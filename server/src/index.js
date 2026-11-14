@@ -32,7 +32,12 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        process.env.NODE_ENV === 'development'
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -96,6 +101,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Ensure MongoDB connection is established before handling API requests (serverless-ready)
+app.use('/api/v1', async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // API v1 Routes
 app.use('/api/v1', routes);
 
@@ -118,7 +133,7 @@ const startServer = async () => {
   });
 };
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   startServer();
 }
 

@@ -109,7 +109,7 @@ const seedDatabase = async () => {
         description:
           'This comprehensive demonstration course teaches you the complete end-to-end pipeline for creating broadcast-quality AI videos. You will learn prompt engineering for cinematic framing, temporal consistency, lighting control, and professional assembly.',
         thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-        previewVideo: 'http://localhost:5000/uploads/videos/cinematic-ai-video.mp4',
+        previewVideo: '/uploads/videos/cinematic-ai-video.mp4',
         category: categoryMap['ai-video-creation'],
         price: 45000,
         discountPrice: 29500,
@@ -189,7 +189,7 @@ const seedDatabase = async () => {
         description:
           'Learn how to build persistent digital characters and studio-grade talking avatars. Covers character sheet generation, facial expression control, lip-sync accuracy, and mandatory IP/consent compliance for commercial projects.',
         thumbnail: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80',
-        previewVideo: 'http://localhost:5000/uploads/videos/ai-character-avatar.mp4',
+        previewVideo: '/uploads/videos/ai-character-avatar.mp4',
         category: categoryMap['ai-character-transformation'],
         price: 55000,
         discountPrice: 35000,
@@ -247,7 +247,7 @@ const seedDatabase = async () => {
         description:
           'Transform scripts into hyper-realistic human narration. Learn vocal pacing, emotional inflection, studio acoustic cleanup, and legal consent protocols for commercial voice cloning.',
         thumbnail: null,
-        previewVideo: 'http://localhost:5000/uploads/videos/voice-cloning-studio.mp4',
+        previewVideo: '/uploads/videos/voice-cloning-studio.mp4',
         category: categoryMap['ai-voice-cloning'],
         price: 38000,
         discountPrice: 24000,
@@ -273,7 +273,7 @@ const seedDatabase = async () => {
               {
                 title: 'Voice Synthesis Fundamentals & Consent Standards',
                 description: 'How modern neural speech synthesis works and legal voice authorization.',
-                videoUrl: 'http://localhost:5000/uploads/videos/voice-cloning-studio.mp4',
+                videoUrl: '/uploads/videos/voice-cloning-studio.mp4',
                 videoDuration: 490,
                 order: 1,
                 isPreview: true,

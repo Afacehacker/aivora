@@ -40,9 +40,8 @@ export const handleMediaUpload = catchAsync(async (req, res, next) => {
     }
   }
 
-  // Build accessible URL served from Express static /uploads
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
-  const fileUrl = `${baseUrl}/uploads/${subFolder}/${req.file.filename}`;
+  // Build accessible relative URL served from Express static /uploads
+  const fileUrl = `/uploads/${subFolder}/${req.file.filename}`;
 
   return successResponse(res, 200, 'File uploaded successfully.', {
     url: fileUrl,
@@ -57,7 +56,6 @@ export const handleMediaUpload = catchAsync(async (req, res, next) => {
  * GET /api/v1/admin/media — List uploaded local videos & images so admin can pick from existing uploads
  */
 export const listUploadedMedia = catchAsync(async (req, res) => {
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
   const uploadsRoot = path.join(process.cwd(), 'uploads');
   const folders = ['videos', 'images', 'resources'];
   const items = [];
@@ -73,7 +71,7 @@ export const listUploadedMedia = catchAsync(async (req, res) => {
           filename: file,
           folder,
           type: folder === 'videos' ? 'video' : folder === 'images' ? 'image' : 'file',
-          url: `${baseUrl}/uploads/${folder}/${file}`,
+          url: `/uploads/${folder}/${file}`,
           size: stat.size,
           createdAt: stat.mtime,
         });

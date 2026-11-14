@@ -2,14 +2,20 @@ import { clsx } from 'clsx'
 
 const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|mkv|avi|m4v)(\?.*)?$/i
 
+export function normalizeMediaUrl(url = '') {
+  if (!url || typeof url !== 'string') return url
+  // Rewrite local dev uploads host to relative /uploads/... so it works seamlessly on Vercel & Vite proxy
+  return url.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000\/uploads\//i, '/uploads/')
+}
+
 export function isVideoUrl(url = '') {
   if (!url || typeof url !== 'string') return false
   return VIDEO_EXTENSIONS.test(url) || url.includes('/uploads/videos/')
 }
 
 export function courseUsesVideoCover(course) {
-  const thumb = course?.thumbnail
-  const previewVid = course?.previewVideo
+  const thumb = normalizeMediaUrl(course?.thumbnail)
+  const previewVid = normalizeMediaUrl(course?.previewVideo)
   return Boolean((!thumb && previewVid) || isVideoUrl(thumb))
 }
 
@@ -29,8 +35,8 @@ export default function CourseMediaPreview({
   loop = true,
   controls = false,
 }) {
-  const thumb = course?.thumbnail
-  const previewVid = course?.previewVideo
+  const thumb = normalizeMediaUrl(course?.thumbnail)
+  const previewVid = normalizeMediaUrl(course?.previewVideo)
 
   // If there is no picture thumbnail (or thumbnail itself is a video) and a video exists, render <video> directly
   const shouldRenderVideo = courseUsesVideoCover(course)
