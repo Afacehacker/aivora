@@ -1,6 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { imageStorage, videoStorage } from '../config/cloudinary.js';
 import { AppError } from './errorHandler.js';
 
@@ -9,25 +10,33 @@ const isCloudinaryConfigured = () => {
   const name = process.env.CLOUDINARY_CLOUD_NAME;
   const key = process.env.CLOUDINARY_API_KEY;
   const secret = process.env.CLOUDINARY_API_SECRET;
-  return (
+  return Boolean(
     name &&
-    key &&
-    secret &&
-    name !== 'your_cloud_name' &&
-    key !== 'your_api_key' &&
-    secret !== 'your_api_secret'
+      key &&
+      secret &&
+      name !== 'your_cloud_name' &&
+      key !== 'your_api_key' &&
+      secret !== 'your_api_secret'
   );
 };
 
-// Ensure local uploads directory exists
-const uploadsDir = path.join(process.cwd(), 'uploads');
+// On Vercel serverless, use os.tmpdir() for writable staging; locally use process.cwd()/uploads
+const baseUploadsRoot = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'aivora-uploads')
+  : path.join(process.cwd(), 'uploads');
+
+const uploadsDir = baseUploadsRoot;
 const imagesDir = path.join(uploadsDir, 'images');
 const videosDir = path.join(uploadsDir, 'videos');
 const resourcesDir = path.join(uploadsDir, 'resources');
 
 [uploadsDir, imagesDir, videosDir, resourcesDir].forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  try {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  } catch (err) {
+    // Ignore read-only fs errors in restricted environments
   }
 });
 
@@ -35,7 +44,11 @@ const resourcesDir = path.join(uploadsDir, 'resources');
 const createDiskStorage = (subFolder) =>
   multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, path.join(uploadsDir, subFolder));
+      const target = path.join(uploadsDir, subFolder);
+      try {
+        if (!fs.existsSync(target)) fs.mkdirSync(target, { recursive: true });
+      } catch {}
+      cb(null, target);
     },
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
@@ -85,7 +98,11 @@ const dynamicLocalMediaStorage = multer.diskStorage({
     let sub = 'resources';
     if (file.mimetype.startsWith('image/')) sub = 'images';
     else if (file.mimetype.startsWith('video/')) sub = 'videos';
-    cb(null, path.join(uploadsDir, sub));
+    const target = path.join(uploadsDir, sub);
+    try {
+      if (!fs.existsSync(target)) fs.mkdirSync(target, { recursive: true });
+    } catch {}
+    cb(null, target);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();

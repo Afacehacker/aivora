@@ -21,7 +21,9 @@ export const protect = catchAsync(async (req, res, next) => {
   }
 
   // Verify token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const jwtSecret =
+    process.env.JWT_SECRET || 'aivora_super_secret_jwt_key_2026_production_secure_998877';
+  const decoded = jwt.verify(token, jwtSecret);
 
   // Check if user still exists
   const user = await User.findById(decoded.id).select('+isActive');

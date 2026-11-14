@@ -1,28 +1,36 @@
 import mongoose from 'mongoose';
+import { ensureInitialData } from '../utils/autoSeed.js';
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY_MS = 5000;
+const DEFAULT_MONGODB_URI =
+  'mongodb+srv://aivora_admin:AivoraDbPass2026Secure99@cluster0.s2g48sz.mongodb.net/aivora?retryWrites=true&w=majority&appName=Cluster0';
 
 let cachedPromise = null;
 
 /**
- * Connect to MongoDB with retry logic and serverless connection caching
+ * Connect to MongoDB with retry logic, serverless connection caching, and automatic initial seeding
  */
 const connectDB = async (attempt = 1) => {
   if (mongoose.connection.readyState === 1) {
+    await ensureInitialData();
     return mongoose.connection;
   }
   if (cachedPromise) {
-    return cachedPromise;
+    const conn = await cachedPromise;
+    await ensureInitialData();
+    return conn.connection;
   }
 
   try {
-    cachedPromise = mongoose.connect(process.env.MONGODB_URI, {
+    const uri = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
+    cachedPromise = mongoose.connect(uri, {
       serverSelectionTimeoutMS: 10000,
     });
     const conn = await cachedPromise;
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    await ensureInitialData();
 
     // Log connection events
     mongoose.connection.on('disconnected', () => {

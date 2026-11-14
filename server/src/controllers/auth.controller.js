@@ -10,16 +10,21 @@ import {
   sendPasswordReset,
 } from '../services/email.service.js';
 
+const JWT_SECRET_DEFAULT = 'aivora_super_secret_jwt_key_2026_production_secure_998877';
+
 // Generate JWT token
 const signToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+  jwt.sign({ id }, process.env.JWT_SECRET || JWT_SECRET_DEFAULT, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  });
 
 // Send token response with cookie
 const createSendToken = (user, statusCode, res, message = 'Success') => {
   const token = signToken(user._id);
+  const cookieDays = parseInt(process.env.JWT_COOKIE_EXPIRES || '7', 10) || 7;
 
   const cookieOptions = {
-    expires: new Date(Date.now() + parseInt(process.env.JWT_COOKIE_EXPIRES) * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + cookieDays * 24 * 60 * 60 * 1000),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',

@@ -12,6 +12,7 @@ import xss from 'xss-clean';
 import rateLimit from 'express-rate-limit';
 import connectDB from './config/db.js';
 import routes from './routes/index.js';
+import { serveStoredMedia } from './controllers/upload.controller.js';
 import errorHandler, { AppError } from './middleware/errorHandler.js';
 
 const app = express();
@@ -65,8 +66,16 @@ app.use(xss());
 // Response compression
 app.use(compression());
 
-// Serve uploaded media files (images, videos, PDFs) statically
+// Serve uploaded media files (images, videos, PDFs) statically from disk first, then fallback to MongoDB MediaFile
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.get('/uploads/:folder/:filename', async (req, res, next) => {
+  try {
+    await connectDB();
+    return serveStoredMedia(req, res, next);
+  } catch (err) {
+    return next(err);
+  }
+});
 
 // Rate limiters
 const generalLimiter = rateLimit({
