@@ -4,10 +4,10 @@
   "private": true,
   "description": "AIVORA — Full-Stack AI Creative Production & Course Platform",
   "scripts": {
-    "build": "npm install --prefix client && npm run build --prefix client && npm install --prefix server",
+    "build": "npm install --include=dev --prefix client && npm run build --prefix client && npm install --prefix server",
     "start": "npm start --prefix server"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "20.x"
   }
 }
