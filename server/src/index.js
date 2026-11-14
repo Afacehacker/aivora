@@ -3,6 +3,8 @@ dotenv.config();
 
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -21,7 +23,12 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Security HTTP headers
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false,
+  })
+);
 
 // CORS configuration
 const allowedOrigins = [
@@ -37,6 +44,7 @@ app.use(
         !origin ||
         allowedOrigins.includes(origin) ||
         origin.endsWith('.vercel.app') ||
+        origin.endsWith('.onrender.com') ||
         process.env.NODE_ENV === 'development'
       ) {
         callback(null, true);
@@ -122,6 +130,21 @@ app.use('/api/v1', async (req, res, next) => {
 
 // API v1 Routes
 app.use('/api/v1', routes);
+
+// Serve built React frontend (client/dist) when deployed as a unified service on Render
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientDistDir = path.resolve(__dirname, '../../client/dist');
+
+if (fs.existsSync(clientDistDir)) {
+  app.use(express.static(clientDistDir, { maxAge: '7d' }));
+  app.get('*', (req, res, next) => {
+    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
+      return next();
+    }
+    return res.sendFile(path.join(clientDistDir, 'index.html'));
+  });
+}
 
 // 404 Handler
 app.all('*', (req, res, next) => {

@@ -1,53 +1,14 @@
 services:
   - type: web
-    name: aivora-api-server
+    name: aivora
     runtime: node
-    rootDir: server
-    plan: starter
-    buildCommand: npm install
+    plan: free
+    buildCommand: npm run build
     startCommand: npm start
-    healthCheckPath: /health
-    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 5000
-      - key: CLIENT_URL
-        sync: false
       - key: MONGODB_URI
-        sync: false
+        value: mongodb+srv://aivora_admin:AivoraDbPass2026Secure99@cluster0.s2g48sz.mongodb.net/aivora?retryWrites=true&w=majority&appName=Cluster0
       - key: JWT_SECRET
-        generateValue: true
-      - key: JWT_EXPIRES_IN
-        value: 7d
-      - key: JWT_COOKIE_EXPIRES
-        value: 7
-      - key: CLOUDINARY_CLOUD_NAME
-        sync: false
-      - key: CLOUDINARY_API_KEY
-        sync: false
-      - key: CLOUDINARY_API_SECRET
-        sync: false
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_PORT
-        value: 587
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false
-      - key: EMAIL_FROM
-        value: noreply@aivora.com
-      - key: EMAIL_FROM_NAME
-        value: AIVORA
-      - key: PAYSTACK_PUBLIC_KEY
-        sync: false
-      - key: PAYSTACK_SECRET_KEY
-        sync: false
-      - key: PAYSTACK_WEBHOOK_SECRET
-        sync: false
-      - key: ADMIN_EMAIL
-        value: admin@aivora.com
-      - key: ADMIN_DEFAULT_PASSWORD
-        sync: false
+        value: aivora_super_secret_jwt_key_2026_production_secure_998877
