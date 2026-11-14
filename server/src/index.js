@@ -134,10 +134,15 @@ app.use('/api/v1', routes);
 // Serve built React frontend (client/dist) when deployed as a unified service on Render
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const clientDistDir = path.resolve(__dirname, '../../client/dist');
+const candidateDistDirs = [
+  path.resolve(__dirname, '../../client/dist'),
+  path.resolve(process.cwd(), 'client/dist'),
+  path.resolve(process.cwd(), '../client/dist'),
+];
+const clientDistDir = candidateDistDirs.find((dir) => fs.existsSync(path.join(dir, 'index.html')));
 
-if (fs.existsSync(clientDistDir)) {
-  app.use(express.static(clientDistDir, { maxAge: '7d' }));
+if (clientDistDir) {
+  app.use(express.static(clientDistDir, { maxAge: '1d' }));
   app.get('*', (req, res, next) => {
     if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
       return next();
