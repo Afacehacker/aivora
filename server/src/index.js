@@ -142,7 +142,7 @@ const candidateDistDirs = [
 const clientDistDir = candidateDistDirs.find((dir) => fs.existsSync(path.join(dir, 'index.html')));
 
 if (clientDistDir) {
-  app.use(express.static(clientDistDir, { maxAge: '1d' }));
+  app.use(express.static(clientDistDir, { maxAge: '1d', redirect: false }));
   app.get('*', (req, res, next) => {
     if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
       return next();
