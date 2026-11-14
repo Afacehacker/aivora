@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { clsx } from 'clsx'
 
 const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|mkv|avi|m4v)(\?.*)?$/i
 
 export function normalizeMediaUrl(url = '') {
   if (!url || typeof url !== 'string') return url
-  // Rewrite local dev uploads host to relative /uploads/... so it works seamlessly on Vercel & Vite proxy
+  // Rewrite local dev uploads host to relative /uploads/... so it works seamlessly on Vercel & Render
   return url.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000\/uploads\//i, '/uploads/')
 }
 
@@ -24,13 +24,15 @@ export function courseUsesVideoCover(course) {
   return Boolean((!thumb && previewVid) || isVideoUrl(thumb))
 }
 
+const FALLBACK_POSTER =
+  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=75'
+
 /**
  * Renders a course's cover media seamlessly whether the admin uploaded:
  * 1) A picture (`course.thumbnail`), OR
  * 2) Only a video (`course.previewVideo`), OR
  * 3) A video URL inside `course.thumbnail`
- * Optimized for mobile: uses preload="metadata" to save data and IntersectionObserver
- * so only visible videos play on screen (preventing mobile CPU/GPU hangs).
+ * Prevents infinite network retry loops if a mobile connection drops (`onError` fallback).
  */
 export default function CourseMediaPreview({
   course,
@@ -42,19 +44,24 @@ export default function CourseMediaPreview({
   controls = false,
 }) {
   const videoRef = useRef(null)
+  const [videoFailed, setVideoFailed] = useState(false)
+
   const thumb = normalizeMediaUrl(course?.thumbnail)
   const previewVid = normalizeMediaUrl(course?.previewVideo)
 
-  const shouldRenderVideo = courseUsesVideoCover(course)
+  const shouldRenderVideo = courseUsesVideoCover(course) && !videoFailed
   const videoSrc = isVideoUrl(thumb) ? thumb : previewVid
+
+  useEffect(() => {
+    setVideoFailed(false)
+  }, [videoSrc])
 
   useEffect(() => {
     const el = videoRef.current
     if (!el || !shouldRenderVideo || !autoPlay) return
 
-    // Only play video when visible in viewport; pause immediately when off-screen to prevent mobile lag & save data
     if (typeof IntersectionObserver === 'undefined') {
-      el.play().catch(() => {})
+      if (navigator.onLine !== false) el.play().catch(() => {})
       return
     }
 
@@ -62,8 +69,10 @@ export default function CourseMediaPreview({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            el.play().catch(() => {})
-          } else {
+            if (navigator.onLine !== false && el.paused) {
+              el.play().catch(() => {})
+            }
+          } else if (!el.paused) {
             el.pause()
           }
         })
@@ -93,6 +102,7 @@ export default function CourseMediaPreview({
         playsInline
         controls={controls}
         preload="metadata"
+        onError={() => setVideoFailed(true)}
         className={clsx('bg-black', resolvedVideoClass)}
       />
     )
@@ -100,10 +110,7 @@ export default function CourseMediaPreview({
 
   return (
     <img
-      src={
-        thumb ||
-        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=75'
-      }
+      src={(!isVideoUrl(thumb) && thumb) || FALLBACK_POSTER}
       alt={course?.title || 'AIVORA Course'}
       loading="lazy"
       decoding="async"

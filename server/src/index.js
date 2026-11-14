@@ -131,7 +131,7 @@ app.use('/api/v1', async (req, res, next) => {
 // API v1 Routes
 app.use('/api/v1', routes);
 
-// Serve built React frontend (client/dist) when deployed as a unified service on Render
+// Serve built React frontend (client/dist) on Render and spa-index.html for SPA route reloads on Vercel
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const candidateDistDirs = [
@@ -140,16 +140,24 @@ const candidateDistDirs = [
   path.resolve(process.cwd(), '../client/dist'),
 ];
 const clientDistDir = candidateDistDirs.find((dir) => fs.existsSync(path.join(dir, 'index.html')));
+const spaFallbackFile = path.join(__dirname, 'spa-index.html');
 
 if (clientDistDir) {
   app.use(express.static(clientDistDir, { maxAge: '1d', redirect: false }));
-  app.get('*', (req, res, next) => {
-    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
-      return next();
-    }
-    return res.sendFile(path.join(clientDistDir, 'index.html'));
-  });
 }
+
+app.get('*', (req, res, next) => {
+  if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
+    return next();
+  }
+  if (clientDistDir && fs.existsSync(path.join(clientDistDir, 'index.html'))) {
+    return res.sendFile(path.join(clientDistDir, 'index.html'));
+  }
+  if (fs.existsSync(spaFallbackFile)) {
+    return res.sendFile(spaFallbackFile);
+  }
+  return next();
+});
 
 // 404 Handler
 app.all('*', (req, res, next) => {
