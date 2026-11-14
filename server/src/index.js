@@ -71,10 +71,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(mongoSanitize());
 app.use(xss());
 
-// Response compression
-app.use(compression());
-
-// Serve uploaded media files (images, videos, PDFs) statically from disk first, then fallback to MongoDB MediaFile
+// Serve uploaded media files (images, videos, PDFs) BEFORE compression() so video byte-range requests are never altered
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.get('/uploads/:folder/:filename', async (req, res, next) => {
   try {
@@ -84,6 +81,18 @@ app.get('/uploads/:folder/:filename', async (req, res, next) => {
     return next(err);
   }
 });
+
+// Response compression (skip video streams so browser range caching never fails with ERR_CACHE_OPERATION_NOT_SUPPORTED)
+app.use(
+  compression({
+    filter: (req, res) => {
+      if (req.originalUrl.startsWith('/uploads/videos') || req.originalUrl.startsWith('/api/v1/media/videos')) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+  })
+);
 
 // Rate limiters
 const generalLimiter = rateLimit({

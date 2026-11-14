@@ -3,6 +3,39 @@ import { clsx } from 'clsx'
 
 const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|mkv|avi|m4v)(\?.*)?$/i
 
+// Shared in-memory Blob URL cache so identical videos on the same page download ONCE
+// and never trigger Chromium's net::ERR_CACHE_OPERATION_NOT_SUPPORTED concurrent range lock.
+const videoBlobUrlCache = new Map()
+const videoFetchPromiseCache = new Map()
+
+function getOrFetchVideoBlobUrl(url) {
+  if (videoBlobUrlCache.has(url)) {
+    return Promise.resolve(videoBlobUrlCache.get(url))
+  }
+  if (videoFetchPromiseCache.has(url)) {
+    return videoFetchPromiseCache.get(url)
+  }
+
+  const promise = fetch(url, { cache: 'force-cache' })
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.blob()
+    })
+    .then((blob) => {
+      const blobUrl = URL.createObjectURL(blob)
+      videoBlobUrlCache.set(url, blobUrl)
+      videoFetchPromiseCache.delete(url)
+      return blobUrl
+    })
+    .catch((err) => {
+      videoFetchPromiseCache.delete(url)
+      throw err
+    })
+
+  videoFetchPromiseCache.set(url, promise)
+  return promise
+}
+
 export function normalizeMediaUrl(url = '') {
   if (!url || typeof url !== 'string') return url
   // Rewrite local dev uploads host to relative /uploads/... so it works seamlessly on Vercel & Render
@@ -32,7 +65,8 @@ const FALLBACK_POSTER =
  * 1) A picture (`course.thumbnail`), OR
  * 2) Only a video (`course.previewVideo`), OR
  * 3) A video URL inside `course.thumbnail`
- * Prevents infinite network retry loops if a mobile connection drops (`onError` fallback).
+ * Uses an in-memory Blob URL cache to eliminate Chromium net::ERR_CACHE_OPERATION_NOT_SUPPORTED
+ * when multiple cards display the same video, and stops retrying if the network is offline.
  */
 export default function CourseMediaPreview({
   course,
@@ -45,20 +79,52 @@ export default function CourseMediaPreview({
 }) {
   const videoRef = useRef(null)
   const [videoFailed, setVideoFailed] = useState(false)
+  const [resolvedVideoSrc, setResolvedVideoSrc] = useState(null)
 
   const thumb = normalizeMediaUrl(course?.thumbnail)
   const previewVid = normalizeMediaUrl(course?.previewVideo)
 
   const shouldRenderVideo = courseUsesVideoCover(course) && !videoFailed
-  const videoSrc = isVideoUrl(thumb) ? thumb : previewVid
+  const rawVideoSrc = isVideoUrl(thumb) ? thumb : previewVid
 
   useEffect(() => {
+    let isMounted = true
     setVideoFailed(false)
-  }, [videoSrc])
+
+    if (!shouldRenderVideo || !rawVideoSrc) {
+      setResolvedVideoSrc(null)
+      return
+    }
+
+    // If already cached as a blob URL in memory, use it immediately
+    if (videoBlobUrlCache.has(rawVideoSrc)) {
+      setResolvedVideoSrc(videoBlobUrlCache.get(rawVideoSrc))
+      return
+    }
+
+    getOrFetchVideoBlobUrl(rawVideoSrc)
+      .then((blobUrl) => {
+        if (isMounted) setResolvedVideoSrc(blobUrl)
+      })
+      .catch(() => {
+        // Fallback to direct URL if fetch fails, or mark failed if offline
+        if (isMounted) {
+          if (navigator.onLine === false) {
+            setVideoFailed(true)
+          } else {
+            setResolvedVideoSrc(rawVideoSrc)
+          }
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [rawVideoSrc, shouldRenderVideo])
 
   useEffect(() => {
     const el = videoRef.current
-    if (!el || !shouldRenderVideo || !autoPlay) return
+    if (!el || !shouldRenderVideo || !resolvedVideoSrc || !autoPlay) return
 
     if (typeof IntersectionObserver === 'undefined') {
       if (navigator.onLine !== false) el.play().catch(() => {})
@@ -77,16 +143,16 @@ export default function CourseMediaPreview({
           }
         })
       },
-      { threshold: 0.25 }
+      { threshold: 0.2 }
     )
 
     observer.observe(el)
     return () => {
       observer.disconnect()
     }
-  }, [shouldRenderVideo, autoPlay, videoSrc])
+  }, [shouldRenderVideo, autoPlay, resolvedVideoSrc])
 
-  if (shouldRenderVideo && videoSrc) {
+  if (shouldRenderVideo && resolvedVideoSrc) {
     const resolvedVideoClass =
       videoClassName ||
       className
@@ -96,7 +162,7 @@ export default function CourseMediaPreview({
     return (
       <video
         ref={videoRef}
-        src={videoSrc}
+        src={resolvedVideoSrc}
         muted={muted}
         loop={loop}
         playsInline
