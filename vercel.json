@@ -26,45 +26,9 @@
       }
     },
     {
-      "source": "/assets/(.*)",
-      "destination": {
-        "service": "client"
-      }
-    },
-    {
-      "source": "/uploads/(.*)",
-      "destination": {
-        "service": "client"
-      }
-    },
-    {
-      "source": "/favicon.svg",
-      "destination": {
-        "service": "client"
-      }
-    },
-    {
-      "source": "/robots.txt",
-      "destination": {
-        "service": "client"
-      }
-    },
-    {
-      "source": "/sitemap.xml",
-      "destination": {
-        "service": "client"
-      }
-    },
-    {
-      "source": "/",
-      "destination": {
-        "service": "client"
-      }
-    },
-    {
       "source": "/(.*)",
       "destination": {
-        "service": "aivora-api-server"
+        "service": "client"
       }
     }
   ]
