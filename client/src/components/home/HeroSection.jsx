@@ -64,11 +64,11 @@ export default function HeroSection({ settings }) {
     'Master the art of AI video creation, digital characters, realistic voice cloning, and cinematic storytelling. Learn the skills to create extraordinary content without expensive equipment or complicated production studios.'
 
   return (
-    <section className="relative min-h-screen flex items-center pt-24 pb-16 overflow-hidden bg-hero-gradient">
-      {/* Ambient Glowing Orbs */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-aivora-indigo/20 rounded-full blur-[128px] pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-aivora-purple/20 rounded-full blur-[128px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-aivora-cyan/10 rounded-full blur-[140px] pointer-events-none" />
+    <section className="relative flex items-center pt-20 sm:pt-24 pb-12 sm:pb-16 overflow-hidden bg-hero-gradient">
+      {/* Ambient Glowing Orbs (Desktop only to prevent mobile GPU lag) */}
+      <div className="hidden lg:block absolute top-1/4 -left-32 w-96 h-96 bg-aivora-indigo/20 rounded-full blur-[128px] pointer-events-none" />
+      <div className="hidden lg:block absolute bottom-1/4 -right-32 w-96 h-96 bg-aivora-purple/20 rounded-full blur-[128px] pointer-events-none" />
+      <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-aivora-cyan/10 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Subtle Grid Pattern */}
       <div
@@ -81,22 +81,17 @@ export default function HeroSection({ settings }) {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
           {/* Left Column: Copy & CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="lg:col-span-7 space-y-6"
-          >
+          <div className="lg:col-span-7 space-y-5 sm:space-y-6">
             {/* Eyebrow badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-aivora-indigo/30 text-xs sm:text-sm font-medium text-slate-200">
-              <Sparkles className="w-4 h-4 text-aivora-cyan" />
-              <span>Next-Generation AI Creative Production Platform</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass border border-aivora-indigo/30 text-xs sm:text-sm font-medium text-slate-200">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-aivora-cyan flex-shrink-0" />
+              <span className="truncate">Next-Generation AI Creative Production Platform</span>
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-black tracking-tight leading-[1.08] text-white">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-black tracking-tight leading-[1.12] text-white">
               {headline.includes('Powered by AI') ? (
                 <>
                   Your Imagination.{' '}
@@ -108,13 +103,13 @@ export default function HeroSection({ settings }) {
             </h1>
 
             {/* Supporting Headline */}
-            <p className="text-base sm:text-lg lg:text-xl text-slate-300 leading-relaxed max-w-2xl">
+            <p className="text-sm sm:text-lg lg:text-xl text-slate-300 leading-relaxed max-w-2xl">
               {subHeadline}
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
-              <Link to="/courses">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-1">
+              <Link to="/courses" className="w-full sm:w-auto">
                 <Button
                   variant="primary"
                   size="lg"
@@ -124,7 +119,7 @@ export default function HeroSection({ settings }) {
                   Explore All Courses
                 </Button>
               </Link>
-              <Link to="/auth/register">
+              <Link to="/auth/register" className="w-full sm:w-auto">
                 <Button
                   variant="secondary"
                   size="lg"
@@ -137,36 +132,31 @@ export default function HeroSection({ settings }) {
             </div>
 
             {/* Trust Indicator */}
-            <div className="pt-6 border-t border-white/10">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-aivora-cyan mb-3">
-                <ShieldCheck className="w-4 h-4" />
+            <div className="pt-4 sm:pt-6 border-t border-white/10">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-aivora-cyan mb-2.5">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
                 <span>Structured, Practical, Beginner-Friendly Training</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {trustPills.map((pill) => (
-                  <div key={pill} className="flex items-center gap-2 text-sm text-slate-300">
+                  <div key={pill} className="flex items-center gap-2 text-xs sm:text-sm text-slate-300">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                     <span>{pill}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Right Column: Featured Course Product (IMAGE to VIDEO — Image to a talking video) */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.15 }}
-            className="lg:col-span-5 relative"
-          >
-            <div className="relative mx-auto max-w-lg lg:max-w-none">
+          <div className="lg:col-span-5 relative">
+            <div className="relative mx-auto max-w-md lg:max-w-none">
               <CourseCard
                 course={heroCourse}
                 onPreview={(c) => setPreviewCourse(c)}
               />
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 

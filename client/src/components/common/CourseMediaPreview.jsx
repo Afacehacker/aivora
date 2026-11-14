@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { clsx } from 'clsx'
 
 const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|mkv|avi|m4v)(\?.*)?$/i
@@ -10,7 +11,11 @@ export function normalizeMediaUrl(url = '') {
 
 export function isVideoUrl(url = '') {
   if (!url || typeof url !== 'string') return false
-  return VIDEO_EXTENSIONS.test(url) || url.includes('/uploads/videos/')
+  return (
+    VIDEO_EXTENSIONS.test(url) ||
+    url.includes('/uploads/videos/') ||
+    url.includes('/api/v1/media/videos/')
+  )
 }
 
 export function courseUsesVideoCover(course) {
@@ -24,7 +29,8 @@ export function courseUsesVideoCover(course) {
  * 1) A picture (`course.thumbnail`), OR
  * 2) Only a video (`course.previewVideo`), OR
  * 3) A video URL inside `course.thumbnail`
- * Ensures the full height, width, and length of the video are visible without cropping.
+ * Optimized for mobile: uses preload="metadata" to save data and IntersectionObserver
+ * so only visible videos play on screen (preventing mobile CPU/GPU hangs).
  */
 export default function CourseMediaPreview({
   course,
@@ -35,15 +41,43 @@ export default function CourseMediaPreview({
   loop = true,
   controls = false,
 }) {
+  const videoRef = useRef(null)
   const thumb = normalizeMediaUrl(course?.thumbnail)
   const previewVid = normalizeMediaUrl(course?.previewVideo)
 
-  // If there is no picture thumbnail (or thumbnail itself is a video) and a video exists, render <video> directly
   const shouldRenderVideo = courseUsesVideoCover(course)
   const videoSrc = isVideoUrl(thumb) ? thumb : previewVid
 
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el || !shouldRenderVideo || !autoPlay) return
+
+    // Only play video when visible in viewport; pause immediately when off-screen to prevent mobile lag & save data
+    if (typeof IntersectionObserver === 'undefined') {
+      el.play().catch(() => {})
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            el.play().catch(() => {})
+          } else {
+            el.pause()
+          }
+        })
+      },
+      { threshold: 0.25 }
+    )
+
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+    }
+  }, [shouldRenderVideo, autoPlay, videoSrc])
+
   if (shouldRenderVideo && videoSrc) {
-    // Replace object-cover with object-contain so the full height and width of the video are never cropped
     const resolvedVideoClass =
       videoClassName ||
       className
@@ -52,13 +86,13 @@ export default function CourseMediaPreview({
 
     return (
       <video
+        ref={videoRef}
         src={videoSrc}
         muted={muted}
         loop={loop}
-        autoPlay={autoPlay}
         playsInline
         controls={controls}
-        preload="auto"
+        preload="metadata"
         className={clsx('bg-black', resolvedVideoClass)}
       />
     )
@@ -68,10 +102,11 @@ export default function CourseMediaPreview({
     <img
       src={
         thumb ||
-        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=75'
       }
       alt={course?.title || 'AIVORA Course'}
       loading="lazy"
+      decoding="async"
       className={clsx(className)}
     />
   )

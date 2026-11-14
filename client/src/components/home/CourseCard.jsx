@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { Play, Clock, BookOpen, Star, ArrowRight } from 'lucide-react'
 import Badge from '../ui/Badge'
 import CourseMediaPreview, { courseUsesVideoCover } from '../common/CourseMediaPreview'
@@ -36,11 +35,7 @@ export default function CourseCard({ course, onPreview }) {
   const isVideoCover = courseUsesVideoCover(course)
 
   return (
-    <motion.div
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.25 }}
-      className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-aivora-indigo/50 shadow-card hover:shadow-card-hover flex flex-col h-full transition-all"
-    >
+    <div className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-aivora-indigo/50 shadow-card hover:shadow-card-hover flex flex-col h-full transition-all md:hover:-translate-y-1">
       {/* Thumbnail or Full-Frame Video Cover */}
       <div
         className={
@@ -154,6 +149,6 @@ export default function CourseCard({ course, onPreview }) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }

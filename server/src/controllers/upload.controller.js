@@ -66,7 +66,7 @@ export const handleMediaUpload = catchAsync(async (req, res, next) => {
     }
   }
 
-  const fileUrl = `/uploads/${subFolder}/${req.file.filename}`;
+  const fileUrl = `/api/v1/media/${subFolder}/${req.file.filename}`;
 
   return successResponse(res, 200, 'File uploaded successfully.', {
     url: fileUrl,
@@ -168,7 +168,7 @@ export const listUploadedMedia = catchAsync(async (req, res) => {
         filename: doc.filename,
         folder: doc.folder,
         type: doc.folder === 'videos' ? 'video' : doc.folder === 'images' ? 'image' : 'file',
-        url: `/uploads/${doc.folder}/${doc.filename}`,
+        url: `/api/v1/media/${doc.folder}/${doc.filename}`,
         size: doc.size,
         createdAt: doc.createdAt,
       });

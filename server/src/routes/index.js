@@ -15,8 +15,12 @@ import certificateRoutes from './certificate.routes.js';
 import notificationRoutes from './notification.routes.js';
 import { protect } from '../middleware/auth.js';
 import { updateProgress, getLastWatched } from '../controllers/enrollment.controller.js';
+import { serveStoredMedia } from '../controllers/upload.controller.js';
 
 const router = express.Router();
+
+// Public media streaming route (serves dynamic uploads stored in MongoDB or disk)
+router.get('/media/:folder/:filename', serveStoredMedia);
 
 router.use('/auth', authRoutes);
 router.use('/courses', courseRoutes);

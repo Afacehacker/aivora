@@ -9,8 +9,8 @@ const showcaseModes = [
     icon: Sparkles,
     beforeTitle: 'Original Studio Portrait (Licensed)',
     afterTitle: 'AI Stylized Sci-Fi Character',
-    beforeImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80',
-    afterImage: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=900&q=80',
+    beforeImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=70',
+    afterImage: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=600&q=70',
     description:
       'Transform consented reference photography into stylized cinematic characters while preserving facial structure and lighting direction.',
   },
@@ -20,8 +20,8 @@ const showcaseModes = [
     icon: Clapperboard,
     beforeTitle: 'Static Concept Artwork',
     afterTitle: 'Cinematic Motion Sequence (24fps)',
-    beforeImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=900&q=80',
-    afterImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=900&q=80',
+    beforeImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=70',
+    afterImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=70',
     description:
       'Bring still concept frames to life with controlled camera dolly motion, atmospheric particles, and dynamic lighting.',
   },
@@ -31,8 +31,8 @@ const showcaseModes = [
     icon: Volume2,
     beforeTitle: 'Raw Microphone Recording',
     afterTitle: 'Studio Neural Voice Master (Consented)',
-    beforeImage: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=900&q=80',
-    afterImage: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=900&q=80',
+    beforeImage: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=600&q=70',
+    afterImage: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=70',
     description:
       'Convert raw vocal takes into noise-free, broadcast-mastered narration or multilingual dubbing using authorized voice models.',
   },
@@ -93,6 +93,8 @@ export default function BeforeAfterShowcase() {
             <img
               src={activeTab.afterImage}
               alt={activeTab.afterTitle}
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-aivora-dark/80 via-transparent to-transparent" />
@@ -105,16 +107,18 @@ export default function BeforeAfterShowcase() {
               <img
                 src={activeTab.beforeImage}
                 alt={activeTab.beforeTitle}
+                loading="lazy"
+                decoding="async"
                 className="absolute inset-0 w-full h-full object-cover filter saturate-75"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-aivora-dark/80 via-transparent to-transparent" />
             </div>
 
             {/* Labels */}
-            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl glass-dark text-xs font-semibold text-slate-200 border border-white/10">
+            <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl glass-dark text-[10px] sm:text-xs font-semibold text-slate-200 border border-white/10 max-w-[44%] truncate">
               BEFORE: {activeTab.beforeTitle}
             </div>
-            <div className="absolute top-4 right-4 px-3 py-1.5 rounded-xl glass-dark text-xs font-semibold text-aivora-cyan border border-aivora-cyan/30">
+            <div className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl glass-dark text-[10px] sm:text-xs font-semibold text-aivora-cyan border border-aivora-cyan/30 max-w-[44%] truncate">
               AFTER: {activeTab.afterTitle}
             </div>
 

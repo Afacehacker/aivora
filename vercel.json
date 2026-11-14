@@ -19,12 +19,6 @@
       }
     },
     {
-      "source": "/uploads/(.*)",
-      "destination": {
-        "service": "aivora-api-server"
-      }
-    },
-    {
       "source": "/health",
       "destination": {
         "service": "aivora-api-server"

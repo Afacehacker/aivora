@@ -13,12 +13,10 @@ let cachedPromise = null;
  */
 const connectDB = async (attempt = 1) => {
   if (mongoose.connection.readyState === 1) {
-    await ensureInitialData();
     return mongoose.connection;
   }
   if (cachedPromise) {
     const conn = await cachedPromise;
-    await ensureInitialData();
     return conn.connection;
   }
 
@@ -30,7 +28,8 @@ const connectDB = async (attempt = 1) => {
     const conn = await cachedPromise;
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    await ensureInitialData();
+    // Run auto-seed non-blockingly in the background so API requests respond immediately
+    ensureInitialData().catch(() => {});
 
     // Log connection events
     mongoose.connection.on('disconnected', () => {
