@@ -54,7 +54,7 @@ export default function PurchaseHistoryPage() {
                   <th className="py-3.5 px-4">Reference</th>
                   <th className="py-3.5 px-4">Course</th>
                   <th className="py-3.5 px-4">Amount</th>
-                  <th className="py-3.5 px-4">Provider</th>
+                  <th className="py-3.5 px-4">Transfer Details</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4">Date</th>
                 </tr>
@@ -69,7 +69,16 @@ export default function PurchaseHistoryPage() {
                       {p.course?.title || p.metadata?.courseTitle || 'Course'}
                     </td>
                     <td className="py-3.5 px-4 font-semibold">{formatPrice(p.amount)}</td>
-                    <td className="py-3.5 px-4 capitalize">{p.paymentProvider}</td>
+                    <td className="py-3.5 px-4 text-xs">
+                      <span className="font-medium text-emerald-300">
+                        {p.senderBank || p.metadata?.senderBank || 'Manual Bank Transfer'}
+                      </span>
+                      {(p.senderName || p.metadata?.senderName) && (
+                        <span className="block text-slate-400">
+                          Sender: {p.senderName || p.metadata?.senderName}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-3.5 px-4">
                       <Badge color={statusColor[p.status] || 'default'} className="capitalize">
                         {p.status}

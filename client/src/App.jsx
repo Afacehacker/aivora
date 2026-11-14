@@ -12,6 +12,7 @@ import ScrollToTop from './hooks/useScrollTop'
 const HomePage = lazy(() => import('./pages/HomePage'))
 const CoursesPage = lazy(() => import('./pages/CoursesPage'))
 const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'))
+const ManualPaymentPage = lazy(() => import('./pages/ManualPaymentPage'))
 const AboutPage = lazy(() => import('./pages/AboutPage'))
 const ContactPage = lazy(() => import('./pages/ContactPage'))
 const LegalPage = lazy(() => import('./pages/LegalPage'))
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/courses/:slug" element={<CourseDetailPage />} />
+            <Route path="/checkout/:slug" element={<ManualPaymentPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/terms" element={<LegalPage type="terms" />} />

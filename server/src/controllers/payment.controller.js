@@ -4,21 +4,17 @@ import Course from '../models/Course.js';
 import Order from '../models/Order.js';
 import Coupon from '../models/Coupon.js';
 import Notification from '../models/Notification.js';
+import SiteSettings from '../models/SiteSettings.js';
 import catchAsync from '../utils/catchAsync.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { successResponse, paginationMeta } from '../utils/apiResponse.js';
-import {
-  initializePaystack,
-  verifyPaystackPayment,
-  verifyPaystackWebhook,
-  generatePaymentReference,
-} from '../services/payment.service.js';
+import { generatePaymentReference } from '../services/payment.service.js';
 import {
   sendPaymentConfirmation,
   sendEnrollmentConfirmation,
 } from '../services/email.service.js';
 
-// Helper: Enroll student after successful payment
+// Helper: Enroll student after manual payment approval or free enrollment
 const enrollStudent = async (studentId, courseId, paymentId) => {
   const existing = await Enrollment.findOne({ student: studentId, course: courseId });
   if (existing) return existing;
@@ -34,7 +30,7 @@ const enrollStudent = async (studentId, courseId, paymentId) => {
     user: studentId,
     type: 'enrollment',
     title: 'Course Access Granted!',
-    message: 'You have been successfully enrolled in a course. Start learning now!',
+    message: 'Your payment has been confirmed and you now have full access to your course. Start learning now!',
     data: { courseId, enrollmentId: enrollment._id },
   });
 
@@ -42,10 +38,48 @@ const enrollStudent = async (studentId, courseId, paymentId) => {
 };
 
 /**
- * POST /api/v1/payments/initialize
+ * GET /api/v1/payments/accounts — Public/Student endpoint to fetch active bank transfer accounts & OPay notice
+ */
+export const getManualPaymentDetails = catchAsync(async (req, res) => {
+  let settings = await SiteSettings.findOne();
+  if (!settings) {
+    settings = await SiteSettings.create({});
+  }
+
+  const activeAccounts = (settings.paymentAccounts || []).filter((acc) => acc.isActive !== false);
+
+  return successResponse(res, 200, 'Manual payment details fetched.', {
+    paymentAccounts: activeAccounts,
+    paymentNotice:
+      settings.paymentNotice ||
+      'Payments cannot be received from OPay because transfers from OPay are currently facing gateway problems. However, we accept payments from any other Nigerian bank such as PalmPay, Kuda, Moniepoint, UBA, Access Bank, FirstBank, or any other Nigerian bank (not OPay).',
+  });
+});
+
+/**
+ * POST /api/v1/payments/initialize — Submit Manual Bank Transfer Payment
  */
 export const initializePayment = catchAsync(async (req, res, next) => {
-  const { courseId, provider = 'paystack', couponCode } = req.body;
+  const {
+    courseId,
+    couponCode,
+    senderName = '',
+    senderBank = '',
+    recipientBank = '',
+    recipientAccountNumber = '',
+    transferNote = '',
+    proofUrl = null,
+  } = req.body;
+
+  // Reject OPay transfers explicitly
+  if (senderBank && senderBank.toLowerCase().includes('opay')) {
+    return next(
+      new AppError(
+        'Payments from OPay cannot be received due to gateway problems. Please transfer from another Nigerian bank such as PalmPay, Kuda, Moniepoint, UBA, Access Bank, FirstBank, or any other Nigerian bank.',
+        400
+      )
+    );
+  }
 
   const course = await Course.findById(courseId);
   if (!course) return next(new AppError('Course not found.', 404));
@@ -58,7 +92,12 @@ export const initializePayment = catchAsync(async (req, res, next) => {
   let amount = course.price;
 
   // Apply discount if active
-  if (course.discountPrice && course.discountExpiry && new Date(course.discountExpiry) > new Date()) {
+  if (
+    course.discountPrice !== null &&
+    course.discountPrice !== undefined &&
+    course.discountPrice < course.price &&
+    (!course.discountExpiry || new Date(course.discountExpiry) > new Date())
+  ) {
     amount = course.discountPrice;
   }
 
@@ -78,7 +117,10 @@ export const initializePayment = catchAsync(async (req, res, next) => {
     if (amount < couponDoc.minOrderAmount) {
       return next(new AppError(`Minimum order amount for this coupon is ${couponDoc.minOrderAmount}.`, 400));
     }
-    if (couponDoc.applicableCourses.length && !couponDoc.applicableCourses.map(String).includes(String(courseId))) {
+    if (
+      couponDoc.applicableCourses.length &&
+      !couponDoc.applicableCourses.map(String).includes(String(courseId))
+    ) {
       return next(new AppError('This coupon is not applicable to this course.', 400));
     }
 
@@ -113,18 +155,38 @@ export const initializePayment = catchAsync(async (req, res, next) => {
     return successResponse(res, 200, 'Enrolled successfully (free course).', { enrolled: true });
   }
 
+  if (!senderName.trim() || !senderBank.trim()) {
+    return next(
+      new AppError('Please provide the Sender Account Name and the Nigerian Bank you transferred from.', 400)
+    );
+  }
+
   const ref = generatePaymentReference();
 
-  // Create pending payment
+  // Create pending manual payment record
   const payment = await Payment.create({
     student: req.user._id,
     course: courseId,
     amount,
     currency: 'NGN',
-    paymentProvider: provider,
+    paymentProvider: 'manual',
     transactionRef: ref,
+    senderName: senderName.trim(),
+    senderBank: senderBank.trim(),
+    recipientBank: recipientBank.trim(),
+    recipientAccountNumber: recipientAccountNumber.trim(),
+    transferNote: transferNote.trim(),
+    proofUrl,
     status: 'pending',
-    metadata: { courseTitle: course.title, couponCode: couponCode || null },
+    metadata: {
+      courseTitle: course.title,
+      couponCode: couponCode || null,
+      senderName: senderName.trim(),
+      senderBank: senderBank.trim(),
+      recipientBank: recipientBank.trim(),
+      recipientAccountNumber: recipientAccountNumber.trim(),
+      transferNote: transferNote.trim(),
+    },
   });
 
   // Create order
@@ -138,114 +200,109 @@ export const initializePayment = catchAsync(async (req, res, next) => {
     status: 'pending',
   });
 
-  // Initialize payment with provider
-  let paymentData;
-  try {
-    paymentData = await initializePaystack(req.user.email, amount, ref, {
-      studentId: String(req.user._id),
-      courseId: String(courseId),
-      courseTitle: course.title,
-    });
-  } catch (err) {
-    await Payment.findByIdAndUpdate(payment._id, { status: 'failed' });
-    return next(new AppError('Payment initialization failed. Please try again.', 500));
+  if (couponDoc) {
+    couponDoc.usedCount += 1;
+    await couponDoc.save();
   }
 
-  return successResponse(res, 200, 'Payment initialized.', {
-    paymentUrl: paymentData.authorization_url,
-    reference: ref,
-    amount,
+  // Notify student that manual payment was received and is awaiting admin confirmation
+  await Notification.create({
+    user: req.user._id,
+    type: 'payment',
+    title: 'Manual Payment Submitted',
+    message: `Your transfer of ₦${amount.toLocaleString()} for "${course.title}" (Ref: ${ref}) has been submitted for admin verification.`,
+    data: { courseId, paymentId: payment._id, reference: ref },
   });
+
+  return successResponse(
+    res,
+    201,
+    'Manual payment submitted! Your course access will be unlocked as soon as an administrator confirms your bank transfer.',
+    {
+      manualSubmitted: true,
+      reference: ref,
+      amount,
+      status: 'pending',
+      payment,
+    }
+  );
 });
 
 /**
- * GET /api/v1/payments/verify/:ref
+ * GET /api/v1/payments/verify/:ref — Check status of manual payment reference
  */
 export const verifyPayment = catchAsync(async (req, res, next) => {
   const { ref } = req.params;
 
-  const payment = await Payment.findOne({ transactionRef: ref });
+  const payment = await Payment.findOne({ transactionRef: ref }).populate('course', 'title slug');
   if (!payment) return next(new AppError('Payment record not found.', 404));
 
-  if (payment.status === 'success') {
-    return successResponse(res, 200, 'Payment already verified.', { status: 'success' });
-  }
-
-  // Verify with Paystack
-  let providerData;
-  try {
-    providerData = await verifyPaystackPayment(ref);
-  } catch (err) {
-    return next(new AppError('Payment verification failed. Please contact support.', 500));
-  }
-
-  if (providerData.status !== 'success') {
-    payment.status = 'failed';
-    await payment.save();
-    return next(new AppError('Payment was not successful.', 400));
-  }
-
-  payment.status = 'success';
-  payment.providerRef = providerData.id?.toString();
-  await payment.save();
-
-  // Update order
-  await Order.findOneAndUpdate({ payment: payment._id }, { status: 'completed' });
-
-  // Enroll student
-  const enrollment = await enrollStudent(payment.student, payment.course, payment._id);
-
-  // Send confirmation emails
-  try {
-    const [user, course] = await Promise.all([
-      (await import('../models/User.js')).default.findById(payment.student),
-      Course.findById(payment.course),
-    ]);
-    if (user && course) {
-      await sendPaymentConfirmation(user, course, payment);
-      await sendEnrollmentConfirmation(user, course);
-    }
-  } catch (err) {
-    console.error('Email error after payment:', err.message);
-  }
-
-  return successResponse(res, 200, 'Payment verified and enrollment confirmed.', {
-    status: 'success',
-    enrollmentId: enrollment._id,
+  return successResponse(res, 200, 'Payment status fetched.', {
+    status: payment.status,
+    reference: payment.transactionRef,
+    amount: payment.amount,
+    course: payment.course,
   });
 });
 
 /**
- * POST /api/v1/payments/webhook/paystack
+ * PATCH /api/v1/payments/:id/status (or /api/v1/admin/orders/:id/status) — Admin approves or rejects manual payment
  */
-export const paystackWebhook = catchAsync(async (req, res, next) => {
-  const signature = req.headers['x-paystack-signature'];
-
-  if (!verifyPaystackWebhook(req.body, signature)) {
-    return res.status(401).json({ success: false, message: 'Invalid webhook signature.' });
+export const updatePaymentStatus = catchAsync(async (req, res, next) => {
+  const { status, adminNote = '' } = req.body;
+  if (!['success', 'failed', 'pending', 'refunded'].includes(status)) {
+    return next(new AppError('Invalid payment status.', 400));
   }
 
-  const event = req.body;
+  const payment = await Payment.findById(req.params.id);
+  if (!payment) return next(new AppError('Payment record not found.', 404));
 
-  if (event.event === 'charge.success') {
-    const { reference } = event.data;
+  payment.status = status;
+  if (adminNote !== undefined) payment.adminNote = adminNote;
+  await payment.save();
 
-    const payment = await Payment.findOne({ transactionRef: reference });
-    if (!payment || payment.status === 'success') {
-      return res.status(200).json({ received: true });
-    }
-
-    payment.status = 'success';
-    payment.providerRef = event.data.id?.toString();
-    payment.webhookVerified = true;
-    await payment.save();
-
+  if (status === 'success') {
     await Order.findOneAndUpdate({ payment: payment._id }, { status: 'completed' });
-
     await enrollStudent(payment.student, payment.course, payment._id);
+
+    // Send confirmation emails (non-blocking)
+    try {
+      const [user, course] = await Promise.all([
+        (await import('../models/User.js')).default.findById(payment.student),
+        Course.findById(payment.course),
+      ]);
+      if (user && course) {
+        await sendPaymentConfirmation(user, course, payment);
+        await sendEnrollmentConfirmation(user, course);
+      }
+    } catch (err) {
+      console.error('Email error after manual payment approval:', err.message);
+    }
+  } else if (status === 'failed') {
+    await Order.findOneAndUpdate({ payment: payment._id }, { status: 'failed' });
+    await Notification.create({
+      user: payment.student,
+      type: 'payment',
+      title: 'Payment Verification Update',
+      message:
+        adminNote ||
+        `Your manual payment (Ref: ${payment.transactionRef}) could not be confirmed. Please contact support with your transfer receipt.`,
+      data: { paymentId: payment._id, reference: payment.transactionRef },
+    });
   }
 
-  return res.status(200).json({ received: true });
+  const populated = await Payment.findById(payment._id)
+    .populate('student', 'name email')
+    .populate('course', 'title slug');
+
+  return successResponse(
+    res,
+    200,
+    status === 'success'
+      ? 'Payment approved and student enrolled in the course!'
+      : `Payment status updated to ${status}.`,
+    populated
+  );
 });
 
 /**
@@ -263,16 +320,16 @@ export const getMyPayments = catchAsync(async (req, res) => {
  * GET /api/v1/payments — Admin
  */
 export const getAllPayments = catchAsync(async (req, res) => {
-  const { page = 1, limit = 20, status, search } = req.query;
+  const { page = 1, limit = 50, status } = req.query;
   const filter = {};
 
   if (status) filter.status = status;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
-  let query = Payment.find(filter)
+  const query = Payment.find(filter)
     .populate('student', 'name email')
-    .populate('course', 'title')
+    .populate('course', 'title slug')
     .sort('-createdAt')
     .skip(skip)
     .limit(parseInt(limit));

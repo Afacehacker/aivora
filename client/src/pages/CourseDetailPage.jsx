@@ -144,30 +144,30 @@ export default function CourseDetailPage() {
       return
     }
 
-    setProcessingPayment(true)
-    try {
-      const res = await paymentService.initializePayment({
-        courseId: course._id,
-        provider: 'paystack',
-        couponCode: couponDiscount > 0 ? couponCode : undefined,
-      })
-
-      if (res.data?.enrolled) {
-        toast.success('Successfully enrolled!')
-        navigate(`/dashboard/learn/${course._id}`)
-        return
+    // If course is free (₦0), enroll immediately
+    if (finalPrice === 0) {
+      setProcessingPayment(true)
+      try {
+        const res = await paymentService.initializePayment({
+          courseId: course._id,
+          couponCode: couponDiscount > 0 ? couponCode : undefined,
+        })
+        if (res.data?.enrolled) {
+          toast.success('Successfully enrolled!')
+          navigate(`/dashboard/learn/${course._id}`)
+          return
+        }
+      } catch (err) {
+        toast.error(err.message || 'Failed to enroll.')
+      } finally {
+        setProcessingPayment(false)
       }
-
-      if (res.data?.paymentUrl) {
-        window.location.href = res.data.paymentUrl
-      } else {
-        toast.error('Payment gateway URL could not be generated. Check server payment configuration.')
-      }
-    } catch (err) {
-      toast.error(err.message || 'Failed to initialize checkout.')
-    } finally {
-      setProcessingPayment(false)
+      return
     }
+
+    // Navigate to Manual Bank Transfer Payment Page
+    const query = couponDiscount > 0 && couponCode ? `?coupon=${encodeURIComponent(couponCode)}` : ''
+    navigate(`/checkout/${course.slug}${query}`)
   }
 
   const handleReviewSubmit = async (e) => {
@@ -521,8 +521,17 @@ export default function CourseDetailPage() {
                     loading={processingPayment}
                     onClick={handleEnrollOrBuy}
                   >
-                    {isEnrolled ? 'Continue Learning' : 'Enroll Now'}
+                    {isEnrolled ? 'Continue Learning' : 'Proceed to Bank Transfer Payment'}
                   </Button>
+
+                  {!isEnrolled && finalPrice > 0 && (
+                    <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-200 leading-relaxed">
+                      <strong className="text-amber-300">Payment Notice:</strong> Transfers from{' '}
+                      <strong>OPay</strong> cannot be received due to gateway problems. We accept
+                      transfers from any other Nigerian bank (PalmPay, Kuda, Moniepoint, UBA,
+                      Access Bank, FirstBank, etc.).
+                    </div>
+                  )}
 
                   {/* Coupon Box */}
                   {!isEnrolled && basePrice > 0 && (

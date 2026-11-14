@@ -13,6 +13,10 @@ import {
   updateTestimonialItem,
   deleteTestimonialItem,
   updateTestimonials,
+  getPaymentAccounts,
+  createPaymentAccount,
+  updatePaymentAccount,
+  deletePaymentAccount,
 } from '../controllers/settings.controller.js';
 import { protect, restrictTo } from '../middleware/auth.js';
 
@@ -22,6 +26,7 @@ const router = express.Router();
 router.get('/', getSiteSettings);
 router.get('/faqs', getFAQs);
 router.get('/testimonials', getTestimonials);
+router.get('/payment-accounts', getPaymentAccounts);
 
 // Admin
 router.get('/admin', protect, restrictTo('admin'), getAdminSettings);
@@ -34,5 +39,10 @@ router.patch('/testimonials', protect, restrictTo('admin'), updateTestimonials);
 router.post('/testimonials', protect, restrictTo('admin'), createTestimonialItem);
 router.patch('/testimonials/:id', protect, restrictTo('admin'), updateTestimonialItem);
 router.delete('/testimonials/:id', protect, restrictTo('admin'), deleteTestimonialItem);
+
+// Payment Accounts (Bank Details)
+router.post('/payment-accounts', protect, restrictTo('admin'), createPaymentAccount);
+router.patch('/payment-accounts/:id', protect, restrictTo('admin'), updatePaymentAccount);
+router.delete('/payment-accounts/:id', protect, restrictTo('admin'), deletePaymentAccount);
 
 export default router;

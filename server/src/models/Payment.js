@@ -22,8 +22,8 @@ const paymentSchema = new mongoose.Schema(
     },
     paymentProvider: {
       type: String,
-      enum: ['paystack', 'flutterwave', 'manual'],
-      default: 'paystack',
+      enum: ['manual'],
+      default: 'manual',
     },
     transactionRef: {
       type: String,
@@ -33,6 +33,40 @@ const paymentSchema = new mongoose.Schema(
     providerRef: {
       type: String,
       default: null,
+    },
+    senderName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    senderBank: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    recipientBank: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    recipientAccountNumber: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    proofUrl: {
+      type: String,
+      default: null,
+    },
+    transferNote: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    adminNote: {
+      type: String,
+      default: '',
+      trim: true,
     },
     status: {
       type: String,

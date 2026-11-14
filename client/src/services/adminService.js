@@ -20,9 +20,16 @@ export const adminService = {
   getStudentById: (id) => get(`/admin/students/${id}`),
   updateStudentStatus: (id, data) => patch(`/admin/students/${id}/status`, data),
 
-  // Orders
+  // Orders & Manual Payments
   getAllOrders: (params) => get('/admin/orders', params),
   getOrderById: (id) => get(`/admin/orders/${id}`),
+  updateOrderStatus: (id, data) => patch(`/admin/orders/${id}/status`, data),
+
+  // Payment Bank Accounts (Admin Add / Edit / Remove Payment Details)
+  getPaymentAccounts: () => get('/admin/payment-accounts'),
+  createPaymentAccount: (data) => post('/admin/payment-accounts', data),
+  updatePaymentAccount: (id, data) => patch(`/admin/payment-accounts/${id}`, data),
+  deletePaymentAccount: (id) => del(`/admin/payment-accounts/${id}`),
 
   // Reviews
   getAllReviews: (params) => get('/admin/reviews', params),

@@ -1,8 +1,9 @@
 import express from 'express';
 import {
+  getManualPaymentDetails,
   initializePayment,
   verifyPayment,
-  paystackWebhook,
+  updatePaymentStatus,
   getMyPayments,
   getAllPayments,
   getPaymentById,
@@ -13,8 +14,8 @@ import { initializePaymentValidator } from '../validators/payment.validator.js';
 
 const router = express.Router();
 
-// Webhook (public — verified via HMAC signature)
-router.post('/webhook/paystack', paystackWebhook);
+// Public/Student: fetch active bank accounts & OPay gateway notice
+router.get('/accounts', getManualPaymentDetails);
 
 // Protected student routes
 router.post('/initialize', protect, initializePaymentValidator, validate, initializePayment);
@@ -24,5 +25,6 @@ router.get('/my', protect, getMyPayments);
 // Admin routes
 router.get('/', protect, restrictTo('admin'), getAllPayments);
 router.get('/:id', protect, restrictTo('admin'), getPaymentById);
+router.patch('/:id/status', protect, restrictTo('admin'), updatePaymentStatus);
 
 export default router;

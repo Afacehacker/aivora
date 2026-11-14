@@ -31,6 +31,7 @@ import {
 import {
   getAllPayments,
   getPaymentById,
+  updatePaymentStatus,
 } from '../controllers/payment.controller.js';
 import {
   getAllReviews,
@@ -48,6 +49,10 @@ import {
   createTestimonialItem,
   updateTestimonialItem,
   deleteTestimonialItem,
+  getPaymentAccounts,
+  createPaymentAccount,
+  updatePaymentAccount,
+  deletePaymentAccount,
 } from '../controllers/settings.controller.js';
 import {
   getAllTickets,
@@ -123,6 +128,13 @@ router.delete('/students/:id/revoke-access', revokeCourseAccess);
 // Orders / Payments
 router.get('/orders', getAllPayments);
 router.get('/orders/:id', getPaymentById);
+router.patch('/orders/:id/status', auditLog('UPDATE_PAYMENT_STATUS', 'Payment'), updatePaymentStatus);
+
+// Payment Bank Accounts (Admin Add / Edit / Remove Payment Details)
+router.get('/payment-accounts', getPaymentAccounts);
+router.post('/payment-accounts', auditLog('ADD_PAYMENT_ACCOUNT', 'SiteSettings'), createPaymentAccount);
+router.patch('/payment-accounts/:id', auditLog('UPDATE_PAYMENT_ACCOUNT', 'SiteSettings'), updatePaymentAccount);
+router.delete('/payment-accounts/:id', auditLog('DELETE_PAYMENT_ACCOUNT', 'SiteSettings'), deletePaymentAccount);
 
 // Reviews
 router.get('/reviews', getAllReviews);

@@ -15,6 +15,14 @@ const faqSchema = new mongoose.Schema({
   order: { type: Number, default: 0 },
 });
 
+const paymentAccountSchema = new mongoose.Schema({
+  bankName: { type: String, required: true, trim: true },
+  accountName: { type: String, required: true, trim: true },
+  accountNumber: { type: String, required: true, trim: true },
+  instructions: { type: String, default: '', trim: true },
+  isActive: { type: Boolean, default: true },
+});
+
 const siteSettingsSchema = new mongoose.Schema(
   {
     // Hero Section
@@ -39,6 +47,25 @@ const siteSettingsSchema = new mongoose.Schema(
 
     // FAQs
     faqs: [faqSchema],
+
+    // Manual Bank Transfer Payment Accounts (managed from Admin Panel)
+    paymentAccounts: {
+      type: [paymentAccountSchema],
+      default: [
+        {
+          bankName: 'Moniepoint MFB',
+          accountName: 'AIVORA Creative Hub',
+          accountNumber: '8012345678',
+          instructions: 'Use your registered email or full name as transfer narration.',
+          isActive: true,
+        },
+      ],
+    },
+    paymentNotice: {
+      type: String,
+      default:
+        'Payments cannot be received from OPay because transfers from OPay are currently facing gateway problems. However, we accept payments from any other Nigerian bank such as PalmPay, Kuda, Moniepoint, UBA, Access Bank, FirstBank, or any other Nigerian bank (not OPay).',
+    },
 
     // Contact Info
     contactEmail: { type: String, default: 'support@aivora.com' },

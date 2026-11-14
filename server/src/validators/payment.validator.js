@@ -5,9 +5,22 @@ export const initializePaymentValidator = [
     .notEmpty().withMessage('Course ID is required')
     .isMongoId().withMessage('Invalid course ID'),
 
-  body('provider')
+  body('senderName')
     .optional()
-    .isIn(['paystack', 'flutterwave']).withMessage('Invalid payment provider'),
+    .trim()
+    .isLength({ max: 120 }).withMessage('Sender name cannot exceed 120 characters'),
+
+  body('senderBank')
+    .optional()
+    .trim()
+    .custom((val) => {
+      if (val && val.toLowerCase().includes('opay')) {
+        throw new Error(
+          'Payments from OPay cannot be received due to gateway problems. Please use another Nigerian bank such as PalmPay, Kuda, Moniepoint, UBA, Access Bank, FirstBank, etc.'
+        );
+      }
+      return true;
+    }),
 
   body('couponCode')
     .optional()

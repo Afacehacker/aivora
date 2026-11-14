@@ -32,6 +32,8 @@ export const getSiteSettings = catchAsync(async (req, res) => {
     footerText: settings.footerText,
     announcementBanner: settings.announcementBanner,
     seoSettings: settings.seoSettings,
+    paymentAccounts: (settings.paymentAccounts || []).filter((acc) => acc.isActive !== false),
+    paymentNotice: settings.paymentNotice,
   };
 
   return successResponse(res, 200, 'Site settings fetched.', publicSettings);
@@ -55,6 +57,7 @@ export const updateSiteSettings = catchAsync(async (req, res) => {
     'heroHeadline', 'heroSubHeadline', 'heroCTAPrimary', 'heroCTASecondary',
     'featuredCourses', 'contactEmail', 'contactPhone', 'contactAddress',
     'socialLinks', 'footerText', 'announcementBanner', 'seoSettings', 'faqs', 'testimonials',
+    'paymentAccounts', 'paymentNotice',
   ];
 
   allowedFields.forEach((field) => {
@@ -180,4 +183,64 @@ export const updateTestimonials = catchAsync(async (req, res) => {
   settings.testimonials = req.body.testimonials || [];
   await settings.save();
   return successResponse(res, 200, 'Testimonials updated successfully.', settings.testimonials);
+});
+
+/**
+ * GET /api/v1/settings/payment-accounts — Public/Admin
+ */
+export const getPaymentAccounts = catchAsync(async (req, res) => {
+  const settings = await getOrCreateSettings();
+  const isAdmin = req.user && req.user.role === 'admin';
+  const accounts = isAdmin
+    ? settings.paymentAccounts || []
+    : (settings.paymentAccounts || []).filter((a) => a.isActive !== false);
+
+  return successResponse(res, 200, 'Payment accounts fetched.', {
+    paymentAccounts: accounts,
+    paymentNotice: settings.paymentNotice,
+  });
+});
+
+/**
+ * POST /api/v1/settings/payment-accounts — Admin add payment account
+ */
+export const createPaymentAccount = catchAsync(async (req, res) => {
+  const settings = await getOrCreateSettings();
+  const { bankName, accountName, accountNumber, instructions, isActive } = req.body;
+  settings.paymentAccounts.push({
+    bankName,
+    accountName,
+    accountNumber,
+    instructions: instructions || '',
+    isActive: isActive !== undefined ? Boolean(isActive) : true,
+  });
+  await settings.save();
+  return successResponse(res, 201, 'Payment account added successfully.', settings.paymentAccounts);
+});
+
+/**
+ * PATCH /api/v1/settings/payment-accounts/:id — Admin update payment account
+ */
+export const updatePaymentAccount = catchAsync(async (req, res) => {
+  const settings = await getOrCreateSettings();
+  const item = settings.paymentAccounts.id(req.params.id);
+  if (item) {
+    ['bankName', 'accountName', 'accountNumber', 'instructions', 'isActive'].forEach((f) => {
+      if (req.body[f] !== undefined) item[f] = req.body[f];
+    });
+    await settings.save();
+  }
+  return successResponse(res, 200, 'Payment account updated.', settings.paymentAccounts);
+});
+
+/**
+ * DELETE /api/v1/settings/payment-accounts/:id — Admin remove payment account
+ */
+export const deletePaymentAccount = catchAsync(async (req, res) => {
+  const settings = await getOrCreateSettings();
+  settings.paymentAccounts = (settings.paymentAccounts || []).filter(
+    (acc) => String(acc._id) !== String(req.params.id)
+  );
+  await settings.save();
+  return successResponse(res, 200, 'Payment details removed.', settings.paymentAccounts);
 });
