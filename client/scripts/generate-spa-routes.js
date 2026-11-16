@@ -49,6 +49,17 @@ if (fs.existsSync(indexHtmlPath)) {
   fs.writeFileSync(path.join(distDir, '200.html'), indexHtml)
   fs.writeFileSync(path.join(distDir, '_redirects'), '/* /index.html 200\n')
 
+  // Write vercel.json in distDir for SPA rewrites
+  const vercelConfig = {
+    rewrites: [
+      {
+        source: '/(.*)',
+        destination: '/index.html',
+      },
+    ],
+  }
+  fs.writeFileSync(path.join(distDir, 'vercel.json'), JSON.stringify(vercelConfig, null, 2))
+
   // Pre-generate deterministic route folders with index.html for direct navigation & reload immunity
   for (const route of knownRoutes) {
     const routeDir = path.join(distDir, route)
