@@ -41,6 +41,36 @@ export const protect = catchAsync(async (req, res, next) => {
 });
 
 /**
+ * Optional Auth — if JWT is present and valid, attaches user; otherwise proceeds as guest
+ */
+export const optionalAuth = async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies && req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const jwtSecret =
+      process.env.JWT_SECRET || 'aivora_super_secret_jwt_key_2026_production_secure_998877';
+    const decoded = jwt.verify(token, jwtSecret);
+    const user = await User.findById(decoded.id).select('+isActive');
+    if (user && user.isActive) {
+      req.user = user;
+    }
+  } catch (err) {
+    // Guest fallback
+  }
+
+  next();
+};
+
+/**
  * Restrict access to specific roles
  * @param {...string} roles - Allowed roles
  */

@@ -6,7 +6,7 @@ import SEO from '../../components/common/SEO'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import CourseMediaPreview from '../../components/common/CourseMediaPreview'
-import { formatPrice } from '../../components/home/CourseCard'
+import { formatPrice, formatMinutesLong } from '../../components/home/CourseCard'
 import adminService from '../../services/adminService'
 
 export default function AdminCourses() {
@@ -59,7 +59,7 @@ export default function AdminCourses() {
           <div>
             <h1 className="text-2xl font-display font-bold text-white">Course Management</h1>
             <p className="text-sm text-slate-400">
-              Create, edit, publish, unpublish, and manage curriculum for all courses.
+              Create, edit, publish, and manage video tutorials for all courses.
             </p>
           </div>
           <Link to="/admin/courses/create">
@@ -80,7 +80,7 @@ export default function AdminCourses() {
                   <th className="py-3.5 px-4">Category</th>
                   <th className="py-3.5 px-4">Level</th>
                   <th className="py-3.5 px-4">Price</th>
-                  <th className="py-3.5 px-4">Lessons</th>
+                  <th className="py-3.5 px-4">Tutorial Videos</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
@@ -109,7 +109,10 @@ export default function AdminCourses() {
                     <td className="py-3.5 px-4 font-semibold">
                       {formatPrice(c.discountPrice || c.price)}
                     </td>
-                    <td className="py-3.5 px-4 text-xs">{c.totalLessons || 0}</td>
+                    <td className="py-3.5 px-4 text-xs">
+                      <span className="font-semibold text-white">{c.totalLessons || 0} Videos</span>
+                      <span className="block text-[11px] text-slate-400">{formatMinutesLong(c.totalDuration)}</span>
+                    </td>
                     <td className="py-3.5 px-4">
                       <Badge color={c.isPublished ? 'success' : 'warning'}>
                         {c.isPublished ? 'Published' : 'Draft'}
@@ -138,7 +141,7 @@ export default function AdminCourses() {
                         <Link
                           to={`/admin/courses/${c._id}/edit`}
                           className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-aivora-indigo"
-                          title="Edit Course & Curriculum"
+                          title="Edit Course & Video Tutorials"
                         >
                           <Edit className="w-4 h-4" />
                         </Link>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
-  Play, CheckCircle2, Clock, BookOpen, Globe, Award, Lock,
+  Play, CheckCircle2, Clock, Video, Globe, Award, Lock,
   ChevronDown, Star, ShieldCheck, Tag, Users
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -12,7 +12,7 @@ import StarRating from '../components/ui/StarRating'
 import Modal from '../components/ui/Modal'
 import PageLoader from '../components/common/PageLoader'
 import CourseMediaPreview, { courseUsesVideoCover } from '../components/common/CourseMediaPreview'
-import { formatDuration, formatPrice } from '../components/home/CourseCard'
+import { formatDuration, formatPrice, formatMinutesLong } from '../components/home/CourseCard'
 import courseService from '../services/courseService'
 import paymentService from '../services/paymentService'
 import reviewService from '../services/reviewService'
@@ -230,13 +230,13 @@ export default function CourseDetailPage() {
                       <span className="text-slate-400">({course.rating.count} reviews)</span>
                     </div>
                   )}
-                  <span className="flex items-center gap-1.5">
-                    <BookOpen className="w-4 h-4 text-aivora-indigo" />
-                    {course.totalLessons || 0} Lessons
+                  <span className="flex items-center gap-1.5 font-medium text-slate-200">
+                    <Video className="w-4 h-4 text-aivora-cyan" />
+                    {course.totalLessons || 0} {course.totalLessons === 1 ? 'Tutorial Video' : 'Tutorial Videos'}
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-aivora-cyan" />
-                    {formatDuration(course.totalDuration)}
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <Clock className="w-4 h-4 text-aivora-indigo" />
+                    {formatMinutesLong(course.totalDuration)}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Globe className="w-4 h-4 text-aivora-purple" />
@@ -291,14 +291,15 @@ export default function CourseDetailPage() {
                 </div>
               </div>
 
-              {/* Course Curriculum */}
+              {/* Course Video Tutorials */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-display font-bold text-white">
-                    Course Curriculum
+                  <h2 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                    <Video className="w-5 h-5 text-aivora-cyan" />
+                    Video Tutorials
                   </h2>
-                  <span className="text-xs text-slate-400">
-                    {course.modules?.length || 0} Modules • {course.totalLessons || 0} Lessons
+                  <span className="text-xs text-slate-400 font-medium">
+                    {course.totalLessons || 0} Tutorial {course.totalLessons === 1 ? 'Video' : 'Videos'} • {formatMinutesLong(course.totalDuration)}
                   </span>
                 </div>
 
@@ -338,27 +339,40 @@ export default function CourseDetailPage() {
                                   key={lesson._id}
                                   className="px-5 py-3.5 flex items-center justify-between gap-4 text-sm"
                                 >
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-3 min-w-0">
                                     {lesson.isPreview || isEnrolled ? (
                                       <Play className="w-4 h-4 text-aivora-cyan flex-shrink-0" />
                                     ) : (
-                                      <Lock className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                                      <Lock className="w-4 h-4 text-amber-400/80 flex-shrink-0" />
                                     )}
-                                    <span className="text-slate-200">{lesson.title}</span>
+                                    <span className="text-slate-200 truncate">{lesson.title}</span>
+                                    {lesson.isPreview ? (
+                                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-500/15 text-aivora-cyan flex-shrink-0">
+                                        Free Preview
+                                      </span>
+                                    ) : !isEnrolled ? (
+                                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-slate-400 flex-shrink-0">
+                                        Requires Payment
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 flex-shrink-0">
+                                        Unlocked
+                                      </span>
+                                    )}
                                   </div>
 
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-3 flex-shrink-0">
                                     {lesson.isPreview && lesson.videoUrl && (
                                       <button
                                         type="button"
                                         onClick={() => setPreviewUrl(lesson.videoUrl)}
                                         className="text-xs font-semibold text-aivora-cyan hover:underline"
                                       >
-                                        Preview
+                                        Watch Preview
                                       </button>
                                     )}
                                     <span className="text-xs text-slate-500">
-                                      {formatDuration(lesson.videoDuration)}
+                                      {formatMinutesLong(lesson.videoDuration)}
                                     </span>
                                   </div>
                                 </div>
@@ -370,7 +384,7 @@ export default function CourseDetailPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-400">Curriculum modules are being updated.</p>
+                  <p className="text-sm text-slate-400">Video tutorials are being updated.</p>
                 )}
               </div>
 
@@ -558,8 +572,8 @@ export default function CourseDetailPage() {
                   <div className="space-y-3 pt-4 border-t border-white/10 text-xs text-slate-300">
                     <p className="font-semibold text-white text-sm">This course includes:</p>
                     <div className="flex items-center gap-2.5">
-                      <BookOpen className="w-4 h-4 text-aivora-indigo" />
-                      <span>{course.totalLessons || 0} on-demand HD lessons</span>
+                      <Video className="w-4 h-4 text-aivora-cyan" />
+                      <span>{course.totalLessons || 0} on-demand HD tutorial {course.totalLessons === 1 ? 'video' : 'videos'}</span>
                     </div>
                     <div className="flex items-center gap-2.5">
                       <Clock className="w-4 h-4 text-aivora-cyan" />

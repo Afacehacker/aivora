@@ -9,7 +9,7 @@ import Button from '../components/ui/Button'
 const values = [
   {
     icon: Video,
-    title: 'Production-Grade Curriculum',
+    title: 'Production-Grade Video Tutorials',
     description:
       'Every course is designed around real creative workflows—from AI video generation and character consistency to studio narration.',
   },

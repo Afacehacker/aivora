@@ -12,7 +12,7 @@ import {
 } from '../controllers/course.controller.js';
 import { getLessonsByCourse } from '../controllers/lesson.controller.js';
 import { getModulesByCourse } from '../controllers/module.controller.js';
-import { protect, restrictTo } from '../middleware/auth.js';
+import { protect, restrictTo, optionalAuth } from '../middleware/auth.js';
 import { uploadThumbnail } from '../middleware/upload.js';
 import auditLog from '../middleware/auditLog.js';
 
@@ -21,7 +21,7 @@ const router = express.Router();
 // Public routes
 router.get('/', getAllCourses);
 router.get('/featured', getFeaturedCourses);
-router.get('/:slug', getCourseBySlug);
+router.get('/:slug', optionalAuth, getCourseBySlug);
 
 // Protected course sub-resources
 router.get('/:courseId/lessons', protect, getLessonsByCourse);

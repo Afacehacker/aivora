@@ -12,7 +12,7 @@ import courseService from '../../services/courseService'
 const trustPills = [
   'Structured Step-by-Step Training',
   'Practical Real-World AI Workflows',
-  'Beginner-Friendly Curriculum',
+  'Beginner-Friendly Video',
   'Responsible & Licensed AI Practices',
 ]
 
@@ -34,8 +34,8 @@ const defaultHeroCourse = {
   price: 10000,
   discountPrice: null,
   level: 'beginner',
-  totalLessons: 0,
-  totalDuration: 0,
+  totalLessons: 1,
+  totalDuration: 300,
   rating: { avg: 0, count: 0 },
 }
 

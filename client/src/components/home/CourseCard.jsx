@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Play, Clock, BookOpen, Star, ArrowRight } from 'lucide-react'
+import { Play, Clock, Video, Star, ArrowRight } from 'lucide-react'
 import Badge from '../ui/Badge'
 import CourseMediaPreview, { courseUsesVideoCover } from '../common/CourseMediaPreview'
 
@@ -7,6 +7,17 @@ const levelBadgeColor = {
   beginner: 'cyan',
   intermediate: 'indigo',
   advanced: 'purple',
+}
+
+export function formatMinutesLong(seconds = 0) {
+  if (!seconds || seconds <= 0) return 'Self-paced'
+  const totalMins = Math.round(seconds / 60)
+  if (totalMins < 60) {
+    return `${totalMins} min${totalMins === 1 ? '' : 's'} long`
+  }
+  const hours = Math.floor(totalMins / 60)
+  const remMins = totalMins % 60
+  return remMins > 0 ? `${hours}h ${remMins}m long` : `${hours}h long`
 }
 
 export function formatDuration(seconds = 0) {
@@ -114,15 +125,15 @@ export default function CourseCard({ course, onPreview }) {
             )}
           </div>
 
-          {/* Meta: Lessons & Duration */}
-          <div className="flex items-center gap-4 text-xs text-slate-400 border-t border-white/5 pt-3">
-            <span className="flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-aivora-indigo" />
-              {course.totalLessons || 0} Lessons
+          {/* Meta: Tutorial Videos Added & Minute Long */}
+          <div className="flex items-center justify-between text-xs text-slate-400 border-t border-white/5 pt-3">
+            <span className="flex items-center gap-1.5 font-medium text-slate-200">
+              <Video className="w-3.5 h-3.5 text-aivora-cyan flex-shrink-0" />
+              {course.totalLessons || 0} {course.totalLessons === 1 ? 'Tutorial Video' : 'Tutorial Videos'}
             </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-aivora-cyan" />
-              {formatDuration(course.totalDuration)}
+            <span className="flex items-center gap-1.5 text-slate-400">
+              <Clock className="w-3.5 h-3.5 text-aivora-indigo flex-shrink-0" />
+              {formatMinutesLong(course.totalDuration)}
             </span>
           </div>
 

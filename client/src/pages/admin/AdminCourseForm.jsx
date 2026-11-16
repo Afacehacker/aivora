@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  Save, Plus, Trash2, ArrowLeft, Video, Layers, Upload,
-  Image as ImageIcon, Film, CheckCircle2, FileText, Loader2, Eye
+  Save, Plus, Trash2, ArrowLeft, Video, Upload,
+  Image as ImageIcon, Film, CheckCircle2, FileText, Loader2, Eye,
+  Lock, Unlock, Clock, AlertCircle, ChevronUp, ChevronDown, Sparkles
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import SEO from '../../components/common/SEO'
@@ -10,6 +11,26 @@ import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import adminService from '../../services/adminService'
+import { formatMinutesLong } from '../../components/home/CourseCard'
+
+const getVideoDurationFromFile = (file) => {
+  return new Promise((resolve) => {
+    try {
+      const video = document.createElement('video')
+      video.preload = 'metadata'
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src)
+        resolve(Math.round(video.duration) || 0)
+      }
+      video.onerror = () => {
+        resolve(0)
+      }
+      video.src = URL.createObjectURL(file)
+    } catch {
+      resolve(0)
+    }
+  })
+}
 
 export default function AdminCourseForm() {
   const { id } = useParams()
@@ -18,8 +39,9 @@ export default function AdminCourseForm() {
 
   const thumbnailInputRef = useRef(null)
   const previewVideoInputRef = useRef(null)
-  const lessonVideoInputRef = useRef(null)
-  const lessonResourceInputRef = useRef(null)
+  const multiVideoInputRef = useRef(null)
+  const singleVideoInputRef = useRef(null)
+  const activeSingleIndexRef = useRef(null)
 
   const [categories, setCategories] = useState([])
   const [saving, setSaving] = useState(false)
@@ -29,9 +51,15 @@ export default function AdminCourseForm() {
   const [uploadingThumb, setUploadingThumb] = useState(false)
   const [uploadingPreview, setUploadingPreview] = useState(false)
   const [previewProgress, setPreviewProgress] = useState(0)
-  const [uploadingLessonVideo, setUploadingLessonVideo] = useState(false)
-  const [lessonVideoProgress, setLessonVideoProgress] = useState(0)
-  const [uploadingResource, setUploadingResource] = useState(false)
+
+  // Batch multi-video upload state
+  const [uploadingBatch, setUploadingBatch] = useState(false)
+  const [batchStatus, setBatchStatus] = useState('')
+  const [batchProgress, setBatchProgress] = useState(0)
+
+  // Individual video upload
+  const [uploadingSingleIndex, setUploadingSingleIndex] = useState(null)
+  const [singleProgress, setSingleProgress] = useState(0)
 
   const [form, setForm] = useState({
     title: '',
@@ -50,27 +78,8 @@ export default function AdminCourseForm() {
     isPublished: true,
   })
 
-  // Curriculum state (Modules & Lessons) — works BEFORE and AFTER saving the course!
-  const [modules, setModules] = useState([
-    {
-      _id: 'temp-mod-1',
-      isTemp: true,
-      title: 'Module 1: Introduction & Core Workflow',
-      order: 1,
-      lessons: [],
-    },
-  ])
-  const [newModuleTitle, setNewModuleTitle] = useState('')
-  const [lessonForm, setLessonForm] = useState({
-    moduleId: 'temp-mod-1',
-    title: '',
-    description: '',
-    videoUrl: '',
-    videoDuration: 600,
-    isPreview: false,
-    resourceTitle: '',
-    resourceUrl: '',
-  })
+  // List of Video Tutorials attached to this course/product
+  const [tutorials, setTutorials] = useState([])
 
   useEffect(() => {
     adminService
@@ -106,17 +115,30 @@ export default function AdminCourseForm() {
             isFeatured: Boolean(c.isFeatured),
             isPublished: Boolean(c.isPublished),
           })
+
+          // Extract all tutorial videos from modules
           const loadedModules = c.modules || []
-          setModules(loadedModules)
-          if (loadedModules[0]) {
-            setLessonForm((prev) => ({ ...prev, moduleId: loadedModules[0]._id }))
-          }
+          const initialTutorials = []
+          loadedModules.forEach((m) => {
+            (m.lessons || []).forEach((l) => {
+              initialTutorials.push({
+                _id: l._id,
+                title: l.title || '',
+                description: l.description || '',
+                videoUrl: l.videoUrl || '',
+                videoDuration: Number(l.videoDuration) || 0,
+                isPreview: Boolean(l.isPreview),
+                resources: l.resources || [],
+              })
+            })
+          })
+          setTutorials(initialTutorials)
         })
         .catch((err) => toast.error(err.message || 'Could not load course'))
     }
   }, [id, isEditing])
 
-  // Upload handlers for Pictures & Videos
+  // Upload Thumbnail Handler
   const handleThumbnailUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -133,6 +155,7 @@ export default function AdminCourseForm() {
     }
   }
 
+  // Upload Preview / Promo Video Handler
   const handlePreviewVideoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -154,213 +177,158 @@ export default function AdminCourseForm() {
     }
   }
 
-  const handleLessonVideoUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadingLessonVideo(true)
-    setLessonVideoProgress(0)
+  // Batch Multi-Video Upload Handler (Allows selecting multiple videos at once)
+  const handleMultipleVideosUpload = async (e) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+
+    setUploadingBatch(true)
+    setBatchProgress(0)
+
     try {
+      const addedTutorials = []
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        setBatchStatus(`Uploading video ${i + 1} of ${files.length}: "${file.name}"...`)
+
+        // Extract duration from video file metadata
+        const duration = await getVideoDurationFromFile(file)
+
+        // Upload video file
+        const res = await adminService.uploadMedia(file, (evt) => {
+          if (evt.total) {
+            const filePct = Math.round((evt.loaded * 100) / evt.total)
+            const overallPct = Math.round(((i + filePct / 100) / files.length) * 100)
+            setBatchProgress(overallPct)
+          }
+        })
+
+        // Clean up filename for human-readable title
+        const lastDot = file.name.lastIndexOf('.')
+        const baseName = lastDot > 0 ? file.name.substring(0, lastDot) : file.name
+        const cleanName = baseName
+          .replace(/[-_]+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+
+        addedTutorials.push({
+          _id: `tut-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+          title: cleanName || `Video Tutorial ${tutorials.length + i + 1}`,
+          description: '',
+          videoUrl: res.data.url,
+          videoDuration: duration || res.data.duration || 300,
+          isPreview: false, // Access unlocked only after payment!
+          resources: [],
+        })
+      }
+
+      setTutorials((prev) => [...prev, ...addedTutorials])
+      toast.success(`${files.length} tutorial video${files.length > 1 ? 's' : ''} uploaded and added!`)
+    } catch (err) {
+      toast.error(err.message || 'Failed to upload videos')
+    } finally {
+      setUploadingBatch(false)
+      setBatchStatus('')
+      setBatchProgress(0)
+      if (multiVideoInputRef.current) multiVideoInputRef.current.value = ''
+    }
+  }
+
+  // Single Video File Upload / Replace for a specific tutorial item
+  const handleSingleVideoUpload = async (e) => {
+    const file = e.target.files?.[0]
+    const index = activeSingleIndexRef.current
+    if (!file || index === null || index === undefined) return
+
+    setUploadingSingleIndex(index)
+    setSingleProgress(0)
+
+    try {
+      const duration = await getVideoDurationFromFile(file)
       const res = await adminService.uploadMedia(file, (evt) => {
         if (evt.total) {
-          setLessonVideoProgress(Math.round((evt.loaded * 100) / evt.total))
+          setSingleProgress(Math.round((evt.loaded * 100) / evt.total))
         }
       })
-      setLessonForm((prev) => ({
-        ...prev,
-        videoUrl: res.data.url,
-        videoDuration: res.data.duration ? Math.round(res.data.duration) : prev.videoDuration,
-      }))
-      toast.success('Lesson video file uploaded!')
-    } catch (err) {
-      toast.error(err.message || 'Lesson video upload failed')
-    } finally {
-      setUploadingLessonVideo(false)
-      e.target.value = ''
-    }
-  }
 
-  const handleResourceUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadingResource(true)
-    try {
-      const res = await adminService.uploadMedia(file)
-      setLessonForm((prev) => ({
-        ...prev,
-        resourceUrl: res.data.url,
-        resourceTitle: prev.resourceTitle || file.name,
-      }))
-      toast.success('Resource file uploaded!')
-    } catch (err) {
-      toast.error(err.message || 'Resource upload failed')
-    } finally {
-      setUploadingResource(false)
-      e.target.value = ''
-    }
-  }
-
-  const refreshCurriculum = async (cId = courseId) => {
-    if (!cId) return
-    const res = await adminService.getCourseById(cId)
-    const loaded = res.data?.modules || []
-    setModules(loaded)
-    if (loaded.length > 0 && (!lessonForm.moduleId || lessonForm.moduleId.startsWith('temp-'))) {
-      setLessonForm((prev) => ({ ...prev, moduleId: loaded[0]._id }))
-    }
-  }
-
-  // Add Module (works before posting or after posting)
-  const handleAddModule = async (e) => {
-    e.preventDefault()
-    if (!newModuleTitle.trim()) return
-
-    if (!courseId) {
-      const tempId = `temp-mod-${Date.now()}`
-      const newMod = {
-        _id: tempId,
-        isTemp: true,
-        title: newModuleTitle.trim(),
-        order: modules.length + 1,
-        lessons: [],
-      }
-      const nextModules = [...modules, newMod]
-      setModules(nextModules)
-      setLessonForm((prev) => ({ ...prev, moduleId: tempId }))
-      setNewModuleTitle('')
-      toast.success('Module staged for publishing!')
-      return
-    }
-
-    try {
-      const res = await adminService.createModule(courseId, {
-        title: newModuleTitle,
-        order: modules.length + 1,
+      setTutorials((prev) => {
+        const next = [...prev]
+        if (next[index]) {
+          next[index] = {
+            ...next[index],
+            videoUrl: res.data.url,
+            videoDuration: duration || res.data.duration || next[index].videoDuration || 300,
+            title: next[index].title || file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '),
+          }
+        }
+        return next
       })
-      setNewModuleTitle('')
-      setLessonForm((prev) => ({ ...prev, moduleId: res.data._id }))
-      await refreshCurriculum()
-      toast.success('Module added!')
+
+      toast.success('Tutorial video uploaded!')
     } catch (err) {
-      toast.error(err.message || 'Could not add module')
+      toast.error(err.message || 'Upload failed')
+    } finally {
+      setUploadingSingleIndex(null)
+      setSingleProgress(0)
+      activeSingleIndexRef.current = null
+      if (singleVideoInputRef.current) singleVideoInputRef.current.value = ''
     }
   }
 
-  const handleDeleteModule = async (modId) => {
-    if (String(modId).startsWith('temp-')) {
-      const remaining = modules.filter((m) => m._id !== modId)
-      setModules(remaining)
-      if (lessonForm.moduleId === modId) {
-        setLessonForm((prev) => ({ ...prev, moduleId: remaining[0]?._id || '' }))
-      }
-      toast.success('Staged module removed')
-      return
-    }
-
-    try {
-      await adminService.deleteModule(modId)
-      await refreshCurriculum()
-      toast.success('Module deleted')
-    } catch (err) {
-      toast.error(err.message || 'Failed to delete module')
-    }
+  // Trigger file replacement for a specific tutorial
+  const triggerSingleUpload = (index) => {
+    activeSingleIndexRef.current = index
+    singleVideoInputRef.current?.click()
   }
 
-  // Add Lesson (works before posting or after posting)
-  const handleAddLesson = async (e) => {
-    e.preventDefault()
-    if (!lessonForm.moduleId || !lessonForm.title.trim()) {
-      toast.error('Please select a module and enter a lesson title.')
-      return
-    }
-
-    const resources =
-      lessonForm.resourceTitle && lessonForm.resourceUrl
-        ? [{ title: lessonForm.resourceTitle, url: lessonForm.resourceUrl, type: 'pdf' }]
-        : []
-
-    if (!courseId || String(lessonForm.moduleId).startsWith('temp-')) {
-      const newLesson = {
-        _id: `temp-les-${Date.now()}`,
-        isTemp: true,
-        title: lessonForm.title.trim(),
-        description: lessonForm.description,
-        videoUrl: lessonForm.videoUrl,
-        videoDuration: Number(lessonForm.videoDuration) || 600,
-        isPreview: lessonForm.isPreview,
-        resources,
-      }
-
-      setModules((prev) =>
-        prev.map((m) =>
-          m._id === lessonForm.moduleId
-            ? { ...m, lessons: [...(m.lessons || []), newLesson] }
-            : m
-        )
-      )
-
-      setLessonForm((prev) => ({
-        ...prev,
-        title: '',
+  // Add an empty Video Tutorial row manually
+  const handleAddManualTutorial = () => {
+    setTutorials((prev) => [
+      ...prev,
+      {
+        _id: `tut-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        title: `Video Tutorial ${prev.length + 1}`,
         description: '',
         videoUrl: '',
-        resourceTitle: '',
-        resourceUrl: '',
-      }))
-      toast.success('Lesson & video staged! It will be published with the course.')
-      return
-    }
-
-    try {
-      await adminService.createLesson(lessonForm.moduleId, {
-        courseId,
-        title: lessonForm.title,
-        description: lessonForm.description,
-        videoUrl: lessonForm.videoUrl,
-        videoDuration: Number(lessonForm.videoDuration) || 600,
-        isPreview: lessonForm.isPreview,
-        isPublished: true,
-        resources,
-      })
-      setLessonForm((prev) => ({
-        ...prev,
-        title: '',
-        description: '',
-        videoUrl: '',
-        resourceTitle: '',
-        resourceUrl: '',
-      }))
-      await refreshCurriculum()
-      toast.success('Lesson added to module!')
-    } catch (err) {
-      toast.error(err.message || 'Could not add lesson')
-    }
+        videoDuration: 300,
+        isPreview: false, // Access unlocked only after payment
+        resources: [],
+      },
+    ])
   }
 
-  const handleDeleteLesson = async (modId, lesId) => {
-    if (String(lesId).startsWith('temp-')) {
-      setModules((prev) =>
-        prev.map((m) =>
-          m._id === modId
-            ? { ...m, lessons: (m.lessons || []).filter((l) => l._id !== lesId) }
-            : m
-        )
-      )
-      toast.success('Staged lesson removed')
-      return
-    }
-
-    try {
-      await adminService.deleteLesson(lesId)
-      await refreshCurriculum()
-      toast.success('Lesson removed')
-    } catch (err) {
-      toast.error(err.message || 'Could not delete lesson')
-    }
+  // Update tutorial field
+  const updateTutorialField = (index, field, value) => {
+    setTutorials((prev) => {
+      const next = [...prev]
+      if (next[index]) {
+        next[index] = { ...next[index], [field]: value }
+      }
+      return next
+    })
   }
 
-  // Save & Post Course (including all pre-staged pictures, preview video, modules, and lesson videos)
+  // Move tutorial Up or Down
+  const moveTutorial = (index, direction) => {
+    const target = index + direction
+    if (target < 0 || target >= tutorials.length) return
+    setTutorials((prev) => {
+      const next = [...prev]
+      const [item] = next.splice(index, 1)
+      next.splice(target, 0, item)
+      return next
+    })
+  }
+
+  // Delete tutorial
+  const deleteTutorial = (index) => {
+    setTutorials((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  // Save Course & All Video Tutorials
   const handleSaveCourse = async (e) => {
-    e.preventDefault()
+    if (e && e.preventDefault) e.preventDefault()
     if (!form.title || !form.category) {
       toast.error('Course title and category are required')
       return
@@ -391,19 +359,25 @@ export default function AdminCourseForm() {
           .filter(Boolean),
         isFeatured: form.isFeatured,
         isPublished: form.isPublished,
+        tutorials: tutorials.map((t, idx) => ({
+          title: t.title?.trim() || `Video Tutorial ${idx + 1}`,
+          description: t.description || '',
+          videoUrl: t.videoUrl || null,
+          videoDuration: Number(t.videoDuration) || 0,
+          isPreview: Boolean(t.isPreview),
+          order: idx + 1,
+          resources: t.resources || [],
+        })),
       }
 
       if (courseId) {
         await adminService.updateCourse(courseId, payload)
-        toast.success('Course updated successfully!')
+        toast.success('Course and video tutorials updated successfully!')
       } else {
-        // Attach pre-built modules & lessons so they are posted together in one go
-        payload.modules = modules.filter((m) => m.title?.trim())
         const res = await adminService.createCourse(payload)
         const createdId = res.data._id
         setCourseId(createdId)
-        await refreshCurriculum(createdId)
-        toast.success('Course, media, and lessons published successfully!')
+        toast.success('Course and all tutorial videos published successfully!')
       }
     } catch (err) {
       toast.error(err.message || 'Failed to save course')
@@ -412,9 +386,35 @@ export default function AdminCourseForm() {
     }
   }
 
+  // Calculate live counters
+  const totalVideoCount = tutorials.length
+  const totalDurationSeconds = tutorials.reduce(
+    (sum, t) => sum + (Number(t.videoDuration) || 0),
+    0
+  )
+  const paidVideosCount = tutorials.filter((t) => !t.isPreview).length
+  const freePreviewsCount = tutorials.filter((t) => t.isPreview).length
+
   return (
     <>
       <SEO title={isEditing ? 'Edit Course — AIVORA Admin' : 'Create Course — AIVORA Admin'} />
+
+      {/* Hidden file inputs */}
+      <input
+        ref={multiVideoInputRef}
+        type="file"
+        multiple
+        accept="video/mp4,video/webm,video/quicktime,video/*"
+        onChange={handleMultipleVideosUpload}
+        className="hidden"
+      />
+      <input
+        ref={singleVideoInputRef}
+        type="file"
+        accept="video/mp4,video/webm,video/quicktime,video/*"
+        onChange={handleSingleVideoUpload}
+        className="hidden"
+      />
 
       <div className="space-y-8 max-w-6xl">
         {/* Top Header */}
@@ -429,10 +429,10 @@ export default function AdminCourseForm() {
             </button>
             <div>
               <h1 className="text-2xl font-display font-bold text-white">
-                {courseId ? 'Edit Course, Media & Curriculum' : 'Create & Post New Course'}
+                {courseId ? 'Edit Product & Video Tutorials' : 'Create & Upload New Product'}
               </h1>
               <p className="text-sm text-slate-400">
-                Upload course pictures, preview videos, and full lesson videos before or after publishing.
+                Upload product pictures, preview video, and attach multiple video tutorials with payment-protected access.
               </p>
             </div>
           </div>
@@ -442,22 +442,22 @@ export default function AdminCourseForm() {
             loading={saving}
             iconLeft={<Save className="w-4 h-4" />}
           >
-            {courseId ? 'Save All Course Changes' : 'Publish Course Now'}
+            {courseId ? 'Save All Course Changes' : 'Publish Product Now'}
           </Button>
         </div>
 
-        {/* STEP 1: Course Media Studio (Upload Pictures AND Videos Before Posting) */}
+        {/* STEP 1: Product Media Studio (Thumbnail & Promo Preview Video) */}
         <div className="glass rounded-2xl p-6 sm:p-8 border border-aivora-indigo/30 space-y-6">
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
             <div>
               <span className="text-xs font-semibold uppercase tracking-wider text-aivora-cyan">
-                Step 1 • Visual & Video Assets
+                Step 1 • Visual & Promo Video
               </span>
               <h2 className="text-lg font-display font-bold text-white mt-0.5">
-                Course Thumbnail Picture & Promo Preview Video
+                Product Cover Picture & Free Promo Video
               </h2>
             </div>
-            <Badge color="indigo">Supports Direct File Upload or URL</Badge>
+            <Badge color="indigo">Direct File Upload or URL</Badge>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -466,7 +466,7 @@ export default function AdminCourseForm() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-white flex items-center gap-2">
                   <ImageIcon className="w-4 h-4 text-aivora-indigo" />
-                  Course Cover Picture (Thumbnail)
+                  Product Cover Picture (Thumbnail)
                 </span>
                 <input
                   ref={thumbnailInputRef}
@@ -509,7 +509,7 @@ export default function AdminCourseForm() {
                 >
                   <ImageIcon className="w-8 h-8 text-slate-500" />
                   <p className="text-xs font-medium text-slate-300">
-                    Click to upload a picture from your computer (JPG, PNG, WEBP)
+                    Click to upload a cover picture from your computer (JPG, PNG, WEBP)
                   </p>
                   <p className="text-[11px] text-slate-500">Or paste an image URL below</p>
                 </div>
@@ -527,7 +527,7 @@ export default function AdminCourseForm() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-white flex items-center gap-2">
                   <Film className="w-4 h-4 text-aivora-cyan" />
-                  Course Promo / Preview Video
+                  Product Promo / Preview Video (Free Teaser)
                 </span>
                 <input
                   ref={previewVideoInputRef}
@@ -570,7 +570,7 @@ export default function AdminCourseForm() {
                 >
                   <Film className="w-8 h-8 text-slate-500" />
                   <p className="text-xs font-medium text-slate-300">
-                    Click to upload a preview video from your computer (MP4, MOV, WEBM)
+                    Click to upload a promo preview video from your computer (MP4, MOV, WEBM)
                   </p>
                   <p className="text-[11px] text-slate-500">Or paste a video stream URL below</p>
                 </div>
@@ -585,23 +585,20 @@ export default function AdminCourseForm() {
           </div>
         </div>
 
-        {/* STEP 2: Course Information & Pricing */}
-        <form
-          onSubmit={handleSaveCourse}
-          className="glass rounded-2xl p-6 sm:p-8 border border-white/10 space-y-6"
-        >
+        {/* STEP 2: Product Information & Pricing */}
+        <div className="glass rounded-2xl p-6 sm:p-8 border border-white/10 space-y-6">
           <div className="border-b border-white/10 pb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-aivora-indigo">
-              Step 2 • Course Details & Pricing
+              Step 2 • Product Details & Pricing
             </span>
             <h2 className="text-lg font-display font-bold text-white mt-0.5">
-              Course Information, Objectives & Naira Pricing
+              Course Information & Naira Pricing
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Course Title"
+              label="Product Title"
               placeholder="e.g. Cinematic AI Video Production Masterclass"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -613,7 +610,7 @@ export default function AdminCourseForm() {
               <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full rounded-xl bg-aivora-navy border border-white/10 py-3 px-4 text-sm text-white"
+                className="w-full rounded-xl bg-aivora-navy border border-white/10 py-3 px-4 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
                 required
               >
                 <option value="">Select Category</option>
@@ -627,21 +624,21 @@ export default function AdminCourseForm() {
           </div>
 
           <Input
-            label="Short Description (Card Summary)"
+            label="Short Description (Summary shown on cards)"
             placeholder="Concise 1-2 sentence summary..."
             value={form.shortDescription}
             onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
           />
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-300">Full Course Description</label>
+            <label className="text-sm font-medium text-slate-300">Full Description</label>
             <textarea
               rows={4}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Comprehensive course overview..."
               required
-              className="w-full rounded-xl bg-aivora-navy border border-white/10 p-3.5 text-sm text-white"
+              className="w-full rounded-xl bg-aivora-navy border border-white/10 p-3.5 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
             />
           </div>
 
@@ -651,7 +648,7 @@ export default function AdminCourseForm() {
               <select
                 value={form.level}
                 onChange={(e) => setForm({ ...form, level: e.target.value })}
-                className="w-full rounded-xl bg-aivora-navy border border-white/10 py-3 px-4 text-sm text-white"
+                className="w-full rounded-xl bg-aivora-navy border border-white/10 py-3 px-4 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
               >
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
@@ -735,252 +732,399 @@ export default function AdminCourseForm() {
               <span>Feature on Homepage</span>
             </label>
           </div>
-        </form>
+        </div>
 
-        {/* STEP 3: Curriculum & Lesson Videos Builder (Always visible before AND after posting!) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left: Modules & Lessons List */}
-          <div className="lg:col-span-6 glass rounded-2xl p-6 border border-white/10 space-y-5">
+        {/* STEP 3: Video Tutorials Studio (Upload One or Multiple Videos, Payment-Protected Access) */}
+        <div className="glass rounded-2xl p-6 sm:p-8 border border-aivora-cyan/30 space-y-6">
+          {/* Header & Live Summary Badge */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-5">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-aivora-purple">
-                Step 3 • Course Modules
-              </span>
-              <h2 className="text-lg font-display font-bold text-white flex items-center gap-2 mt-0.5">
-                <Layers className="w-5 h-5 text-aivora-indigo" />
-                Curriculum Structure ({modules.length} Modules)
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-aivora-cyan">
+                  Step 3 • Video Tutorials
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold flex items-center gap-1">
+                  <Lock className="w-3 h-3" /> Unlocks After Payment
+                </span>
+              </div>
+              <h2 className="text-xl font-display font-bold text-white mt-1 flex items-center gap-2">
+                <Video className="w-6 h-6 text-aivora-cyan" />
+                Add & Manage Course Video Tutorials
               </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Select one or more videos to add. By default, users only get access to stream these video tutorials after making a payment for this course.
+              </p>
             </div>
 
-            <form onSubmit={handleAddModule} className="flex gap-2">
-              <input
-                type="text"
-                value={newModuleTitle}
-                onChange={(e) => setNewModuleTitle(e.target.value)}
-                placeholder="New module title (e.g. Module 2: Voice Cloning)"
-                className="flex-1 rounded-xl bg-aivora-navy border border-white/10 px-3.5 py-2 text-sm text-white"
-              />
-              <Button type="submit" size="sm" iconLeft={<Plus className="w-4 h-4" />}>
-                Add Module
-              </Button>
-            </form>
-
-            <div className="space-y-4">
-              {modules.map((mod) => (
-                <div
-                  key={mod._id}
-                  className="rounded-xl border border-white/10 bg-aivora-navy/60 p-4 space-y-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <h3 className="text-sm font-bold text-white truncate">{mod.title}</h3>
-                      {mod.isTemp && (
-                        <Badge color="cyan" className="text-[10px]">
-                          Ready
-                        </Badge>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteModule(mod._id)}
-                      className="text-xs text-red-400 hover:underline flex-shrink-0"
-                    >
-                      Remove
-                    </button>
-                  </div>
-
-                  {mod.lessons?.length > 0 ? (
-                    <div className="space-y-2">
-                      {mod.lessons.map((les) => (
-                        <div
-                          key={les._id}
-                          className="flex items-center justify-between gap-2 text-xs bg-white/5 px-3 py-2.5 rounded-lg"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Video className="w-3.5 h-3.5 text-aivora-cyan flex-shrink-0" />
-                            <span className="text-slate-200 truncate font-medium">{les.title}</span>
-                            {les.videoUrl && (
-                              <span className="text-[10px] text-emerald-400">(Video Attached)</span>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteLesson(mod._id, les._id)}
-                            className="text-slate-400 hover:text-red-400 flex-shrink-0"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500">
-                      No lessons added yet. Use the Lesson Video Uploader on the right →
-                    </p>
-                  )}
-                </div>
-              ))}
+            {/* Live Product Card Stats Preview */}
+            <div className="rounded-xl bg-aivora-navy/90 border border-white/10 p-3.5 flex items-center gap-4 flex-shrink-0">
+              <div className="text-center px-2 border-r border-white/10">
+                <span className="block text-xs text-slate-400 font-medium">Display on Card</span>
+                <span className="text-sm font-bold text-white flex items-center gap-1.5 justify-center mt-0.5">
+                  <Video className="w-4 h-4 text-aivora-cyan" />
+                  {totalVideoCount} {totalVideoCount === 1 ? 'Tutorial Video' : 'Tutorial Videos'}
+                </span>
+              </div>
+              <div className="text-center px-2 border-r border-white/10">
+                <span className="block text-xs text-slate-400 font-medium">Minute Long</span>
+                <span className="text-sm font-bold text-aivora-cyan flex items-center gap-1.5 justify-center mt-0.5">
+                  <Clock className="w-4 h-4 text-aivora-indigo" />
+                  {formatMinutesLong(totalDurationSeconds)}
+                </span>
+              </div>
+              <div className="text-center px-2">
+                <span className="block text-xs text-slate-400 font-medium">Paid Protected</span>
+                <span className="text-xs font-semibold text-emerald-400 block mt-0.5">
+                  {paidVideosCount} Paid / {freePreviewsCount} Preview
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Right: Add Lesson & Upload Video Form */}
-          <div className="lg:col-span-6 glass rounded-2xl p-6 border border-white/10 space-y-4">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-aivora-cyan">
-                Lesson Video & Resource Uploader
-              </span>
-              <h2 className="text-lg font-display font-bold text-white flex items-center gap-2 mt-0.5">
-                <Video className="w-5 h-5 text-aivora-cyan" />
-                Add Video Lesson to Module
-              </h2>
+          {/* Action Bar: Select More Than One Video / Add Video */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-xl bg-aivora-navy/60 border border-white/10">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => multiVideoInputRef.current?.click()}
+                loading={uploadingBatch}
+                iconLeft={<Upload className="w-4 h-4" />}
+                className="bg-gradient-to-r from-aivora-indigo to-aivora-cyan text-white shadow-lg"
+              >
+                Select & Upload Videos (Multiple Allowed)
+              </Button>
+
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleAddManualTutorial}
+                iconLeft={<Plus className="w-4 h-4" />}
+              >
+                Add Video Tutorial by URL
+              </Button>
             </div>
 
-            <form onSubmit={handleAddLesson} className="space-y-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-300">Target Module</label>
-                <select
-                  value={lessonForm.moduleId}
-                  onChange={(e) => setLessonForm({ ...lessonForm, moduleId: e.target.value })}
-                  className="w-full rounded-xl bg-aivora-navy border border-white/10 py-2.5 px-3 text-sm text-white"
-                  required
+            <span className="text-xs text-slate-400 flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4 text-aivora-cyan flex-shrink-0" />
+              You can select multiple MP4 / MOV videos at once from your computer.
+            </span>
+          </div>
+
+          {/* Batch Upload Progress Indicator */}
+          {uploadingBatch && (
+            <div className="p-4 rounded-xl glass border border-aivora-cyan/30 space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-white flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-aivora-cyan" />
+                  {batchStatus}
+                </span>
+                <span className="text-aivora-cyan font-bold">{batchProgress}%</span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-aivora-indigo to-aivora-cyan transition-all duration-300"
+                  style={{ width: `${batchProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* List of Tutorial Videos */}
+          <div className="space-y-4">
+            {tutorials.length === 0 ? (
+              <div
+                onClick={() => multiVideoInputRef.current?.click()}
+                className="p-10 rounded-2xl border-2 border-dashed border-white/15 hover:border-aivora-cyan/50 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-3"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-aivora-cyan/10 flex items-center justify-center text-aivora-cyan">
+                  <Video className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">No Video Tutorials Added Yet</h3>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                    Click here to select more than one video from your computer. They will be automatically uploaded and staged for payment-protected access.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  iconLeft={<Upload className="w-4 h-4" />}
                 >
-                  <option value="">Select Module</option>
-                  {modules.map((m) => (
-                    <option key={m._id} value={m._id}>
-                      {m.title}
-                    </option>
-                  ))}
-                </select>
+                  Select Video Files (MP4, MOV, WEBM)
+                </Button>
               </div>
+            ) : (
+              tutorials.map((tut, index) => {
+                const durationMinutes = Math.round((Number(tut.videoDuration) || 0) / 60)
+                const isUploadingThis = uploadingSingleIndex === index
 
-              <Input
-                label="Lesson Title"
-                placeholder="e.g. Lesson 1: Generating Cinematic AI Scenes"
-                value={lessonForm.title}
-                onChange={(e) => setLessonForm({ ...lessonForm, title: e.target.value })}
-                required
-              />
-
-              {/* Direct Video Upload Box for Lesson */}
-              <div className="p-4 rounded-xl bg-aivora-navy border border-white/10 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-white flex items-center gap-1.5">
-                    <Film className="w-4 h-4 text-aivora-cyan" />
-                    Lesson Video File or Stream URL
-                  </span>
-                  <input
-                    ref={lessonVideoInputRef}
-                    type="file"
-                    accept="video/mp4,video/webm,video/quicktime,video/*"
-                    onChange={handleLessonVideoUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    loading={uploadingLessonVideo}
-                    onClick={() => lessonVideoInputRef.current?.click()}
-                    iconLeft={<Upload className="w-3.5 h-3.5" />}
+                return (
+                  <div
+                    key={tut._id || index}
+                    className="rounded-2xl border border-white/10 bg-aivora-navy/80 p-5 space-y-4 transition-all hover:border-white/20"
                   >
-                    {uploadingLessonVideo
-                      ? `Uploading ${lessonVideoProgress}%`
-                      : 'Upload Video File'}
-                  </Button>
-                </div>
+                    {/* Top Row: Index, Title, Access Toggle, Reorder, Delete */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-7 h-7 rounded-lg bg-white/10 text-xs font-bold text-white flex items-center justify-center flex-shrink-0">
+                          {index + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                            Tutorial Video #{index + 1}
+                          </span>
+                          <span className="text-sm font-bold text-white truncate block">
+                            {tut.title || `Video Tutorial ${index + 1}`}
+                          </span>
+                        </div>
+                      </div>
 
-                {lessonForm.videoUrl && (
-                  <div className="aspect-video rounded-lg overflow-hidden bg-black border border-white/10">
-                    <video
-                      src={lessonForm.videoUrl}
-                      controls
-                      className="w-full h-full object-contain"
-                    />
+                      {/* Access Badge & Controls */}
+                      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                        {/* Access Setting (Paid Only vs Free Preview) */}
+                        <button
+                          type="button"
+                          onClick={() => updateTutorialField(index, 'isPreview', !tut.isPreview)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                            tut.isPreview
+                              ? 'bg-cyan-500/20 text-aivora-cyan border border-aivora-cyan/40'
+                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                          }`}
+                          title={
+                            tut.isPreview
+                              ? 'Click to lock: buyers only get access after payment'
+                              : 'Click to allow free sample preview'
+                          }
+                        >
+                          {tut.isPreview ? (
+                            <>
+                              <Unlock className="w-3.5 h-3.5" />
+                              <span>Free Sample Preview</span>
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>🔒 Paid Only (Locked Until Payment)</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Move Up / Down */}
+                        <div className="flex items-center rounded-lg bg-white/5 border border-white/10">
+                          <button
+                            type="button"
+                            disabled={index === 0}
+                            onClick={() => moveTutorial(index, -1)}
+                            className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move Up"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={index === tutorials.length - 1}
+                            onClick={() => moveTutorial(index, 1)}
+                            className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed border-l border-white/10"
+                            title="Move Down"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Remove */}
+                        <button
+                          type="button"
+                          onClick={() => deleteTutorial(index)}
+                          className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                          title="Remove this video tutorial"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Middle: Video Stream / Player & Info */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                      {/* Video Player / Upload Box */}
+                      <div className="lg:col-span-5 space-y-2">
+                        {tut.videoUrl ? (
+                          <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-white/10">
+                            <video
+                              src={tut.videoUrl}
+                              controls
+                              className="w-full h-full object-contain"
+                            />
+                            <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-white font-medium flex items-center gap-1">
+                              <Video className="w-3 h-3 text-aivora-cyan" />
+                              Video Attached
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => triggerSingleUpload(index)}
+                            className="aspect-video rounded-xl border border-dashed border-white/15 hover:border-aivora-cyan/40 bg-black/40 flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors"
+                          >
+                            <Film className="w-6 h-6 text-slate-500 mb-1" />
+                            <span className="text-xs text-slate-300 font-medium">Click to upload video file</span>
+                            <span className="text-[10px] text-slate-500">MP4, MOV, WEBM</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            loading={isUploadingThis}
+                            onClick={() => triggerSingleUpload(index)}
+                            iconLeft={<Upload className="w-3.5 h-3.5" />}
+                            className="text-xs py-1.5"
+                          >
+                            {tut.videoUrl ? 'Replace Video File' : 'Upload Video File'}
+                          </Button>
+                          {tut.videoUrl && (
+                            <span className="text-[11px] text-slate-400 truncate flex-1">
+                              {tut.videoUrl}
+                            </span>
+                          )}
+                        </div>
+
+                        {isUploadingThis && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[11px] text-slate-400">
+                              <span>Uploading...</span>
+                              <span>{singleProgress}%</span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                              <div
+                                className="h-full bg-aivora-cyan transition-all"
+                                style={{ width: `${singleProgress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Video Tutorial Metadata Form */}
+                      <div className="lg:col-span-7 space-y-3">
+                        <Input
+                          label="Tutorial Video Title"
+                          placeholder="e.g. Tutorial 1: Getting Started with Prompt Engineering"
+                          value={tut.title}
+                          onChange={(e) => updateTutorialField(index, 'title', e.target.value)}
+                        />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Duration input in minutes */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
+                              <span>Duration (minutes long)</span>
+                              <span className="text-[11px] text-aivora-cyan">
+                                {Number(tut.videoDuration) || 0} seconds
+                              </span>
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="0"
+                                value={durationMinutes}
+                                onChange={(e) => {
+                                  const mins = Number(e.target.value) || 0
+                                  updateTutorialField(index, 'videoDuration', mins * 60)
+                                }}
+                                className="w-full pl-3.5 pr-14 py-2.5 rounded-xl bg-aivora-navy border border-white/10 text-sm text-white focus:outline-none focus:border-aivora-cyan/50"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
+                                mins
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Access Mode Selector */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-medium text-slate-300">Access Permission</label>
+                            <select
+                              value={tut.isPreview ? 'preview' : 'paid'}
+                              onChange={(e) =>
+                                updateTutorialField(index, 'isPreview', e.target.value === 'preview')
+                              }
+                              className="w-full px-3 py-2.5 rounded-xl bg-aivora-navy border border-white/10 text-xs text-white focus:outline-none focus:border-aivora-cyan/50"
+                            >
+                              <option value="paid">🔒 Paid Only (Locked Until Payment)</option>
+                              <option value="preview">🎁 Free Sample Preview</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Video URL direct paste */}
+                        <Input
+                          label="Video Stream / Direct URL"
+                          placeholder="https://... (or leave uploaded URL above)"
+                          value={tut.videoUrl}
+                          onChange={(e) => updateTutorialField(index, 'videoUrl', e.target.value)}
+                        />
+
+                        {/* Access explanation note */}
+                        <div className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-start gap-2 text-[11px] text-slate-300">
+                          {tut.isPreview ? (
+                            <>
+                              <Unlock className="w-4 h-4 text-aivora-cyan flex-shrink-0 mt-0.5" />
+                              <span>
+                                This video is marked as a <strong>Free Preview</strong>. Potential buyers can watch it before purchasing.
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                              <span>
+                                <strong>Paid Protection Active:</strong> A user only gets access to watch this video after making a payment and getting enrolled in this course.
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
+                )
+              })
+            )}
+          </div>
 
-                <Input
-                  placeholder="Or paste lesson video URL (https://...)"
-                  value={lessonForm.videoUrl}
-                  onChange={(e) => setLessonForm({ ...lessonForm, videoUrl: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Duration (seconds)"
-                  type="number"
-                  value={lessonForm.videoDuration}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, videoDuration: e.target.value })
-                  }
-                />
-                <div className="flex items-end pb-3">
-                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={lessonForm.isPreview}
-                      onChange={(e) =>
-                        setLessonForm({ ...lessonForm, isPreview: e.target.checked })
-                      }
-                      className="rounded border-white/20 bg-aivora-navy text-aivora-indigo"
-                    />
-                    <span>Allow Free Preview</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Resource File Uploader */}
-              <div className="p-3.5 rounded-xl bg-aivora-navy/60 border border-white/10 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-300">
-                    Downloadable PDF / Resource (Optional)
-                  </span>
-                  <input
-                    ref={lessonResourceInputRef}
-                    type="file"
-                    accept=".pdf,.zip,image/*"
-                    onChange={handleResourceUpload}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => lessonResourceInputRef.current?.click()}
-                    className="text-xs font-semibold text-aivora-indigo hover:underline flex items-center gap-1"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    {uploadingResource ? 'Uploading...' : 'Upload PDF/File'}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Input
-                    placeholder="Resource title (e.g. Prompt Guide)"
-                    value={lessonForm.resourceTitle}
-                    onChange={(e) =>
-                      setLessonForm({ ...lessonForm, resourceTitle: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Resource URL"
-                    value={lessonForm.resourceUrl}
-                    onChange={(e) =>
-                      setLessonForm({ ...lessonForm, resourceUrl: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <Button type="submit" fullWidth size="sm" iconLeft={<Plus className="w-4 h-4" />}>
-                Add Video Lesson to Module
+          {/* Bottom Bar inside Step 3 */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-white/10">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => multiVideoInputRef.current?.click()}
+                iconLeft={<Upload className="w-4 h-4" />}
+              >
+                + Add More Videos (Select Multiple)
               </Button>
-            </form>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleAddManualTutorial}
+                iconLeft={<Plus className="w-4 h-4" />}
+              >
+                + Add Video Tutorial by URL
+              </Button>
+            </div>
+
+            <div className="text-xs text-slate-400">
+              Total: <strong className="text-white">{totalVideoCount} Tutorial Videos</strong> •{' '}
+              <strong className="text-aivora-cyan">{formatMinutesLong(totalDurationSeconds)}</strong>
+            </div>
           </div>
         </div>
 
         {/* Bottom Publish Bar */}
         <div className="glass rounded-2xl p-5 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-xs text-slate-400">
-            Ready to publish? All uploaded pictures, preview videos, modules, and video lessons will be saved together.
+            Ready to publish? All uploaded pictures, preview promo video, and payment-protected video tutorials will be saved together.
           </div>
           <Button
             size="lg"
@@ -988,7 +1132,7 @@ export default function AdminCourseForm() {
             onClick={handleSaveCourse}
             iconLeft={<Save className="w-4 h-4" />}
           >
-            {courseId ? 'Save All Course Changes' : 'Publish Course & All Videos'}
+            {courseId ? 'Save All Course Changes' : 'Publish Course & All Video Tutorials'}
           </Button>
         </div>
       </div>

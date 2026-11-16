@@ -124,7 +124,7 @@ export const ensureInitialData = async () => {
       const courseCount = await Course.countDocuments();
       if (courseCount === 0) {
         // First: Create the featured "IMAGE to VIDEO" course
-        await Course.create({
+        const imageToVideoCourse = await Course.create({
           title: 'IMAGE to VIDEO',
           slug: 'image-to-video',
           shortDescription: 'Image to a talking video',
@@ -146,8 +146,28 @@ export const ensureInitialData = async () => {
           isPublished: true,
           isFeatured: true,
           status: 'published',
-          totalDuration: 0,
-          totalLessons: 0,
+          totalDuration: 300,
+          totalLessons: 1,
+        });
+
+        const itvModule = await Module.create({
+          title: 'Core Video Tutorials',
+          course: imageToVideoCourse._id,
+          order: 1,
+          isPublished: true,
+        });
+
+        await Lesson.create({
+          module: itvModule._id,
+          course: imageToVideoCourse._id,
+          title: 'Image to Talking Video in Under 5 Minutes',
+          description: 'Step-by-step master tutorial on converting any image into a talking video.',
+          videoUrl: '/uploads/videos/1794654991023-Empty-1794653741016.mp4',
+          videoDuration: 300,
+          order: 1,
+          type: 'video',
+          isPreview: false, // Access unlocked only after payment!
+          isPublished: true,
         });
 
         // Second: Create the 3 Initial Demo Courses
@@ -398,6 +418,42 @@ export const ensureInitialData = async () => {
         },
         { upsert: true, new: true }
       );
+
+      // 6. Ensure existing courses have video tutorial stats populated
+      const existingITV = await Course.findOne({ slug: 'image-to-video' });
+      if (existingITV) {
+        const itvLessons = await Lesson.find({ course: existingITV._id });
+        if (itvLessons.length === 0) {
+          let mod = await Module.findOne({ course: existingITV._id });
+          if (!mod) {
+            mod = await Module.create({
+              title: 'Core Video Tutorials',
+              course: existingITV._id,
+              order: 1,
+              isPublished: true,
+            });
+          }
+          await Lesson.create({
+            module: mod._id,
+            course: existingITV._id,
+            title: 'Image to Talking Video in Under 5 Minutes',
+            description: 'Step-by-step master tutorial on converting any image into a talking video.',
+            videoUrl: existingITV.previewVideo || '/uploads/videos/1794654991023-Empty-1794653741016.mp4',
+            videoDuration: 300,
+            order: 1,
+            type: 'video',
+            isPreview: false,
+            isPublished: true,
+          });
+          existingITV.totalLessons = 1;
+          existingITV.totalDuration = 300;
+          await existingITV.save();
+        } else if (existingITV.totalLessons === 0 || existingITV.totalDuration === 0) {
+          existingITV.totalLessons = itvLessons.length;
+          existingITV.totalDuration = itvLessons.reduce((sum, l) => sum + (Number(l.videoDuration) || 0), 0);
+          await existingITV.save();
+        }
+      }
     } catch (err) {
       console.error('Auto-seed initialization notice:', err.message);
     }

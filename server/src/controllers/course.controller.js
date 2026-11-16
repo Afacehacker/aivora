@@ -71,7 +71,18 @@ export const getFeaturedCourses = catchAsync(async (req, res) => {
 });
 
 /**
- * GET /api/v1/courses/:slug — Public (supports slug or ObjectId)
+ * Helper to recalculate and persist course totalLessons and totalDuration
+ */
+export const recalculateCourseStats = async (courseId) => {
+  const lessons = await Lesson.find({ course: courseId });
+  const totalLessons = lessons.length;
+  const totalDuration = lessons.reduce((sum, l) => sum + (Number(l.videoDuration) || 0), 0);
+  await Course.findByIdAndUpdate(courseId, { totalLessons, totalDuration });
+  return { totalLessons, totalDuration };
+};
+
+/**
+ * GET /api/v1/courses/:slug — Public (supports slug or ObjectId), with access control
  */
 export const getCourseBySlug = catchAsync(async (req, res, next) => {
   const param = req.params.slug || req.params.id;
@@ -85,6 +96,14 @@ export const getCourseBySlug = catchAsync(async (req, res, next) => {
 
   if (!course) return next(new AppError('Course not found.', 404));
 
+  // Determine access privileges: admin or enrolled user has paid/full access
+  const isAdmin = req.user?.role === 'admin';
+  let isEnrolled = false;
+  if (req.user && !isAdmin) {
+    const enr = await Enrollment.findOne({ student: req.user._id, course: course._id });
+    isEnrolled = Boolean(enr);
+  }
+
   // Count enrolled students and fetch curriculum (modules + lessons metadata)
   const [enrolledCount, modules, lessons] = await Promise.all([
     Enrollment.countDocuments({ course: course._id }),
@@ -92,25 +111,27 @@ export const getCourseBySlug = catchAsync(async (req, res, next) => {
     Lesson.find({ course: course._id }).sort({ order: 1 }),
   ]);
 
-  // Attach lessons to each module (redact non-preview video URLs for public)
+  // Attach lessons to each module (redact non-preview video URLs if user has not paid / enrolled)
   const modulesWithLessons = modules.map((mod) => {
     const modObj = mod.toObject();
     modObj.lessons = lessons
       .filter((l) => String(l.module) === String(mod._id))
       .map((l) => {
         const lObj = l.toObject();
-        if (!lObj.isPreview) {
+        // A user only gets access to the video tutorial after making payment, unless marked as free sample preview
+        if (!isAdmin && !isEnrolled && !lObj.isPreview) {
           lObj.videoUrl = null;
+          lObj.content = null;
         }
         return lObj;
       });
     return modObj;
   });
 
-  // Fallback previewVideo to first available lesson video if previewVideo wasn't explicitly set
+  // Fallback previewVideo to first available preview or tutorial video if previewVideo wasn't explicitly set
   const courseObj = course.toObject();
   if (!courseObj.previewVideo) {
-    const firstVideoLesson = lessons.find((l) => l.videoUrl);
+    const firstVideoLesson = lessons.find((l) => l.isPreview && l.videoUrl) || lessons.find((l) => l.videoUrl);
     if (firstVideoLesson) {
       courseObj.previewVideo = firstVideoLesson.videoUrl;
     }
@@ -127,8 +148,11 @@ export const getCourseBySlug = catchAsync(async (req, res, next) => {
  * POST /api/v1/courses — Admin only
  */
 export const createCourse = catchAsync(async (req, res, next) => {
-  const { title, description, shortDescription, category, price, discountPrice, discountExpiry,
-    level, language, tags, requirements, objectives, targetAudience, thumbnail, previewVideo, isFeatured, isPublished, modules } = req.body;
+  const {
+    title, description, shortDescription, category, price, discountPrice, discountExpiry,
+    level, language, tags, requirements, objectives, targetAudience, thumbnail, previewVideo,
+    isFeatured, isPublished, modules, tutorials,
+  } = req.body;
 
   let slug = generateSlug(title);
 
@@ -138,23 +162,23 @@ export const createCourse = catchAsync(async (req, res, next) => {
     slug = `${slug}-${Date.now()}`;
   }
 
-  let totalLessons = 0;
-  let totalDuration = 0;
-  let firstLessonVideo = null;
-
-  if (Array.isArray(modules)) {
+  // Support direct tutorial video array or modules structure
+  let tutorialList = [];
+  if (Array.isArray(tutorials) && tutorials.length > 0) {
+    tutorialList = tutorials;
+  } else if (Array.isArray(modules) && modules.length > 0) {
     modules.forEach((m) => {
       if (Array.isArray(m.lessons)) {
-        m.lessons.forEach((l) => {
-          totalLessons += 1;
-          totalDuration += Number(l.videoDuration) || 0;
-          if (!firstLessonVideo && l.videoUrl) {
-            firstLessonVideo = l.videoUrl;
-          }
-        });
+        tutorialList.push(...m.lessons);
       }
     });
   }
+
+  let totalLessons = tutorialList.length;
+  let totalDuration = tutorialList.reduce((acc, t) => acc + (Number(t.videoDuration) || 0), 0);
+  let firstLessonVideo = null;
+  const firstVideoObj = tutorialList.find((t) => t.videoUrl);
+  if (firstVideoObj) firstLessonVideo = firstVideoObj.videoUrl;
 
   const course = await Course.create({
     title,
@@ -181,8 +205,35 @@ export const createCourse = catchAsync(async (req, res, next) => {
     targetAudience: targetAudience ? (Array.isArray(targetAudience) ? targetAudience : [targetAudience]) : [],
   });
 
-  // If initial modules & lessons were staged before posting, create them now
-  if (Array.isArray(modules) && modules.length > 0) {
+  // If tutorials were provided directly from admin upload
+  if (Array.isArray(tutorials) && tutorials.length > 0) {
+    const modDoc = await Module.create({
+      course: course._id,
+      title: 'Course Video Tutorials',
+      description: 'Step-by-step video tutorials included in this course.',
+      order: 1,
+      isPublished: true,
+    });
+
+    for (let j = 0; j < tutorials.length; j++) {
+      const tData = tutorials[j];
+      if (!tData.title) continue;
+      await Lesson.create({
+        module: modDoc._id,
+        course: course._id,
+        title: tData.title,
+        description: tData.description || '',
+        videoUrl: tData.videoUrl || null,
+        videoDuration: Number(tData.videoDuration) || 0,
+        order: tData.order ?? j + 1,
+        type: 'video',
+        isPreview: Boolean(tData.isPreview),
+        isPublished: true,
+        resources: Array.isArray(tData.resources) ? tData.resources : [],
+      });
+    }
+  } else if (Array.isArray(modules) && modules.length > 0) {
+    // If structured modules & lessons were provided
     for (let i = 0; i < modules.length; i++) {
       const mData = modules[i];
       if (!mData.title) continue;
@@ -204,7 +255,7 @@ export const createCourse = catchAsync(async (req, res, next) => {
             title: lData.title,
             description: lData.description || '',
             videoUrl: lData.videoUrl || null,
-            videoDuration: Number(lData.videoDuration) || 600,
+            videoDuration: Number(lData.videoDuration) || 0,
             order: lData.order ?? j + 1,
             type: lData.type || 'video',
             isPreview: Boolean(lData.isPreview),
@@ -215,6 +266,8 @@ export const createCourse = catchAsync(async (req, res, next) => {
       }
     }
   }
+
+  await recalculateCourseStats(course._id);
 
   return successResponse(res, 201, 'Course created successfully.', course);
 });
@@ -240,7 +293,54 @@ export const updateCourse = catchAsync(async (req, res, next) => {
     course.slug = generateSlug(req.body.title);
   }
 
+  // If tutorials array is passed, synchronize the course's video tutorials
+  if (Array.isArray(req.body.tutorials)) {
+    const tutorials = req.body.tutorials;
+    let modDoc = await Module.findOne({ course: course._id }).sort({ order: 1 });
+    if (!modDoc) {
+      modDoc = await Module.create({
+        course: course._id,
+        title: 'Course Video Tutorials',
+        description: 'Step-by-step video tutorials included in this course.',
+        order: 1,
+        isPublished: true,
+      });
+    }
+
+    await Lesson.deleteMany({ course: course._id });
+
+    let totalDuration = 0;
+    for (let j = 0; j < tutorials.length; j++) {
+      const t = tutorials[j];
+      if (!t.title) continue;
+      const dur = Number(t.videoDuration) || 0;
+      totalDuration += dur;
+      await Lesson.create({
+        module: modDoc._id,
+        course: course._id,
+        title: t.title,
+        description: t.description || '',
+        videoUrl: t.videoUrl || null,
+        videoDuration: dur,
+        order: t.order ?? j + 1,
+        type: 'video',
+        isPreview: Boolean(t.isPreview),
+        isPublished: true,
+        resources: Array.isArray(t.resources) ? t.resources : [],
+      });
+    }
+
+    course.totalLessons = tutorials.length;
+    course.totalDuration = totalDuration;
+    if (!course.previewVideo) {
+      const previewTut = tutorials.find((t) => t.isPreview && t.videoUrl) || tutorials.find((t) => t.videoUrl);
+      if (previewTut) course.previewVideo = previewTut.videoUrl;
+    }
+  }
+
   await course.save();
+  await recalculateCourseStats(course._id);
+
   return successResponse(res, 200, 'Course updated successfully.', course);
 });
 

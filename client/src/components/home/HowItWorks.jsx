@@ -8,7 +8,7 @@ const steps = [
     step: '01',
     icon: Search,
     title: 'Choose Your Preferred Course',
-    description: 'Browse our specialized AI curriculum and pick the skill track that matches your creative goals.',
+    description: 'Browse our specialized AI video tutorials and pick the skill track that matches your creative goals.',
   },
   {
     step: '02',

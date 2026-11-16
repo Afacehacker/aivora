@@ -113,7 +113,7 @@ export default function MyLearningPage() {
                       </h3>
                       <ProgressBar value={enr.progress || 0} showLabel />
                       <p className="text-xs text-slate-400">
-                        {enr.completedLessons?.length || 0} of {course.totalLessons || 0} lessons completed
+                        {enr.completedLessons?.length || 0} of {course.totalLessons || 0} tutorial videos completed
                       </p>
                     </div>
                   </div>

@@ -32,8 +32,8 @@ const INITIAL_COURSES = [
     price: 10000,
     discountPrice: null,
     level: 'beginner',
-    totalLessons: 0,
-    totalDuration: 0,
+    totalLessons: 1,
+    totalDuration: 300,
     rating: { avg: 0, count: 0 },
   },
   {

@@ -5,6 +5,7 @@ import Enrollment from '../models/Enrollment.js';
 import catchAsync from '../utils/catchAsync.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { successResponse } from '../utils/apiResponse.js';
+import { recalculateCourseStats } from './course.controller.js';
 
 // Helper to check if student is enrolled
 const checkEnrolled = async (userId, courseId) =>
@@ -101,12 +102,10 @@ export const createLesson = catchAsync(async (req, res, next) => {
     resources: resources || [],
   });
 
-  // Update course totalLessons count and auto-fill previewVideo if empty
-  const courseUpdate = { $inc: { totalLessons: 1 } };
   if (!course.previewVideo && finalVideoUrl) {
-    courseUpdate.$set = { previewVideo: finalVideoUrl };
+    await Course.findByIdAndUpdate(courseId, { previewVideo: finalVideoUrl });
   }
-  await Course.findByIdAndUpdate(courseId, courseUpdate);
+  await recalculateCourseStats(courseId);
 
   return successResponse(res, 201, 'Lesson created successfully.', lesson);
 });
@@ -133,6 +132,8 @@ export const updateLesson = catchAsync(async (req, res, next) => {
   }
 
   await lesson.save();
+  await recalculateCourseStats(lesson.course);
+
   return successResponse(res, 200, 'Lesson updated successfully.', lesson);
 });
 
@@ -143,8 +144,7 @@ export const deleteLesson = catchAsync(async (req, res, next) => {
   const lesson = await Lesson.findByIdAndDelete(req.params.id);
   if (!lesson) return next(new AppError('Lesson not found.', 404));
 
-  // Decrement course totalLessons count
-  await Course.findByIdAndUpdate(lesson.course, { $inc: { totalLessons: -1 } });
+  await recalculateCourseStats(lesson.course);
 
   return successResponse(res, 200, 'Lesson deleted successfully.');
 });

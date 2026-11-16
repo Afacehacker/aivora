@@ -125,7 +125,7 @@ export default function DashboardOverview() {
                       <ProgressBar value={enr.progress || 0} showLabel />
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-xs text-slate-400">
-                          {enr.completedLessons?.length || 0} / {course.totalLessons || 0} lessons
+                          {enr.completedLessons?.length || 0} / {course.totalLessons || 0} tutorial videos
                         </span>
                         <Link
                           to={`/dashboard/learn/${course._id}`}

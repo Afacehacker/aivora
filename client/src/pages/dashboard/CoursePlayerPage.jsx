@@ -114,7 +114,7 @@ export default function CoursePlayerPage() {
       if (!completedIds.includes(String(activeLesson._id))) {
         setCompletedIds([...completedIds, String(activeLesson._id)])
       }
-      toast.success('Lesson marked as completed!')
+      toast.success('Video tutorial marked as completed!')
 
       if (updatedProgress >= 100) {
         await api.post(`/certificates/generate/${courseId}`).catch(() => {})
@@ -192,7 +192,7 @@ export default function CoursePlayerPage() {
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
                   <Sparkles className="w-10 h-10 text-aivora-indigo mb-2" />
-                  <p className="text-sm">Select a lesson to begin streaming.</p>
+                  <p className="text-sm">Select a video tutorial to begin streaming.</p>
                 </div>
               )}
             </div>
@@ -318,7 +318,7 @@ export default function CoursePlayerPage() {
           {/* Right Curriculum Sidebar */}
           <aside className="lg:col-span-4 xl:col-span-3 glass-dark border-l border-white/10 p-4 sm:p-5 overflow-y-auto max-h-screen">
             <h3 className="text-sm font-display font-bold uppercase tracking-wider text-slate-400 mb-4">
-              Course Curriculum ({completedIds.length}/{lessons.length})
+              Video Tutorials ({completedIds.length}/{lessons.length})
             </h3>
 
             <div className="space-y-4">
