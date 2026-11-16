@@ -69,9 +69,20 @@ if (fs.existsSync(indexHtmlPath)) {
     fs.writeFileSync(path.join(routeDir, 'index.html'), indexHtml)
   }
 
-  // Also sync index.html into server/src/spa-index.html so Express can serve it for SPA route reloads on Vercel & Render
+  // Also sync index.html and assets into server/src so Express can serve them for SPA route reloads
   try {
     fs.writeFileSync(serverSpaHtmlPath, indexHtml)
+    const serverAssetsDir = path.resolve(__dirname, '../../server/src/assets')
+    const distAssetsDir = path.join(distDir, 'assets')
+    if (fs.existsSync(distAssetsDir)) {
+      if (!fs.existsSync(serverAssetsDir)) {
+        fs.mkdirSync(serverAssetsDir, { recursive: true })
+      }
+      const files = fs.readdirSync(distAssetsDir)
+      for (const file of files) {
+        fs.copyFileSync(path.join(distAssetsDir, file), path.join(serverAssetsDir, file))
+      }
+    }
   } catch {}
 
   console.log('✅ Synced deterministic SPA index.html, route pre-generations, and fallback files.')

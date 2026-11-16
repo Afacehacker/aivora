@@ -150,22 +150,43 @@ const candidateDistDirs = [
 ];
 const clientDistDir = candidateDistDirs.find((dir) => fs.existsSync(path.join(dir, 'index.html')));
 const spaFallbackFile = path.join(__dirname, 'spa-index.html');
+const serverAssetsDir = path.join(__dirname, 'assets');
 
+// Serve static assets from both server/src/assets and client/dist/assets
+if (fs.existsSync(serverAssetsDir)) {
+  app.use('/assets', express.static(serverAssetsDir, { maxAge: '30d', immutable: true }));
+}
 if (clientDistDir) {
   app.use(express.static(clientDistDir, { maxAge: '1d', redirect: false }));
 }
+
+const inlineFallbackHtml = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fff1f5" />
+    <title>AIVORA — AI Creative Education Platform</title>
+    <script type="module" crossorigin src="/assets/app.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`;
 
 app.get('*', (req, res, next) => {
   if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
     return next();
   }
   if (clientDistDir && fs.existsSync(path.join(clientDistDir, 'index.html'))) {
-    return res.sendFile(path.join(clientDistDir, 'index.html'));
+    return res.status(200).sendFile(path.join(clientDistDir, 'index.html'));
   }
   if (fs.existsSync(spaFallbackFile)) {
-    return res.sendFile(spaFallbackFile);
+    return res.status(200).sendFile(spaFallbackFile);
   }
-  return next();
+  return res.status(200).type('html').send(inlineFallbackHtml);
 });
 
 // 404 Handler
