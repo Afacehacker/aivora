@@ -146,7 +146,9 @@ export const handleMediaUpload = catchAsync(async (req, res, next) => {
  * assembling them safely in MongoDB GridFS so videos of ANY duration/size upload reliably.
  */
 export const handleChunkUpload = catchAsync(async (req, res, next) => {
-  const file = req.files?.chunk?.[0] || req.files?.file?.[0] || req.file;
+  const file = Array.isArray(req.files)
+    ? req.files[0]
+    : req.files?.chunk?.[0] || req.files?.file?.[0] || req.file;
   if (!file) {
     return next(new AppError('No chunk data received. Please select a valid video.', 400));
   }
@@ -161,9 +163,15 @@ export const handleChunkUpload = catchAsync(async (req, res, next) => {
     );
   }
 
-  const subFolder = folder || (mimeType?.startsWith('image/') ? 'images' : 'videos');
-  const isVideo = subFolder === 'videos' || (mimeType || '').startsWith('video/');
-  const isImage = subFolder === 'images' || (mimeType || '').startsWith('image/');
+  const ext = path.extname(filename || originalName || file.originalname || '').toLowerCase();
+  const isVideoExt = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'].includes(ext);
+  const isImageExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext);
+
+  const subFolder =
+    folder ||
+    (mimeType?.startsWith('image/') || isImageExt ? 'images' : 'videos');
+  const isVideo = subFolder === 'videos' || (mimeType || '').startsWith('video/') || isVideoExt;
+  const isImage = subFolder === 'images' || (mimeType || '').startsWith('image/') || isImageExt;
 
   // 1) Upsert chunk in MongoDB
   await UploadChunk.findOneAndUpdate(

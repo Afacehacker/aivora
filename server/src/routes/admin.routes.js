@@ -87,7 +87,7 @@ router.use(protect, restrictTo('admin'));
 
 // Media Upload & Media Library (Videos, Images, PDFs)
 router.post('/upload', uploadMediaFile, auditLog('UPLOAD_MEDIA', 'Media'), handleMediaUpload);
-router.post('/upload-chunk', uploadChunkMiddleware, auditLog('UPLOAD_MEDIA_CHUNK', 'Media'), handleChunkUpload);
+router.post('/upload-chunk', uploadChunkMiddleware, handleChunkUpload);
 router.get('/media', listUploadedMedia);
 
 // Dashboard & Analytics

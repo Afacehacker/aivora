@@ -15,19 +15,25 @@ import { formatMinutesLong } from '../../components/home/CourseCard'
 
 const getVideoDurationFromFile = (file) => {
   return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(300), 2000)
     try {
       const video = document.createElement('video')
       video.preload = 'metadata'
       video.onloadedmetadata = () => {
-        window.URL.revokeObjectURL(video.src)
-        resolve(Math.round(video.duration) || 0)
+        clearTimeout(timer)
+        try {
+          window.URL.revokeObjectURL(video.src)
+        } catch {}
+        resolve(Math.round(video.duration) || 300)
       }
       video.onerror = () => {
-        resolve(0)
+        clearTimeout(timer)
+        resolve(300)
       }
       video.src = URL.createObjectURL(file)
     } catch {
-      resolve(0)
+      clearTimeout(timer)
+      resolve(300)
     }
   })
 }
@@ -137,11 +143,15 @@ export default function AdminCourseForm() {
         setPreviewProgress(p.percent)
         setPreviewStatus(`Uploading video ${p.percent}% (Part ${p.chunkIndex + 1}/${p.totalChunks})...`)
       })
-      const uploadedUrl = res?.data?.data?.url || res?.data?.url || ''
+      const uploadedUrl = res?.data?.url || res?.url || res?.data?.data?.url || ''
+      if (!uploadedUrl) {
+        throw new Error('Upload finished but no video URL was returned. Please try again.')
+      }
       setForm((prev) => ({ ...prev, previewVideo: uploadedUrl }))
       toast.success('Course preview video uploaded!')
     } catch (err) {
-      toast.error(err.message || 'Video upload failed')
+      console.error('Preview video upload error:', err)
+      toast.error(err?.message || err?.data?.message || 'Video upload failed')
     } finally {
       setUploadingPreview(false)
       setPreviewStatus('')
@@ -177,7 +187,7 @@ export default function AdminCourseForm() {
           )
         })
 
-        const videoUrl = res?.data?.data?.url || res?.data?.url || ''
+        const videoUrl = res?.data?.url || res?.url || res?.data?.data?.url || ''
 
         // Clean up filename for human-readable title
         const lastDot = file.name.lastIndexOf('.')
@@ -192,7 +202,7 @@ export default function AdminCourseForm() {
           title: cleanName || `Video Tutorial ${tutorials.length + i + 1}`,
           description: '',
           videoUrl: videoUrl,
-          videoDuration: duration || res?.data?.data?.duration || res?.data?.duration || 300,
+          videoDuration: duration || res?.data?.duration || res?.data?.data?.duration || 300,
           isPreview: false, // Access unlocked only after payment!
           resources: [],
         })
@@ -201,7 +211,8 @@ export default function AdminCourseForm() {
       setTutorials((prev) => [...prev, ...addedTutorials])
       toast.success(`${files.length} tutorial video${files.length > 1 ? 's' : ''} uploaded and added!`)
     } catch (err) {
-      toast.error(err.message || 'Failed to upload videos')
+      console.error('Batch video upload error:', err)
+      toast.error(err?.message || err?.data?.message || 'Failed to upload videos')
     } finally {
       setUploadingBatch(false)
       setBatchStatus('')
@@ -225,7 +236,7 @@ export default function AdminCourseForm() {
         setSingleProgress(p.percent)
       })
 
-      const videoUrl = res?.data?.data?.url || res?.data?.url || ''
+      const videoUrl = res?.data?.url || res?.url || res?.data?.data?.url || ''
 
       setTutorials((prev) => {
         const next = [...prev]
@@ -233,7 +244,7 @@ export default function AdminCourseForm() {
           next[index] = {
             ...next[index],
             videoUrl: videoUrl || next[index].videoUrl,
-            videoDuration: duration || res?.data?.data?.duration || res?.data?.duration || next[index].videoDuration || 300,
+            videoDuration: duration || res?.data?.duration || res?.data?.data?.duration || next[index].videoDuration || 300,
             title: next[index].title || file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '),
           }
         }
@@ -242,7 +253,8 @@ export default function AdminCourseForm() {
 
       toast.success('Tutorial video uploaded!')
     } catch (err) {
-      toast.error(err.message || 'Upload failed')
+      console.error('Single video upload error:', err)
+      toast.error(err?.message || err?.data?.message || 'Upload failed')
     } finally {
       setUploadingSingleIndex(null)
       setSingleProgress(0)

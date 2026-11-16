@@ -3,15 +3,31 @@ import useAuthStore from '../store/authStore'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
-  headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 })
 
-// Request interceptor — attach token
+// Request interceptor — attach token and format Content-Type
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token
-    if (token) config.headers.Authorization = `Bearer ${token}`
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+
+    // CRITICAL: When sending FormData, delete Content-Type so Axios/browser automatically
+    // generates the boundary parameter: "multipart/form-data; boundary=----WebKitFormBoundary..."
+    const isFormData =
+      config.data instanceof FormData ||
+      (typeof FormData !== 'undefined' && config.data instanceof FormData) ||
+      Object.prototype.toString.call(config.data) === '[object FormData]'
+
+    if (isFormData) {
+      delete config.headers['Content-Type']
+      delete config.headers['content-type']
+    } else if (!config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json'
+    }
+
     return config
   },
   (error) => Promise.reject(error)
@@ -22,11 +38,13 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
-      useAuthStore.getState().logout()
-      window.location.href = '/auth/login'
+      console.warn('Session expired or unauthorized request (401).')
     }
     return Promise.reject(
-      error.response?.data || { message: 'An unexpected error occurred' }
+      error.response?.data || {
+        message: error.message || 'An unexpected error occurred',
+        status: error.response?.status,
+      }
     )
   }
 )

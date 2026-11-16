@@ -80,11 +80,20 @@ const videoFilter = (req, file, cb) => {
 
 // Combined media filter (image, video, or PDF/attachment)
 const mediaFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const allowedVideoExts = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.3gp', '.flv'];
+  const allowedImageExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+  const allowedDocExts = ['.pdf', '.zip'];
+
   if (
     file.mimetype.startsWith('image/') ||
     file.mimetype.startsWith('video/') ||
     file.mimetype === 'application/pdf' ||
-    file.mimetype === 'application/zip'
+    file.mimetype === 'application/zip' ||
+    file.mimetype === 'application/octet-stream' ||
+    allowedVideoExts.includes(ext) ||
+    allowedImageExts.includes(ext) ||
+    allowedDocExts.includes(ext)
   ) {
     cb(null, true);
   } else {
@@ -152,10 +161,7 @@ export const uploadMediaFile = multer({
 // Chunked media upload (memory storage for assembling chunk by chunk in MongoDB)
 export const uploadChunkMiddleware = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB per chunk (each chunk is ~2.5MB)
-}).fields([
-  { name: 'chunk', maxCount: 1 },
-  { name: 'file', maxCount: 1 },
-]);
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB per chunk
+}).any();
 
 export { isCloudinaryConfigured, uploadsDir };
