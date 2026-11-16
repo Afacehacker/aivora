@@ -59,8 +59,7 @@ const INITIAL_COURSES = [
     slug: 'demo-authorized-ai-character-design-talking-avatars',
     shortDescription:
       'Design consistent fictional characters, realistic digital presenters, and lip-synced avatars ethically.',
-    thumbnail:
-      'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=600&q=75',
+    thumbnail: null,
     previewVideo: '/uploads/videos/ai-character-avatar.mp4',
     category: { name: 'AI Character Transformation', slug: 'ai-character-transformation' },
     instructor: { name: 'AIVORA Administrator' },
@@ -77,8 +76,7 @@ const INITIAL_COURSES = [
     slug: 'demo-cinematic-ai-video-production-masterclass',
     shortDescription:
       'Master text-to-video, camera motion control, lighting direction, and commercial AI filmmaking from scratch.',
-    thumbnail:
-      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=75',
+    thumbnail: null,
     previewVideo: '/uploads/videos/cinematic-ai-video.mp4',
     category: { name: 'AI Video Creation', slug: 'ai-video-creation' },
     instructor: { name: 'AIVORA Administrator' },

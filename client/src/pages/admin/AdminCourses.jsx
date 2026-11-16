@@ -104,9 +104,6 @@ export default function AdminCourses() {
                             ★ Featured
                           </span>
                         )}
-                        <span className="text-[11px] text-slate-400 capitalize">
-                          {c.level || 'Beginner'}
-                        </span>
                       </div>
                       <h3 className="font-semibold text-white text-sm truncate">{c.title}</h3>
                       <p className="text-xs text-slate-400 truncate">{c.category?.name || 'General'}</p>
@@ -174,7 +171,6 @@ export default function AdminCourses() {
                   <tr>
                     <th className="py-3.5 px-4">Course</th>
                     <th className="py-3.5 px-4">Category</th>
-                    <th className="py-3.5 px-4">Level</th>
                     <th className="py-3.5 px-4">Price</th>
                     <th className="py-3.5 px-4">Tutorial Videos</th>
                     <th className="py-3.5 px-4">Status</th>
@@ -201,7 +197,6 @@ export default function AdminCourses() {
                         </div>
                       </td>
                       <td className="py-3.5 px-4 text-xs">{c.category?.name || '—'}</td>
-                      <td className="py-3.5 px-4 capitalize text-xs">{c.level}</td>
                       <td className="py-3.5 px-4 font-semibold">
                         {formatPrice(c.discountPrice || c.price)}
                       </td>

@@ -47,31 +47,25 @@ export default function CourseCard({ course, onPreview }) {
 
   return (
     <div className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-aivora-indigo/50 shadow-card hover:shadow-card-hover flex flex-col h-full transition-all md:hover:-translate-y-1">
-      {/* Thumbnail or Full-Frame Video Cover — Scaled perfectly for mobile & desktop */}
-      <div
-        className={
-          isVideoCover
-            ? 'relative w-full overflow-hidden bg-black flex items-center justify-center min-h-[160px] max-h-[220px] sm:max-h-[300px] md:max-h-[360px]'
-            : 'relative aspect-video sm:h-48 overflow-hidden bg-aivora-navy flex items-center justify-center'
-        }
-      >
+      {/* Product Video Cover */}
+      <div className="relative w-full overflow-hidden bg-black flex items-center justify-center min-h-[160px] max-h-[220px] sm:max-h-[300px] md:max-h-[360px]">
         <CourseMediaPreview
           course={course}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-auto max-h-[220px] sm:max-h-[300px] md:max-h-[360px] object-contain block mx-auto"
           videoClassName="w-full h-auto max-h-[220px] sm:max-h-[300px] md:max-h-[360px] object-contain block mx-auto"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-aivora-dark/60 via-transparent to-transparent pointer-events-none" />
 
-        {/* Top badges */}
+        {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-          <Badge color={levelBadgeColor[course.level] || 'indigo'} className="capitalize">
-            {course.level || 'Beginner'}
-          </Badge>
-          {course.category?.name && (
+          {course.category?.name ? (
             <span className="px-2.5 py-1 rounded-full glass-dark text-[11px] font-medium text-slate-200">
               {course.category.name}
             </span>
-          )}
+          ) : <span />}
+          <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-aivora-cyan text-[11px] font-semibold flex items-center gap-1">
+            <Video className="w-3 h-3" /> Video Tutorial
+          </span>
         </div>
 
         {/* Preview Button Overlay */}

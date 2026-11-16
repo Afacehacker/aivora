@@ -16,11 +16,12 @@ const courseSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      required: [true, 'Course description is required'],
+      default: '',
     },
     shortDescription: {
       type: String,
-      maxlength: [300, 'Short description cannot exceed 300 characters'],
+      default: '',
+      maxlength: [500, 'Short description cannot exceed 500 characters'],
     },
     thumbnail: {
       type: String,
@@ -98,7 +99,6 @@ const courseSchema = new mongoose.Schema(
 
 // Index for search
 courseSchema.index({ title: 'text', description: 'text', tags: 'text' });
-courseSchema.index({ slug: 1 });
 courseSchema.index({ category: 1 });
 courseSchema.index({ isPublished: 1 });
 courseSchema.index({ isFeatured: 1 });

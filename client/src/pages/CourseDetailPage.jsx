@@ -209,9 +209,7 @@ export default function CourseDetailPage() {
                   {course.category?.name && (
                     <Badge color="indigo">{course.category.name}</Badge>
                   )}
-                  <Badge color="cyan" className="capitalize">
-                    {course.level}
-                  </Badge>
+                  <Badge color="cyan">Video Tutorial</Badge>
                 </div>
 
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-white leading-tight">
@@ -267,17 +265,11 @@ export default function CourseDetailPage() {
             {/* On mobile (< lg): render Checkout & Video Preview card first so students see price & media immediately */}
             <div className="lg:col-span-4 lg:order-last">
               <div className="sticky top-20 sm:top-24 glass-dark rounded-2xl sm:rounded-3xl overflow-hidden border border-white/15 shadow-card-hover">
-                {/* Preview Thumbnail or Responsive Video Cover */}
-                <div
-                  className={
-                    courseUsesVideoCover(course)
-                      ? 'relative w-full bg-black flex items-center justify-center overflow-hidden min-h-[180px] max-h-[240px] sm:max-h-[320px] lg:max-h-[420px]'
-                      : 'relative aspect-video bg-aivora-navy flex items-center justify-center'
-                  }
-                >
+                {/* Product Video Cover */}
+                <div className="relative w-full bg-black flex items-center justify-center overflow-hidden min-h-[180px] max-h-[240px] sm:max-h-[320px] lg:max-h-[420px]">
                   <CourseMediaPreview
                     course={course}
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-auto max-h-[240px] sm:max-h-[320px] lg:max-h-[420px] object-contain block mx-auto"
                     videoClassName="w-full h-auto max-h-[240px] sm:max-h-[320px] lg:max-h-[420px] object-contain block mx-auto"
                   />
                   {course.previewVideo && (
@@ -390,13 +382,15 @@ export default function CourseDetailPage() {
                 </div>
               )}
 
-              {/* Full Description */}
-              <div className="space-y-4">
-                <h2 className="text-xl font-display font-bold text-white">Course Description</h2>
-                <div className="text-sm sm:text-base text-slate-300 leading-relaxed whitespace-pre-line glass rounded-2xl p-6 border border-white/10">
-                  {course.description}
+              {/* Product Description */}
+              {(course.shortDescription || course.description) && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-display font-bold text-white">Course Overview</h2>
+                  <div className="text-sm sm:text-base text-slate-300 leading-relaxed whitespace-pre-line glass rounded-2xl p-6 border border-white/10">
+                    {course.shortDescription || course.description}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Course Video Tutorials */}
               <div className="space-y-4">

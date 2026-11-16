@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { clsx } from 'clsx'
+import { Film, Play } from 'lucide-react'
 
 const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|mkv|avi|m4v)(\?.*)?$/i
 
@@ -52,25 +53,16 @@ export function isVideoUrl(url = '') {
 }
 
 export function courseUsesVideoCover(course) {
-  const thumb = normalizeMediaUrl(course?.thumbnail)
-  const previewVid = normalizeMediaUrl(course?.previewVideo)
-  return Boolean((!thumb && previewVid) || isVideoUrl(thumb))
+  return true // Cover is exclusively video
 }
 
-const FALLBACK_POSTER =
-  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=75'
-
 /**
- * Renders a course's cover media seamlessly whether the admin uploaded:
- * 1) A picture (`course.thumbnail`), OR
- * 2) Only a video (`course.previewVideo`), OR
- * 3) A video URL inside `course.thumbnail`
- * Uses an in-memory Blob URL cache to eliminate Chromium net::ERR_CACHE_OPERATION_NOT_SUPPORTED
- * when multiple cards display the same video, and stops retrying if the network is offline.
+ * Product cover display: 100% video only.
+ * Renders the preview promo video with smart caching, playsInline, and autoplay.
  */
 export default function CourseMediaPreview({
   course,
-  className = 'w-full h-full object-cover object-center',
+  className = 'w-full h-full object-contain object-center',
   videoClassName,
   autoPlay = true,
   muted = true,
@@ -81,11 +73,12 @@ export default function CourseMediaPreview({
   const [videoFailed, setVideoFailed] = useState(false)
   const [resolvedVideoSrc, setResolvedVideoSrc] = useState(null)
 
-  const thumb = normalizeMediaUrl(course?.thumbnail)
   const previewVid = normalizeMediaUrl(course?.previewVideo)
+  const thumbVid = isVideoUrl(course?.thumbnail) ? normalizeMediaUrl(course?.thumbnail) : null
+  const firstLessonVid = normalizeMediaUrl(course?.modules?.[0]?.lessons?.[0]?.videoUrl)
 
-  const shouldRenderVideo = courseUsesVideoCover(course) && !videoFailed
-  const rawVideoSrc = isVideoUrl(thumb) ? thumb : previewVid
+  const rawVideoSrc = previewVid || thumbVid || firstLessonVid
+  const shouldRenderVideo = Boolean(rawVideoSrc) && !videoFailed
 
   useEffect(() => {
     let isMounted = true
@@ -96,7 +89,6 @@ export default function CourseMediaPreview({
       return
     }
 
-    // If already cached as a blob URL in memory, use it immediately
     if (videoBlobUrlCache.has(rawVideoSrc)) {
       setResolvedVideoSrc(videoBlobUrlCache.get(rawVideoSrc))
       return
@@ -107,7 +99,6 @@ export default function CourseMediaPreview({
         if (isMounted) setResolvedVideoSrc(blobUrl)
       })
       .catch(() => {
-        // Fallback to direct URL if fetch fails, or mark failed if offline
         if (isMounted) {
           if (navigator.onLine === false) {
             setVideoFailed(true)
@@ -175,12 +166,16 @@ export default function CourseMediaPreview({
   }
 
   return (
-    <img
-      src={(!isVideoUrl(thumb) && thumb) || FALLBACK_POSTER}
-      alt={course?.title || 'AIVORA Course'}
-      loading="lazy"
-      decoding="async"
-      className={clsx(className)}
-    />
+    <div
+      className={clsx(
+        'w-full h-full min-h-[160px] bg-black/90 flex flex-col items-center justify-center gap-2 p-4 text-center',
+        className
+      )}
+    >
+      <div className="w-10 h-10 rounded-full bg-cyan-500/20 text-aivora-cyan flex items-center justify-center">
+        <Play className="w-5 h-5 fill-aivora-cyan" />
+      </div>
+      <span className="text-xs text-slate-300 font-semibold">{course?.title || 'Video Tutorial'}</span>
+    </div>
   )
 }

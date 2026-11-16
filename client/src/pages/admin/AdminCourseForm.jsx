@@ -37,7 +37,6 @@ export default function AdminCourseForm() {
   const isEditing = Boolean(id)
   const navigate = useNavigate()
 
-  const thumbnailInputRef = useRef(null)
   const previewVideoInputRef = useRef(null)
   const multiVideoInputRef = useRef(null)
   const singleVideoInputRef = useRef(null)
@@ -48,7 +47,6 @@ export default function AdminCourseForm() {
   const [courseId, setCourseId] = useState(id || null)
 
   // Upload progress indicators
-  const [uploadingThumb, setUploadingThumb] = useState(false)
   const [uploadingPreview, setUploadingPreview] = useState(false)
   const [previewProgress, setPreviewProgress] = useState(0)
 
@@ -64,16 +62,10 @@ export default function AdminCourseForm() {
   const [form, setForm] = useState({
     title: '',
     shortDescription: '',
-    description: '',
     category: '',
-    level: 'beginner',
     price: 35000,
     discountPrice: '',
-    thumbnail: '',
     previewVideo: '',
-    objectivesText: '',
-    requirementsText: '',
-    audienceText: '',
     isFeatured: true,
     isPublished: true,
   })
@@ -101,17 +93,11 @@ export default function AdminCourseForm() {
           setCourseId(c._id)
           setForm({
             title: c.title || '',
-            shortDescription: c.shortDescription || '',
-            description: c.description || '',
+            shortDescription: c.shortDescription || c.description || '',
             category: c.category?._id || c.category || '',
-            level: c.level || 'beginner',
             price: c.price ?? 0,
             discountPrice: c.discountPrice ?? '',
-            thumbnail: c.thumbnail || '',
             previewVideo: c.previewVideo || '',
-            objectivesText: (c.objectives || []).join('\n'),
-            requirementsText: (c.requirements || []).join('\n'),
-            audienceText: (c.targetAudience || []).join('\n'),
             isFeatured: Boolean(c.isFeatured),
             isPublished: Boolean(c.isPublished),
           })
@@ -138,24 +124,7 @@ export default function AdminCourseForm() {
     }
   }, [id, isEditing])
 
-  // Upload Thumbnail Handler
-  const handleThumbnailUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadingThumb(true)
-    try {
-      const res = await adminService.uploadMedia(file)
-      setForm((prev) => ({ ...prev, thumbnail: res.data.url }))
-      toast.success('Course thumbnail image uploaded!')
-    } catch (err) {
-      toast.error(err.message || 'Image upload failed')
-    } finally {
-      setUploadingThumb(false)
-      e.target.value = ''
-    }
-  }
-
-  // Upload Preview / Promo Video Handler
+  // Upload Preview / Promo Video Handler (The Product Cover)
   const handlePreviewVideoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -338,25 +307,16 @@ export default function AdminCourseForm() {
       const payload = {
         title: form.title,
         shortDescription: form.shortDescription,
-        description: form.description,
+        description: form.shortDescription || form.title,
         category: form.category,
-        level: form.level,
+        level: 'beginner',
         price: Number(form.price),
         discountPrice: form.discountPrice !== '' ? Number(form.discountPrice) : null,
-        thumbnail: form.thumbnail,
+        thumbnail: null,
         previewVideo: form.previewVideo,
-        objectives: form.objectivesText
-          .split('\n')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        requirements: form.requirementsText
-          .split('\n')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        targetAudience: form.audienceText
-          .split('\n')
-          .map((s) => s.trim())
-          .filter(Boolean),
+        objectives: [],
+        requirements: [],
+        targetAudience: [],
         isFeatured: form.isFeatured,
         isPublished: form.isPublished,
         tutorials: tutorials.map((t, idx) => ({
@@ -481,142 +441,78 @@ export default function AdminCourseForm() {
           </div>
         </div>
 
-        {/* STEP 1: Product Media Studio (Thumbnail & Promo Preview Video) */}
+        {/* STEP 1: Product Cover Video */}
         <div className="glass rounded-2xl p-6 sm:p-8 border border-aivora-indigo/30 space-y-6">
           <div className="flex items-center justify-between border-b border-white/10 pb-4">
             <div>
               <span className="text-xs font-semibold uppercase tracking-wider text-aivora-cyan">
-                Step 1 • Visual & Promo Video
+                Step 1 • Product Cover Video
               </span>
               <h2 className="text-lg font-display font-bold text-white mt-0.5">
-                Product Cover Picture & Free Promo Video
+                Product Cover Video (Free Teaser / Promo)
               </h2>
             </div>
-            <Badge color="indigo">Direct File Upload or URL</Badge>
+            <Badge color="cyan">Video Only Cover</Badge>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Thumbnail Picture Uploader */}
-            <div className="rounded-2xl bg-aivora-navy/80 border border-white/10 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-white flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-aivora-indigo" />
-                  Product Cover Picture (Thumbnail)
-                </span>
-                <input
-                  ref={thumbnailInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleThumbnailUpload}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  loading={uploadingThumb}
-                  onClick={() => thumbnailInputRef.current?.click()}
-                  iconLeft={<Upload className="w-3.5 h-3.5" />}
-                >
-                  Upload Picture
-                </Button>
-              </div>
-
-              {form.thumbnail ? (
-                <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-white/10">
-                  <img
-                    src={form.thumbnail}
-                    alt="Course Thumbnail Preview"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, thumbnail: '' })}
-                    className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-black/70 text-xs text-red-400 hover:bg-black"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => thumbnailInputRef.current?.click()}
-                  className="aspect-video rounded-xl border-2 border-dashed border-white/15 hover:border-aivora-indigo/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors p-4 text-center"
-                >
-                  <ImageIcon className="w-8 h-8 text-slate-500" />
-                  <p className="text-xs font-medium text-slate-300">
-                    Click to upload a cover picture from your computer (JPG, PNG, WEBP)
-                  </p>
-                  <p className="text-[11px] text-slate-500">Or paste an image URL below</p>
-                </div>
-              )}
-
-              <Input
-                placeholder="Or paste image URL (https://...)"
-                value={form.thumbnail}
-                onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
+          <div className="rounded-2xl bg-aivora-navy/80 border border-white/10 p-5 space-y-4 max-w-2xl">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-white flex items-center gap-2">
+                <Film className="w-4 h-4 text-aivora-cyan" />
+                Product Cover Video
+              </span>
+              <input
+                ref={previewVideoInputRef}
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime,video/*"
+                onChange={handlePreviewVideoUpload}
+                className="hidden"
               />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                loading={uploadingPreview}
+                onClick={() => previewVideoInputRef.current?.click()}
+                iconLeft={<Upload className="w-3.5 h-3.5" />}
+              >
+                {uploadingPreview ? `Uploading ${previewProgress}%` : 'Upload Video File'}
+              </Button>
             </div>
 
-            {/* Preview Video Uploader */}
-            <div className="rounded-2xl bg-aivora-navy/80 border border-white/10 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-white flex items-center gap-2">
-                  <Film className="w-4 h-4 text-aivora-cyan" />
-                  Product Promo / Preview Video (Free Teaser)
-                </span>
-                <input
-                  ref={previewVideoInputRef}
-                  type="file"
-                  accept="video/mp4,video/webm,video/quicktime,video/*"
-                  onChange={handlePreviewVideoUpload}
-                  className="hidden"
+            {form.previewVideo ? (
+              <div className="relative rounded-xl overflow-hidden bg-black border border-white/10 flex items-center justify-center">
+                <video
+                  src={form.previewVideo}
+                  controls
+                  className="w-full h-auto max-h-[360px] object-contain block"
                 />
-                <Button
+                <button
                   type="button"
-                  variant="secondary"
-                  size="sm"
-                  loading={uploadingPreview}
-                  onClick={() => previewVideoInputRef.current?.click()}
-                  iconLeft={<Upload className="w-3.5 h-3.5" />}
+                  onClick={() => setForm({ ...form, previewVideo: '' })}
+                  className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-black/70 text-xs text-red-400 hover:bg-black"
                 >
-                  {uploadingPreview ? `Uploading ${previewProgress}%` : 'Upload Video'}
-                </Button>
+                  Remove
+                </button>
               </div>
+            ) : (
+              <div
+                onClick={() => previewVideoInputRef.current?.click()}
+                className="aspect-video rounded-xl border-2 border-dashed border-white/15 hover:border-aivora-cyan/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors p-4 text-center bg-black/30"
+              >
+                <Film className="w-8 h-8 text-slate-500" />
+                <p className="text-xs font-medium text-slate-300">
+                  Click to upload the product cover video (MP4, MOV, WEBM)
+                </p>
+                <p className="text-[11px] text-slate-500">Or paste a video stream URL below</p>
+              </div>
+            )}
 
-              {form.previewVideo ? (
-                <div className="relative rounded-xl overflow-hidden bg-black border border-white/10 flex items-center justify-center">
-                  <video
-                    src={form.previewVideo}
-                    controls
-                    className="w-full h-auto max-h-[420px] object-contain block"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, previewVideo: '' })}
-                    className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-black/70 text-xs text-red-400 hover:bg-black"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => previewVideoInputRef.current?.click()}
-                  className="aspect-video rounded-xl border-2 border-dashed border-white/15 hover:border-aivora-cyan/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors p-4 text-center"
-                >
-                  <Film className="w-8 h-8 text-slate-500" />
-                  <p className="text-xs font-medium text-slate-300">
-                    Click to upload a promo preview video from your computer (MP4, MOV, WEBM)
-                  </p>
-                  <p className="text-[11px] text-slate-500">Or paste a video stream URL below</p>
-                </div>
-              )}
-
-              <Input
-                placeholder="Or paste video URL (https://...)"
-                value={form.previewVideo}
-                onChange={(e) => setForm({ ...form, previewVideo: e.target.value })}
-              />
-            </div>
+            <Input
+              placeholder="Or paste video stream URL (https://...)"
+              value={form.previewVideo}
+              onChange={(e) => setForm({ ...form, previewVideo: e.target.value })}
+            />
           </div>
         </div>
 
@@ -627,14 +523,14 @@ export default function AdminCourseForm() {
               Step 2 • Product Details & Pricing
             </span>
             <h2 className="text-lg font-display font-bold text-white mt-0.5">
-              Course Information & Naira Pricing
+              Product Information & Naira Pricing
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Product Title"
-              placeholder="e.g. Cinematic AI Video Production Masterclass"
+              placeholder="e.g. IMAGE to VIDEO"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
@@ -658,39 +554,18 @@ export default function AdminCourseForm() {
             </div>
           </div>
 
-          <Input
-            label="Short Description (Summary shown on cards)"
-            placeholder="Concise 1-2 sentence summary..."
-            value={form.shortDescription}
-            onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
-          />
-
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-300">Full Description</label>
+            <label className="text-sm font-medium text-slate-300">Product Description</label>
             <textarea
-              rows={4}
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Comprehensive course overview..."
-              required
+              rows={3}
+              value={form.shortDescription}
+              onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
+              placeholder="Learn how to change image to a talking video in less than 5 minutes..."
               className="w-full rounded-xl bg-aivora-navy border border-white/10 p-3.5 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-300">Skill Level</label>
-              <select
-                value={form.level}
-                onChange={(e) => setForm({ ...form, level: e.target.value })}
-                className="w-full rounded-xl bg-aivora-navy border border-white/10 py-3 px-4 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
-              >
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-              </select>
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Regular Price (NGN ₦)"
               type="number"
@@ -702,48 +577,10 @@ export default function AdminCourseForm() {
             <Input
               label="Discounted Price (Optional ₦)"
               type="number"
-              placeholder="e.g. 25000"
+              placeholder="e.g. 10000"
               value={form.discountPrice}
               onChange={(e) => setForm({ ...form, discountPrice: e.target.value })}
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-300">
-                What Students Will Learn (1 per line)
-              </label>
-              <textarea
-                rows={4}
-                value={form.objectivesText}
-                onChange={(e) => setForm({ ...form, objectivesText: e.target.value })}
-                className="w-full rounded-xl bg-aivora-navy border border-white/10 p-3 text-xs text-white"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-300">
-                Requirements (1 per line)
-              </label>
-              <textarea
-                rows={4}
-                value={form.requirementsText}
-                onChange={(e) => setForm({ ...form, requirementsText: e.target.value })}
-                className="w-full rounded-xl bg-aivora-navy border border-white/10 p-3 text-xs text-white"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-300">
-                Intended Audience (1 per line)
-              </label>
-              <textarea
-                rows={4}
-                value={form.audienceText}
-                onChange={(e) => setForm({ ...form, audienceText: e.target.value })}
-                className="w-full rounded-xl bg-aivora-navy border border-white/10 p-3 text-xs text-white"
-              />
-            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-6 pt-2">
