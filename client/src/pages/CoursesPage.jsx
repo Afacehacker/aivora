@@ -100,19 +100,19 @@ export default function CoursesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-10">
-            <span className="inline-block px-3.5 py-1.5 rounded-full glass border border-aivora-indigo/30 text-xs font-semibold uppercase tracking-wider text-aivora-cyan mb-3">
+            <span className="inline-block px-3.5 py-1.5 rounded-full bg-pink-100/70 border border-pink-200 text-xs font-semibold uppercase tracking-wider text-pink-700 mb-3 shadow-sm">
               AIVORA Course Catalog
             </span>
-            <h1 className="text-3xl sm:text-5xl font-display font-black text-white mb-3">
+            <h1 className="text-3xl sm:text-5xl font-display font-black text-slate-900 mb-3">
               Master <span className="gradient-text">AI Creative Production</span>
             </h1>
-            <p className="text-slate-400 text-base max-w-2xl">
+            <p className="text-slate-600 text-base max-w-2xl">
               Step-by-step courses designed to take you from beginner to commercial AI creator.
             </p>
           </div>
 
           {/* Search & Filter Bar */}
-          <div className="glass rounded-2xl p-4 sm:p-5 border border-white/10 mb-8 space-y-4">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-pink-100 shadow-sm mb-8 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               {/* Search */}
               <div className="md:col-span-5 relative">
@@ -125,7 +125,7 @@ export default function CoursesPage() {
                     setPage(1)
                   }}
                   placeholder="Search courses by title, tool, or topic..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-aivora-navy border border-white/10 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-aivora-indigo/50"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-pink-50/50 border border-pink-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-pink-500 focus:bg-white"
                 />
               </div>
 
@@ -137,7 +137,7 @@ export default function CoursesPage() {
                     setSelectedCategory(e.target.value)
                     setPage(1)
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-aivora-navy border border-white/10 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-pink-50/50 border border-pink-200 text-sm text-slate-800 focus:outline-none focus:border-pink-500 focus:bg-white"
                 >
                   <option value="">All Categories</option>
                   {categories.map((cat) => (
@@ -156,7 +156,7 @@ export default function CoursesPage() {
                     setSelectedLevel(e.target.value)
                     setPage(1)
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-aivora-navy border border-white/10 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-pink-50/50 border border-pink-200 text-sm text-slate-800 focus:outline-none focus:border-pink-500 focus:bg-white"
                 >
                   {levels.map((l) => (
                     <option key={l.value} value={l.value}>
@@ -171,7 +171,7 @@ export default function CoursesPage() {
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-aivora-navy border border-white/10 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-pink-50/50 border border-pink-200 text-sm text-slate-800 focus:outline-none focus:border-pink-500 focus:bg-white"
                 >
                   {sortOptions.map((s) => (
                     <option key={s.value} value={s.value}>
@@ -183,11 +183,11 @@ export default function CoursesPage() {
             </div>
 
             {(search || selectedCategory || selectedLevel) && (
-              <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs text-slate-400">
+              <div className="flex items-center justify-between pt-2 border-t border-pink-100 text-xs text-slate-500">
                 <span>Showing {pagination.total || courses.length} matching courses</span>
                 <button
                   onClick={handleClearFilters}
-                  className="inline-flex items-center gap-1 text-aivora-cyan hover:underline"
+                  className="inline-flex items-center gap-1 text-pink-600 hover:underline font-semibold"
                 >
                   <X className="w-3.5 h-3.5" /> Clear Filters
                 </button>
@@ -225,12 +225,12 @@ export default function CoursesPage() {
               )}
             </>
           ) : (
-            <div className="glass rounded-2xl p-14 text-center border border-white/10 max-w-lg mx-auto my-8">
-              <BookOpen className="w-12 h-12 text-aivora-indigo mx-auto mb-4" />
-              <h3 className="text-xl font-display font-bold text-white mb-2">
+            <div className="bg-white rounded-2xl p-14 text-center border border-pink-100 shadow-sm max-w-lg mx-auto my-8">
+              <BookOpen className="w-12 h-12 text-pink-500 mx-auto mb-4" />
+              <h3 className="text-xl font-display font-bold text-slate-900 mb-2">
                 No Matching Courses Found
               </h3>
-              <p className="text-sm text-slate-400 mb-6">
+              <p className="text-sm text-slate-600 mb-6">
                 Try clearing your search filters to view all available courses.
               </p>
               <Button onClick={handleClearFilters}>Reset All Filters</Button>
@@ -257,7 +257,7 @@ export default function CoursesPage() {
               />
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-300">{previewCourse.shortDescription}</p>
+              <p className="text-sm text-slate-700">{previewCourse.shortDescription}</p>
               <Link to={`/courses/${previewCourse.slug}`}>
                 <Button size="sm">View Full Details</Button>
               </Link>

@@ -57,8 +57,8 @@ export default function AdminCourses() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-display font-bold text-white">Course Management</h1>
-            <p className="text-sm text-slate-400">
+            <h1 className="text-2xl font-display font-bold text-slate-900">Course Management</h1>
+            <p className="text-sm text-slate-600">
               Create, edit, publish, and manage video tutorials for all courses.
             </p>
           </div>
@@ -70,10 +70,10 @@ export default function AdminCourses() {
         </div>
 
         {loading ? (
-          <div className="h-64 rounded-2xl glass animate-pulse" />
+          <div className="h-64 rounded-2xl bg-white border border-pink-100 animate-pulse shadow-sm" />
         ) : courses.length === 0 ? (
-          <div className="glass rounded-2xl p-8 text-center border border-white/10 space-y-3">
-            <p className="text-slate-300 font-medium">No courses in the catalog yet.</p>
+          <div className="bg-white rounded-2xl p-8 text-center border border-pink-100 space-y-3 shadow-sm">
+            <p className="text-slate-700 font-medium">No courses in the catalog yet.</p>
             <Link to="/admin/courses/create">
               <Button size="sm" iconLeft={<Plus className="w-4 h-4" />}>
                 Create Your First Course
@@ -87,7 +87,7 @@ export default function AdminCourses() {
               {courses.map((c) => (
                 <div
                   key={c._id}
-                  className="glass rounded-2xl p-4 border border-white/10 space-y-3.5 shadow-card"
+                  className="bg-white rounded-2xl p-4 border border-pink-100 space-y-3.5 shadow-sm"
                 >
                   <div className="flex items-start gap-3">
                     <CourseMediaPreview
@@ -100,38 +100,38 @@ export default function AdminCourses() {
                           {c.isPublished ? 'Published' : 'Draft'}
                         </Badge>
                         {c.isFeatured && (
-                          <span className="text-[10px] text-aivora-cyan font-semibold">
+                          <span className="text-[10px] text-pink-600 font-semibold">
                             ★ Featured
                           </span>
                         )}
                       </div>
-                      <h3 className="font-semibold text-white text-sm truncate">{c.title}</h3>
-                      <p className="text-xs text-slate-400 truncate">{c.category?.name || 'General'}</p>
+                      <h3 className="font-semibold text-slate-900 text-sm truncate">{c.title}</h3>
+                      <p className="text-xs text-slate-500 truncate">{c.category?.name || 'General'}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs pt-2 border-t border-white/5">
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-pink-100">
                     <div>
-                      <span className="text-slate-400 block text-[11px]">Price</span>
-                      <span className="font-bold text-white text-sm">
+                      <span className="text-slate-500 block text-[11px]">Price</span>
+                      <span className="font-bold text-slate-900 text-sm">
                         {formatPrice(c.discountPrice || c.price)}
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="font-semibold text-aivora-cyan">
+                      <span className="font-semibold text-pink-600">
                         {c.totalLessons || 0} Video Tutorials
                       </span>
-                      <span className="block text-[11px] text-slate-400">
+                      <span className="block text-[11px] text-slate-500">
                         {formatMinutesLong(c.totalDuration)}
                       </span>
                     </div>
                   </div>
 
                   {/* Mobile Action Buttons */}
-                  <div className="grid grid-cols-4 gap-2 pt-2 border-t border-white/5">
+                  <div className="grid grid-cols-4 gap-2 pt-2 border-t border-pink-100">
                     <Link
                       to={`/admin/courses/${c._id}/edit`}
-                      className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl bg-aivora-indigo/15 text-aivora-indigo hover:bg-aivora-indigo/25 text-[11px] font-semibold"
+                      className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl bg-pink-50 text-pink-600 hover:bg-pink-100 text-[11px] font-semibold"
                     >
                       <Edit className="w-4 h-4" />
                       <span>Edit</span>
@@ -139,14 +139,14 @@ export default function AdminCourses() {
                     <button
                       type="button"
                       onClick={() => handleTogglePublish(c._id)}
-                      className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl bg-white/5 text-slate-300 hover:text-white text-[11px] font-semibold"
+                      className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-[11px] font-semibold"
                     >
                       {c.isPublished ? <EyeOff className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
                       <span>{c.isPublished ? 'Unpublish' : 'Publish'}</span>
                     </button>
                     <Link
                       to={`/courses/${c.slug}`}
-                      className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl bg-white/5 text-slate-300 hover:text-white text-[11px] font-semibold"
+                      className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-[11px] font-semibold"
                     >
                       <Eye className="w-4 h-4" />
                       <span>View</span>
@@ -154,7 +154,7 @@ export default function AdminCourses() {
                     <button
                       type="button"
                       onClick={() => handleDelete(c._id, c.title)}
-                      className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[11px] font-semibold"
+                      className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-[11px] font-semibold"
                     >
                       <Trash2 className="w-4 h-4" />
                       <span>Delete</span>
@@ -165,9 +165,9 @@ export default function AdminCourses() {
             </div>
 
             {/* Desktop Table */}
-            <div className="hidden md:block glass rounded-2xl border border-white/10 overflow-x-auto">
+            <div className="hidden md:block bg-white rounded-2xl border border-pink-100 shadow-sm overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-white/10 text-xs uppercase text-slate-400">
+                <thead className="bg-pink-50/70 border-b border-pink-100 text-xs uppercase text-slate-600 font-semibold">
                   <tr>
                     <th className="py-3.5 px-4">Course</th>
                     <th className="py-3.5 px-4">Category</th>
@@ -177,9 +177,9 @@ export default function AdminCourses() {
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-slate-200">
+                <tbody className="divide-y divide-pink-100 text-slate-700">
                   {courses.map((c) => (
-                    <tr key={c._id} className="hover:bg-white/5">
+                    <tr key={c._id} className="hover:bg-pink-50/30 transition-colors">
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
                           <CourseMediaPreview
@@ -187,22 +187,22 @@ export default function AdminCourses() {
                             className="w-14 h-10 rounded-lg object-cover flex-shrink-0"
                           />
                           <div className="min-w-0">
-                            <p className="font-semibold text-white truncate max-w-xs">{c.title}</p>
+                            <p className="font-semibold text-slate-900 truncate max-w-xs">{c.title}</p>
                             {c.isFeatured && (
-                              <span className="text-[10px] text-aivora-cyan font-semibold">
+                              <span className="text-[10px] text-pink-600 font-semibold">
                                 ★ Featured
                               </span>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-xs">{c.category?.name || '—'}</td>
-                      <td className="py-3.5 px-4 font-semibold">
+                      <td className="py-3.5 px-4 text-xs font-medium">{c.category?.name || '—'}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-900">
                         {formatPrice(c.discountPrice || c.price)}
                       </td>
                       <td className="py-3.5 px-4 text-xs">
-                        <span className="font-semibold text-white">{c.totalLessons || 0} Videos</span>
-                        <span className="block text-[11px] text-slate-400">{formatMinutesLong(c.totalDuration)}</span>
+                        <span className="font-semibold text-slate-900">{c.totalLessons || 0} Videos</span>
+                        <span className="block text-[11px] text-slate-500">{formatMinutesLong(c.totalDuration)}</span>
                       </td>
                       <td className="py-3.5 px-4">
                         <Badge color={c.isPublished ? 'success' : 'warning'}>
@@ -213,14 +213,14 @@ export default function AdminCourses() {
                         <div className="inline-flex items-center gap-1.5">
                           <Link
                             to={`/courses/${c.slug}`}
-                            className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"
+                            className="p-2 rounded-lg hover:bg-pink-50 text-slate-500 hover:text-slate-900"
                             title="View Public Page"
                           >
                             <Eye className="w-4 h-4" />
                           </Link>
                           <button
                             onClick={() => handleTogglePublish(c._id)}
-                            className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-aivora-cyan"
+                            className="p-2 rounded-lg hover:bg-pink-50 text-slate-500 hover:text-pink-600"
                             title={c.isPublished ? 'Unpublish' : 'Publish'}
                           >
                             {c.isPublished ? (
@@ -231,14 +231,14 @@ export default function AdminCourses() {
                           </button>
                           <Link
                             to={`/admin/courses/${c._id}/edit`}
-                            className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-aivora-indigo"
+                            className="p-2 rounded-lg hover:bg-pink-50 text-slate-500 hover:text-pink-600"
                             title="Edit Course & Video Tutorials"
                           >
                             <Edit className="w-4 h-4" />
                           </Link>
                           <button
                             onClick={() => handleDelete(c._id, c.title)}
-                            className="p-2 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"
+                            className="p-2 rounded-lg hover:bg-rose-50 text-slate-500 hover:text-rose-600"
                             title="Delete Course"
                           >
                             <Trash2 className="w-4 h-4" />

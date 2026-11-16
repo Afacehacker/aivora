@@ -90,17 +90,17 @@ const creationPillars = [
 
 export default function WhatYouCanCreate() {
   return (
-    <section id="what-you-learn" className="py-12 sm:py-20 lg:py-24 relative bg-aivora-dark">
+    <section id="what-you-learn" className="py-12 sm:py-20 lg:py-24 relative bg-[#fff5f7]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-          <span className="inline-block px-3.5 py-1.5 rounded-full glass border border-aivora-indigo/30 text-xs font-semibold uppercase tracking-wider text-aivora-indigo mb-4">
+          <span className="inline-block px-3.5 py-1.5 rounded-full bg-pink-100/70 border border-pink-200 text-xs font-semibold uppercase tracking-wider text-pink-700 mb-4 shadow-sm">
             Creative Specializations
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-slate-900 mb-4">
             What You Can <span className="gradient-text">Create With AIVORA</span>
           </h2>
-          <p className="text-slate-400 text-base sm:text-lg">
+          <p className="text-slate-600 text-base sm:text-lg">
             Practical, studio-grade training across eight core AI creative disciplines—taught with ethical standards and commercial quality.
           </p>
         </div>
@@ -116,7 +116,7 @@ export default function WhatYouCanCreate() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.45, delay: idx * 0.06 }}
-                className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-aivora-indigo/40 transition-all duration-300 flex flex-col shadow-card hover:shadow-card-hover"
+                className="group bg-white rounded-2xl overflow-hidden border border-pink-100 hover:border-pink-300 transition-all duration-300 flex flex-col shadow-card hover:shadow-card-hover"
               >
                 {/* Visual Header */}
                 <div className="relative h-44 overflow-hidden">
@@ -126,7 +126,7 @@ export default function WhatYouCanCreate() {
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-aivora-navy via-aivora-navy/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent" />
                   <div
                     className={`absolute bottom-3 left-4 w-10 h-10 rounded-xl bg-gradient-to-br ${item.accent} flex items-center justify-center shadow-lg`}
                   >
@@ -137,17 +137,17 @@ export default function WhatYouCanCreate() {
                 {/* Content */}
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-base font-display font-bold text-white group-hover:text-aivora-indigo transition-colors mb-2">
+                    <h3 className="text-base font-display font-bold text-slate-900 group-hover:text-pink-600 transition-colors mb-2">
                       {item.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-4">
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
                       {item.description}
                     </p>
                   </div>
 
                   <Link
                     to={`/courses?category=${item.categorySlug}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-aivora-cyan hover:text-white transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-pink-600 hover:text-pink-700 transition-colors"
                   >
                     <span>Learn More</span>
                     <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />

@@ -55,17 +55,17 @@ export default function FAQSection({ faqs = [] }) {
   const [openIndex, setOpenIndex] = useState(0)
 
   return (
-    <section className="py-12 sm:py-20 lg:py-24 relative bg-aivora-dark">
+    <section className="py-12 sm:py-20 lg:py-24 relative bg-[#fff5f7]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full glass border border-aivora-indigo/30 text-xs font-semibold uppercase tracking-wider text-aivora-indigo mb-3">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-pink-100/70 border border-pink-200 text-xs font-semibold uppercase tracking-wider text-pink-700 mb-3 shadow-sm">
             <HelpCircle className="w-3.5 h-3.5" />
             Frequently Asked Questions
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-slate-900 mb-4">
             Got <span className="gradient-text">Questions?</span>
           </h2>
-          <p className="text-slate-400 text-base">
+          <p className="text-slate-600 text-base">
             Everything you need to know about learning with AIVORA.
           </p>
         </div>
@@ -78,8 +78,8 @@ export default function FAQSection({ faqs = [] }) {
                 key={item._id || idx}
                 className={`rounded-2xl transition-all border ${
                   isOpen
-                    ? 'glass-dark border-aivora-indigo/50 shadow-glow-indigo'
-                    : 'glass border-white/10 hover:border-white/20'
+                    ? 'bg-white border-pink-300 shadow-md'
+                    : 'bg-white/90 border-pink-100 hover:border-pink-200'
                 }`}
               >
                 <button
@@ -87,11 +87,11 @@ export default function FAQSection({ faqs = [] }) {
                   onClick={() => setOpenIndex(isOpen ? -1 : idx)}
                   className="w-full flex items-center justify-between gap-4 p-5 text-left"
                 >
-                  <span className="text-base font-display font-semibold text-white">
+                  <span className="text-base font-display font-semibold text-slate-900">
                     {item.question}
                   </span>
                   <ChevronDown
-                    className={`w-5 h-5 text-aivora-indigo flex-shrink-0 transition-transform duration-200 ${
+                    className={`w-5 h-5 text-pink-600 flex-shrink-0 transition-transform duration-200 ${
                       isOpen ? 'rotate-180' : ''
                     }`}
                   />
@@ -106,7 +106,7 @@ export default function FAQSection({ faqs = [] }) {
                       transition={{ duration: 0.25 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                      <div className="px-5 pb-5 text-sm text-slate-700 leading-relaxed border-t border-pink-100 pt-3">
                         {item.answer}
                       </div>
                     </motion.div>

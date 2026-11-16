@@ -404,15 +404,15 @@ export default function AdminCourseForm() {
             <button
               type="button"
               onClick={() => navigate('/admin/courses')}
-              className="p-2 rounded-xl glass text-slate-300 hover:text-white"
+              className="p-2 rounded-xl bg-white border border-pink-200 text-slate-700 hover:text-pink-600 shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div>
-              <h1 className="text-2xl font-display font-bold text-white">
+              <h1 className="text-2xl font-display font-bold text-slate-900">
                 {courseId ? 'Edit Product & Video Tutorials' : 'Create & Upload New Product'}
               </h1>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-600">
                 Upload product pictures, preview video, and attach multiple video tutorials with payment-protected access.
               </p>
             </div>
@@ -424,7 +424,7 @@ export default function AdminCourseForm() {
                 type="button"
                 onClick={handleDeleteCourse}
                 disabled={saving}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50"
                 title="Permanently Delete This Course"
               >
                 <Trash2 className="w-4 h-4" />
@@ -442,23 +442,23 @@ export default function AdminCourseForm() {
         </div>
 
         {/* STEP 1: Product Cover Video */}
-        <div className="glass rounded-2xl p-6 sm:p-8 border border-aivora-indigo/30 space-y-6">
-          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-pink-200 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-pink-100 pb-4">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-aivora-cyan">
+              <span className="text-xs font-semibold uppercase tracking-wider text-pink-600">
                 Step 1 • Product Cover Video
               </span>
-              <h2 className="text-lg font-display font-bold text-white mt-0.5">
+              <h2 className="text-lg font-display font-bold text-slate-900 mt-0.5">
                 Product Cover Video (Free Teaser / Promo)
               </h2>
             </div>
-            <Badge color="cyan">Video Only Cover</Badge>
+            <Badge color="pink">Video Only Cover</Badge>
           </div>
 
-          <div className="rounded-2xl bg-aivora-navy/80 border border-white/10 p-5 space-y-4 max-w-2xl">
+          <div className="rounded-2xl bg-pink-50/50 border border-pink-100 p-5 space-y-4 max-w-2xl">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-white flex items-center gap-2">
-                <Film className="w-4 h-4 text-aivora-cyan" />
+              <span className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Film className="w-4 h-4 text-pink-500" />
                 Product Cover Video
               </span>
               <input
@@ -481,7 +481,7 @@ export default function AdminCourseForm() {
             </div>
 
             {form.previewVideo ? (
-              <div className="relative rounded-xl overflow-hidden bg-black border border-white/10 flex items-center justify-center">
+              <div className="relative rounded-xl overflow-hidden bg-black border border-pink-200 flex items-center justify-center">
                 <video
                   src={form.previewVideo}
                   controls
@@ -490,7 +490,7 @@ export default function AdminCourseForm() {
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, previewVideo: '' })}
-                  className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-black/70 text-xs text-red-400 hover:bg-black"
+                  className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-black/70 text-xs text-rose-400 hover:bg-black"
                 >
                   Remove
                 </button>
@@ -498,10 +498,10 @@ export default function AdminCourseForm() {
             ) : (
               <div
                 onClick={() => previewVideoInputRef.current?.click()}
-                className="aspect-video rounded-xl border-2 border-dashed border-white/15 hover:border-aivora-cyan/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors p-4 text-center bg-black/30"
+                className="aspect-video rounded-xl border-2 border-dashed border-pink-300 hover:border-pink-500 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors p-4 text-center bg-white"
               >
-                <Film className="w-8 h-8 text-slate-500" />
-                <p className="text-xs font-medium text-slate-300">
+                <Film className="w-8 h-8 text-pink-400" />
+                <p className="text-xs font-medium text-slate-700">
                   Click to upload the product cover video (MP4, MOV, WEBM)
                 </p>
                 <p className="text-[11px] text-slate-500">Or paste a video stream URL below</p>
@@ -517,12 +517,12 @@ export default function AdminCourseForm() {
         </div>
 
         {/* STEP 2: Product Information & Pricing */}
-        <div className="glass rounded-2xl p-6 sm:p-8 border border-white/10 space-y-6">
-          <div className="border-b border-white/10 pb-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-aivora-indigo">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-pink-100 shadow-sm space-y-6">
+          <div className="border-b border-pink-100 pb-4">
+            <span className="text-xs font-semibold uppercase tracking-wider text-pink-600">
               Step 2 • Product Details & Pricing
             </span>
-            <h2 className="text-lg font-display font-bold text-white mt-0.5">
+            <h2 className="text-lg font-display font-bold text-slate-900 mt-0.5">
               Product Information & Naira Pricing
             </h2>
           </div>
@@ -537,11 +537,11 @@ export default function AdminCourseForm() {
             />
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-300">Category</label>
+              <label className="text-sm font-medium text-slate-700">Category</label>
               <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full rounded-xl bg-aivora-navy border border-white/10 py-3 px-4 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
+                className="w-full rounded-xl bg-white border border-pink-200 py-3 px-4 text-sm text-slate-800 focus:outline-none focus:border-pink-500"
                 required
               >
                 <option value="">Select Category</option>
@@ -555,13 +555,13 @@ export default function AdminCourseForm() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-300">Product Description</label>
+            <label className="text-sm font-medium text-slate-700">Product Description</label>
             <textarea
               rows={3}
               value={form.shortDescription}
               onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
               placeholder="Learn how to change image to a talking video in less than 5 minutes..."
-              className="w-full rounded-xl bg-aivora-navy border border-white/10 p-3.5 text-sm text-white focus:outline-none focus:border-aivora-indigo/50"
+              className="w-full rounded-xl bg-white border border-pink-200 p-3.5 text-sm text-slate-800 focus:outline-none focus:border-pink-500"
             />
           </div>
 
@@ -599,54 +599,54 @@ export default function AdminCourseForm() {
                 type="checkbox"
                 checked={form.isFeatured}
                 onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
-                className="rounded border-white/20 bg-aivora-navy text-aivora-indigo"
+                className="rounded border-pink-300 text-pink-600 focus:ring-pink-500/20"
               />
-              <span>Feature on Homepage</span>
+              <span className="text-slate-800 font-medium">Feature on Homepage</span>
             </label>
           </div>
         </div>
 
         {/* STEP 3: Video Tutorials Studio (Upload One or Multiple Videos, Payment-Protected Access) */}
-        <div className="glass rounded-2xl p-6 sm:p-8 border border-aivora-cyan/30 space-y-6">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-pink-200 shadow-sm space-y-6">
           {/* Header & Live Summary Badge */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-pink-100 pb-5">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-aivora-cyan">
+                <span className="text-xs font-semibold uppercase tracking-wider text-pink-600">
                   Step 3 • Video Tutorials
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold flex items-center gap-1 border border-emerald-200">
                   <Lock className="w-3 h-3" /> Unlocks After Payment
                 </span>
               </div>
-              <h2 className="text-xl font-display font-bold text-white mt-1 flex items-center gap-2">
-                <Video className="w-6 h-6 text-aivora-cyan" />
+              <h2 className="text-xl font-display font-bold text-slate-900 mt-1 flex items-center gap-2">
+                <Video className="w-6 h-6 text-pink-500" />
                 Add & Manage Course Video Tutorials
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-600 mt-1">
                 Select one or more videos to add. By default, users only get access to stream these video tutorials after making a payment for this course.
               </p>
             </div>
 
             {/* Live Product Card Stats Preview */}
-            <div className="rounded-xl bg-aivora-navy/90 border border-white/10 p-3.5 flex items-center gap-4 flex-shrink-0">
-              <div className="text-center px-2 border-r border-white/10">
-                <span className="block text-xs text-slate-400 font-medium">Display on Card</span>
-                <span className="text-sm font-bold text-white flex items-center gap-1.5 justify-center mt-0.5">
-                  <Video className="w-4 h-4 text-aivora-cyan" />
+            <div className="rounded-xl bg-pink-50/70 border border-pink-100 p-3.5 flex items-center gap-4 flex-shrink-0">
+              <div className="text-center px-2 border-r border-pink-200">
+                <span className="block text-xs text-slate-500 font-medium">Display on Card</span>
+                <span className="text-sm font-bold text-slate-900 flex items-center gap-1.5 justify-center mt-0.5">
+                  <Video className="w-4 h-4 text-pink-500" />
                   {totalVideoCount} {totalVideoCount === 1 ? 'Tutorial Video' : 'Tutorial Videos'}
                 </span>
               </div>
-              <div className="text-center px-2 border-r border-white/10">
-                <span className="block text-xs text-slate-400 font-medium">Minute Long</span>
-                <span className="text-sm font-bold text-aivora-cyan flex items-center gap-1.5 justify-center mt-0.5">
-                  <Clock className="w-4 h-4 text-aivora-indigo" />
+              <div className="text-center px-2 border-r border-pink-200">
+                <span className="block text-xs text-slate-500 font-medium">Minute Long</span>
+                <span className="text-sm font-bold text-pink-600 flex items-center gap-1.5 justify-center mt-0.5">
+                  <Clock className="w-4 h-4 text-pink-500" />
                   {formatMinutesLong(totalDurationSeconds)}
                 </span>
               </div>
               <div className="text-center px-2">
-                <span className="block text-xs text-slate-400 font-medium">Paid Protected</span>
-                <span className="text-xs font-semibold text-emerald-400 block mt-0.5">
+                <span className="block text-xs text-slate-500 font-medium">Paid Protected</span>
+                <span className="text-xs font-semibold text-emerald-700 block mt-0.5">
                   {paidVideosCount} Paid / {freePreviewsCount} Preview
                 </span>
               </div>
@@ -654,14 +654,14 @@ export default function AdminCourseForm() {
           </div>
 
           {/* Action Bar: Select More Than One Video / Add Video */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-xl bg-aivora-navy/60 border border-white/10">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-xl bg-pink-50/40 border border-pink-100">
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 onClick={() => multiVideoInputRef.current?.click()}
                 loading={uploadingBatch}
                 iconLeft={<Upload className="w-4 h-4" />}
-                className="bg-gradient-to-r from-aivora-indigo to-aivora-cyan text-white shadow-lg"
+                className="bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md"
               >
                 Select & Upload Videos (Multiple Allowed)
               </Button>
@@ -677,25 +677,25 @@ export default function AdminCourseForm() {
               </Button>
             </div>
 
-            <span className="text-xs text-slate-400 flex items-center gap-1.5">
-              <AlertCircle className="w-4 h-4 text-aivora-cyan flex-shrink-0" />
+            <span className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+              <AlertCircle className="w-4 h-4 text-pink-500 flex-shrink-0" />
               You can select multiple MP4 / MOV videos at once from your computer.
             </span>
           </div>
 
           {/* Batch Upload Progress Indicator */}
           {uploadingBatch && (
-            <div className="p-4 rounded-xl glass border border-aivora-cyan/30 space-y-2.5">
+            <div className="p-4 rounded-xl bg-pink-50/70 border border-pink-200 space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-white flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-aivora-cyan" />
+                <span className="font-semibold text-slate-900 flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-pink-500" />
                   {batchStatus}
                 </span>
-                <span className="text-aivora-cyan font-bold">{batchProgress}%</span>
+                <span className="text-pink-600 font-bold">{batchProgress}%</span>
               </div>
-              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="w-full h-2 rounded-full bg-pink-200 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-aivora-indigo to-aivora-cyan transition-all duration-300"
+                  className="h-full bg-gradient-to-r from-pink-500 to-rose-500 transition-all duration-300"
                   style={{ width: `${batchProgress}%` }}
                 />
               </div>
@@ -707,14 +707,14 @@ export default function AdminCourseForm() {
             {tutorials.length === 0 ? (
               <div
                 onClick={() => multiVideoInputRef.current?.click()}
-                className="p-10 rounded-2xl border-2 border-dashed border-white/15 hover:border-aivora-cyan/50 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-3"
+                className="p-10 rounded-2xl border-2 border-dashed border-pink-300 hover:border-pink-500 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-3 bg-pink-50/30"
               >
-                <div className="w-14 h-14 rounded-2xl bg-aivora-cyan/10 flex items-center justify-center text-aivora-cyan">
+                <div className="w-14 h-14 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600">
                   <Video className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">No Video Tutorials Added Yet</h3>
-                  <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                  <h3 className="text-base font-bold text-slate-900">No Video Tutorials Added Yet</h3>
+                  <p className="text-xs text-slate-600 max-w-md mx-auto mt-1">
                     Click here to select more than one video from your computer. They will be automatically uploaded and staged for payment-protected access.
                   </p>
                 </div>
@@ -734,19 +734,19 @@ export default function AdminCourseForm() {
                 return (
                   <div
                     key={tut._id || index}
-                    className="rounded-2xl border border-white/10 bg-aivora-navy/80 p-5 space-y-4 transition-all hover:border-white/20"
+                    className="rounded-2xl border border-pink-100 bg-pink-50/30 p-5 space-y-4 transition-all hover:border-pink-300 shadow-sm"
                   >
                     {/* Top Row: Index, Title, Access Toggle, Reorder, Delete */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-pink-100 pb-3">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-7 h-7 rounded-lg bg-white/10 text-xs font-bold text-white flex items-center justify-center flex-shrink-0">
+                        <span className="w-7 h-7 rounded-lg bg-pink-500 text-xs font-bold text-white flex items-center justify-center flex-shrink-0 shadow-sm">
                           {index + 1}
                         </span>
                         <div className="min-w-0">
-                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                          <span className="text-xs font-semibold text-pink-600 uppercase tracking-wider block">
                             Tutorial Video #{index + 1}
                           </span>
-                          <span className="text-sm font-bold text-white truncate block">
+                          <span className="text-sm font-bold text-slate-900 truncate block">
                             {tut.title || `Video Tutorial ${index + 1}`}
                           </span>
                         </div>
@@ -760,8 +760,8 @@ export default function AdminCourseForm() {
                           onClick={() => updateTutorialField(index, 'isPreview', !tut.isPreview)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                             tut.isPreview
-                              ? 'bg-cyan-500/20 text-aivora-cyan border border-aivora-cyan/40'
-                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                              ? 'bg-pink-100 text-pink-700 border border-pink-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           }`}
                           title={
                             tut.isPreview
@@ -783,12 +783,12 @@ export default function AdminCourseForm() {
                         </button>
 
                         {/* Move Up / Down */}
-                        <div className="flex items-center rounded-lg bg-white/5 border border-white/10">
+                        <div className="flex items-center rounded-lg bg-white border border-pink-200 shadow-sm">
                           <button
                             type="button"
                             disabled={index === 0}
                             onClick={() => moveTutorial(index, -1)}
-                            className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="p-1.5 text-slate-500 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed"
                             title="Move Up"
                           >
                             <ChevronUp className="w-4 h-4" />
@@ -797,7 +797,7 @@ export default function AdminCourseForm() {
                             type="button"
                             disabled={index === tutorials.length - 1}
                             onClick={() => moveTutorial(index, 1)}
-                            className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed border-l border-white/10"
+                            className="p-1.5 text-slate-500 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed border-l border-pink-200"
                             title="Move Down"
                           >
                             <ChevronDown className="w-4 h-4" />
@@ -808,7 +808,7 @@ export default function AdminCourseForm() {
                         <button
                           type="button"
                           onClick={() => deleteTutorial(index)}
-                          className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                          className="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
                           title="Remove this video tutorial"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -821,24 +821,24 @@ export default function AdminCourseForm() {
                       {/* Video Player / Upload Box */}
                       <div className="lg:col-span-5 space-y-2">
                         {tut.videoUrl ? (
-                          <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-white/10">
+                          <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-pink-200">
                             <video
                               src={tut.videoUrl}
                               controls
                               className="w-full h-full object-contain"
                             />
                             <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-white font-medium flex items-center gap-1">
-                              <Video className="w-3 h-3 text-aivora-cyan" />
+                              <Video className="w-3 h-3 text-pink-400" />
                               Video Attached
                             </div>
                           </div>
                         ) : (
                           <div
                             onClick={() => triggerSingleUpload(index)}
-                            className="aspect-video rounded-xl border border-dashed border-white/15 hover:border-aivora-cyan/40 bg-black/40 flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors"
+                            className="aspect-video rounded-xl border border-dashed border-pink-300 hover:border-pink-500 bg-white flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors"
                           >
-                            <Film className="w-6 h-6 text-slate-500 mb-1" />
-                            <span className="text-xs text-slate-300 font-medium">Click to upload video file</span>
+                            <Film className="w-6 h-6 text-pink-400 mb-1" />
+                            <span className="text-xs text-slate-700 font-medium">Click to upload video file</span>
                             <span className="text-[10px] text-slate-500">MP4, MOV, WEBM</span>
                           </div>
                         )}
@@ -856,7 +856,7 @@ export default function AdminCourseForm() {
                             {tut.videoUrl ? 'Replace Video File' : 'Upload Video File'}
                           </Button>
                           {tut.videoUrl && (
-                            <span className="text-[11px] text-slate-400 truncate flex-1">
+                            <span className="text-[11px] text-slate-500 truncate flex-1">
                               {tut.videoUrl}
                             </span>
                           )}
@@ -864,13 +864,13 @@ export default function AdminCourseForm() {
 
                         {isUploadingThis && (
                           <div className="space-y-1">
-                            <div className="flex justify-between text-[11px] text-slate-400">
+                            <div className="flex justify-between text-[11px] text-slate-600">
                               <span>Uploading...</span>
                               <span>{singleProgress}%</span>
                             </div>
-                            <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                            <div className="w-full h-1.5 rounded-full bg-pink-200 overflow-hidden">
                               <div
-                                className="h-full bg-aivora-cyan transition-all"
+                                className="h-full bg-pink-500 transition-all"
                                 style={{ width: `${singleProgress}%` }}
                               />
                             </div>
@@ -890,9 +890,9 @@ export default function AdminCourseForm() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {/* Duration input in minutes */}
                           <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
+                            <label className="text-xs font-medium text-slate-700 flex items-center justify-between">
                               <span>Duration (minutes long)</span>
-                              <span className="text-[11px] text-aivora-cyan">
+                              <span className="text-[11px] text-pink-600 font-semibold">
                                 {Number(tut.videoDuration) || 0} seconds
                               </span>
                             </label>
@@ -905,7 +905,7 @@ export default function AdminCourseForm() {
                                   const mins = Number(e.target.value) || 0
                                   updateTutorialField(index, 'videoDuration', mins * 60)
                                 }}
-                                className="w-full pl-3.5 pr-14 py-2.5 rounded-xl bg-aivora-navy border border-white/10 text-sm text-white focus:outline-none focus:border-aivora-cyan/50"
+                                className="w-full pl-3.5 pr-14 py-2.5 rounded-xl bg-white border border-pink-200 text-sm text-slate-800 focus:outline-none focus:border-pink-500"
                               />
                               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
                                 mins
@@ -915,13 +915,13 @@ export default function AdminCourseForm() {
 
                           {/* Access Mode Selector */}
                           <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-medium text-slate-300">Access Permission</label>
+                            <label className="text-xs font-medium text-slate-700">Access Permission</label>
                             <select
                               value={tut.isPreview ? 'preview' : 'paid'}
                               onChange={(e) =>
                                 updateTutorialField(index, 'isPreview', e.target.value === 'preview')
                               }
-                              className="w-full px-3 py-2.5 rounded-xl bg-aivora-navy border border-white/10 text-xs text-white focus:outline-none focus:border-aivora-cyan/50"
+                              className="w-full px-3 py-2.5 rounded-xl bg-white border border-pink-200 text-xs text-slate-800 focus:outline-none focus:border-pink-500"
                             >
                               <option value="paid">🔒 Paid Only (Locked Until Payment)</option>
                               <option value="preview">🎁 Free Sample Preview</option>
@@ -938,17 +938,17 @@ export default function AdminCourseForm() {
                         />
 
                         {/* Access explanation note */}
-                        <div className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-start gap-2 text-[11px] text-slate-300">
+                        <div className="p-2.5 rounded-xl bg-white border border-pink-200 flex items-start gap-2 text-[11px] text-slate-700 shadow-sm">
                           {tut.isPreview ? (
                             <>
-                              <Unlock className="w-4 h-4 text-aivora-cyan flex-shrink-0 mt-0.5" />
+                              <Unlock className="w-4 h-4 text-pink-600 flex-shrink-0 mt-0.5" />
                               <span>
                                 This video is marked as a <strong>Free Preview</strong>. Potential buyers can watch it before purchasing.
                               </span>
                             </>
                           ) : (
                             <>
-                              <Lock className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                              <Lock className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                               <span>
                                 <strong>Paid Protection Active:</strong> A user only gets access to watch this video after making a payment and getting enrolled in this course.
                               </span>

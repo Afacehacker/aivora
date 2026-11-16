@@ -46,7 +46,7 @@ export default function CourseCard({ course, onPreview }) {
   const isVideoCover = courseUsesVideoCover(course)
 
   return (
-    <div className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-aivora-indigo/50 shadow-card hover:shadow-card-hover flex flex-col h-full transition-all md:hover:-translate-y-1">
+    <div className="group bg-white rounded-2xl overflow-hidden border border-pink-100 hover:border-pink-300 shadow-card hover:shadow-card-hover flex flex-col h-full transition-all md:hover:-translate-y-1">
       {/* Product Video Cover */}
       <div className="relative w-full overflow-hidden bg-black flex items-center justify-center min-h-[160px] max-h-[220px] sm:max-h-[300px] md:max-h-[360px]">
         <CourseMediaPreview
@@ -54,16 +54,16 @@ export default function CourseCard({ course, onPreview }) {
           className="w-full h-auto max-h-[220px] sm:max-h-[300px] md:max-h-[360px] object-contain block mx-auto"
           videoClassName="w-full h-auto max-h-[220px] sm:max-h-[300px] md:max-h-[360px] object-contain block mx-auto"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-aivora-dark/60 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
           {course.category?.name ? (
-            <span className="px-2.5 py-1 rounded-full glass-dark text-[11px] font-medium text-slate-200">
+            <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-sm text-[11px] font-medium text-slate-800 shadow-sm border border-pink-100">
               {course.category.name}
             </span>
           ) : <span />}
-          <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-aivora-cyan text-[11px] font-semibold flex items-center gap-1">
+          <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[11px] font-semibold flex items-center gap-1 shadow-sm">
             <Video className="w-3 h-3" /> Video Tutorial
           </span>
         </div>
@@ -76,9 +76,9 @@ export default function CourseCard({ course, onPreview }) {
               e.preventDefault()
               onPreview(course)
             }}
-            className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-dark border border-white/15 text-xs font-semibold text-white hover:bg-aivora-indigo transition-colors"
+            className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 backdrop-blur-sm border border-pink-200 text-xs font-semibold text-slate-800 hover:bg-pink-500 hover:text-white transition-colors shadow-md"
           >
-            <Play className="w-3.5 h-3.5 fill-white" />
+            <Play className="w-3.5 h-3.5 fill-current" />
             Preview
           </button>
         )}
@@ -88,57 +88,57 @@ export default function CourseCard({ course, onPreview }) {
       <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
         <div className="space-y-2.5">
           <Link to={`/courses/${course.slug}`}>
-            <h3 className="text-base sm:text-lg font-display font-bold text-white group-hover:text-aivora-indigo transition-colors line-clamp-2">
+            <h3 className="text-base sm:text-lg font-display font-bold text-slate-900 group-hover:text-pink-600 transition-colors line-clamp-2">
               {course.title}
             </h3>
           </Link>
 
-          <p className="text-xs sm:text-sm text-slate-400 line-clamp-2">
+          <p className="text-xs sm:text-sm text-slate-600 line-clamp-2">
             {course.shortDescription || course.description}
           </p>
         </div>
 
         <div className="space-y-3 pt-2">
           {/* Instructor & Rating */}
-          <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="flex items-center justify-between text-xs text-slate-500">
             <div className="flex items-center gap-2 truncate">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-aivora-indigo to-aivora-purple flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 shadow-sm">
                 {course.instructor?.name?.charAt(0) || 'A'}
               </div>
-              <span className="truncate">{course.instructor?.name || 'AIVORA Studio'}</span>
+              <span className="truncate text-slate-700 font-medium">{course.instructor?.name || 'AIVORA Studio'}</span>
             </div>
 
             {ratingCount > 0 ? (
-              <div className="flex items-center gap-1 text-amber-400 font-semibold">
+              <div className="flex items-center gap-1 text-amber-500 font-semibold">
                 <Star className="w-3.5 h-3.5 fill-amber-400" />
                 <span>{ratingAvg.toFixed(1)}</span>
-                <span className="text-slate-500">({ratingCount})</span>
+                <span className="text-slate-400">({ratingCount})</span>
               </div>
             ) : (
-              <span className="text-[11px] text-slate-500">New Release</span>
+              <span className="text-[11px] text-pink-600 font-medium">New Release</span>
             )}
           </div>
 
           {/* Meta: Tutorial Videos Added & Minute Long */}
-          <div className="flex items-center justify-between text-xs text-slate-400 border-t border-white/5 pt-3">
-            <span className="flex items-center gap-1.5 font-medium text-slate-200">
-              <Video className="w-3.5 h-3.5 text-aivora-cyan flex-shrink-0" />
+          <div className="flex items-center justify-between text-xs text-slate-600 border-t border-pink-100 pt-3">
+            <span className="flex items-center gap-1.5 font-semibold text-slate-800">
+              <Video className="w-3.5 h-3.5 text-pink-500 flex-shrink-0" />
               {course.totalLessons || 0} {course.totalLessons === 1 ? 'Tutorial Video' : 'Tutorial Videos'}
             </span>
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <Clock className="w-3.5 h-3.5 text-aivora-indigo flex-shrink-0" />
+            <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <Clock className="w-3.5 h-3.5 text-pink-400 flex-shrink-0" />
               {formatMinutesLong(course.totalDuration)}
             </span>
           </div>
 
           {/* Price & CTA */}
-          <div className="flex items-center justify-between pt-2 border-t border-white/5">
+          <div className="flex items-center justify-between pt-2 border-t border-pink-100">
             <div>
-              <span className="text-lg font-display font-black text-white">
+              <span className="text-lg font-display font-black text-slate-900">
                 {formatPrice(displayPrice)}
               </span>
               {hasDiscount && (
-                <span className="ml-2 text-xs text-slate-500 line-through">
+                <span className="ml-2 text-xs text-slate-400 line-through">
                   {formatPrice(course.price)}
                 </span>
               )}
@@ -146,7 +146,7 @@ export default function CourseCard({ course, onPreview }) {
 
             <Link
               to={`/courses/${course.slug}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-aivora-indigo to-aivora-purple text-xs font-semibold text-white hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-xs font-semibold text-white hover:opacity-95 transition-opacity shadow-sm"
             >
               <span>Enroll Now</span>
               <ArrowRight className="w-3.5 h-3.5" />

@@ -65,17 +65,17 @@ export default function HeroSection({ settings }) {
 
   return (
     <section className="relative flex items-center pt-20 sm:pt-24 pb-12 sm:pb-16 overflow-hidden bg-hero-gradient">
-      {/* Ambient Glowing Orbs (Desktop only to prevent mobile GPU lag) */}
-      <div className="hidden lg:block absolute top-1/4 -left-32 w-96 h-96 bg-aivora-indigo/20 rounded-full blur-[128px] pointer-events-none" />
-      <div className="hidden lg:block absolute bottom-1/4 -right-32 w-96 h-96 bg-aivora-purple/20 rounded-full blur-[128px] pointer-events-none" />
-      <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-aivora-cyan/10 rounded-full blur-[140px] pointer-events-none" />
+      {/* Ambient Glowing Orbs */}
+      <div className="hidden lg:block absolute top-1/4 -left-32 w-96 h-96 bg-pink-300/25 rounded-full blur-[128px] pointer-events-none" />
+      <div className="hidden lg:block absolute bottom-1/4 -right-32 w-96 h-96 bg-rose-200/25 rounded-full blur-[128px] pointer-events-none" />
+      <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-pink-100/30 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Subtle Grid Pattern */}
       <div
-        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{
           backgroundImage:
-            'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
+            'linear-gradient(to right, #ec4899 1px, transparent 1px), linear-gradient(to bottom, #ec4899 1px, transparent 1px)',
           backgroundSize: '48px 48px',
         }}
       />
@@ -85,13 +85,13 @@ export default function HeroSection({ settings }) {
           {/* Left Column: Copy & CTAs */}
           <div className="lg:col-span-7 space-y-5 sm:space-y-6">
             {/* Eyebrow badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass border border-aivora-indigo/30 text-xs sm:text-sm font-medium text-slate-200">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-aivora-cyan flex-shrink-0" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-pink-200 text-xs sm:text-sm font-semibold text-pink-700 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-500 flex-shrink-0" />
               <span className="truncate">Next-Generation AI Creative Production Platform</span>
             </div>
 
             {/* Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-black tracking-tight leading-[1.12] text-white">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-black tracking-tight leading-[1.12] text-slate-900">
               {headline.includes('Powered by AI') ? (
                 <>
                   Your Imagination.{' '}
@@ -103,7 +103,7 @@ export default function HeroSection({ settings }) {
             </h1>
 
             {/* Supporting Headline */}
-            <p className="text-sm sm:text-lg lg:text-xl text-slate-300 leading-relaxed max-w-2xl">
+            <p className="text-sm sm:text-lg lg:text-xl text-slate-700 leading-relaxed max-w-2xl font-normal">
               {subHeadline}
             </p>
 
@@ -124,7 +124,7 @@ export default function HeroSection({ settings }) {
                   variant="secondary"
                   size="lg"
                   fullWidth
-                  iconLeft={<Play className="w-4 h-4 text-aivora-cyan fill-aivora-cyan" />}
+                  iconLeft={<Play className="w-4 h-4 text-pink-600 fill-pink-600" />}
                 >
                   Start Learning Today
                 </Button>
@@ -132,15 +132,15 @@ export default function HeroSection({ settings }) {
             </div>
 
             {/* Trust Indicator */}
-            <div className="pt-4 sm:pt-6 border-t border-white/10">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-aivora-cyan mb-2.5">
-                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+            <div className="pt-4 sm:pt-6 border-t border-pink-200/60">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-pink-700 mb-2.5">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0 text-pink-600" />
                 <span>Structured, Practical, Beginner-Friendly Training</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {trustPills.map((pill) => (
-                  <div key={pill} className="flex items-center gap-2 text-xs sm:text-sm text-slate-300">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <div key={pill} className="flex items-center gap-2 text-xs sm:text-sm text-slate-700 font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     <span>{pill}</span>
                   </div>
                 ))}
@@ -178,7 +178,7 @@ export default function HeroSection({ settings }) {
               />
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-300">{previewCourse.shortDescription}</p>
+              <p className="text-sm text-slate-700">{previewCourse.shortDescription}</p>
               <Link to={`/courses/${previewCourse.slug}`}>
                 <Button size="sm">Go to Course</Button>
               </Link>

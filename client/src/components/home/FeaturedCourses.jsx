@@ -122,16 +122,16 @@ export default function FeaturedCourses() {
   }, [activeFilter])
 
   return (
-    <section className="py-14 sm:py-24 relative bg-aivora-navy/50 border-y border-white/5">
+    <section className="py-14 sm:py-24 relative bg-pink-50/40 border-y border-pink-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 mb-8 sm:mb-10">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full glass border border-aivora-indigo/30 text-xs font-semibold uppercase tracking-wider text-aivora-cyan mb-3">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-pink-100/70 border border-pink-200 text-xs font-semibold uppercase tracking-wider text-pink-700 mb-3">
               <Sparkles className="w-3.5 h-3.5" />
               Course Marketplace
             </span>
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-display font-black text-white">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-display font-black text-slate-900">
               Featured <span className="gradient-text">AI Courses</span>
             </h2>
           </div>
@@ -150,10 +150,10 @@ export default function FeaturedCourses() {
               <button
                 key={tab.id}
                 onClick={() => setActiveFilter(tab)}
-                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all shadow-sm ${
                   active
-                    ? 'bg-gradient-to-r from-aivora-indigo to-aivora-purple text-white shadow-glow-indigo'
-                    : 'glass text-slate-400 hover:text-white'
+                    ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-glow-pink'
+                    : 'bg-white text-slate-700 border border-pink-100 hover:bg-pink-50 hover:text-pink-600'
                 }`}
               >
                 {tab.label}
@@ -180,11 +180,11 @@ export default function FeaturedCourses() {
             ))}
           </div>
         ) : (
-          <div className="glass rounded-2xl p-8 sm:p-12 text-center border border-white/10">
-            <p className="text-base sm:text-lg font-semibold text-white mb-2">
+          <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-pink-100 shadow-sm">
+            <p className="text-base sm:text-lg font-semibold text-slate-900 mb-2">
               No courses found for &ldquo;{activeFilter.label}&rdquo; yet.
             </p>
-            <p className="text-xs sm:text-sm text-slate-400 mb-6">
+            <p className="text-xs sm:text-sm text-slate-600 mb-6">
               Try another category filter or browse our full catalog.
             </p>
             <Button onClick={() => setActiveFilter(filterTabs[0])}>Reset Filter</Button>
@@ -220,7 +220,7 @@ export default function FeaturedCourses() {
               />
             </div>
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs sm:text-sm text-slate-300">{previewCourse.shortDescription}</p>
+              <p className="text-xs sm:text-sm text-slate-700">{previewCourse.shortDescription}</p>
               <Link to={`/courses/${previewCourse.slug}`}>
                 <Button size="sm">Go to Course</Button>
               </Link>

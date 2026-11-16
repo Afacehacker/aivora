@@ -46,25 +46,25 @@ export default function AdminDashboard() {
       label: 'Registered Students',
       value: stats?.totalUsers || 0,
       icon: Users,
-      color: 'text-aivora-indigo',
+      color: 'text-pink-600',
     },
     {
       label: 'Total Courses',
       value: stats?.totalCourses || 0,
       icon: BookOpen,
-      color: 'text-aivora-cyan',
+      color: 'text-pink-600',
     },
     {
       label: 'Total Enrollments',
       value: stats?.totalEnrollments || 0,
       icon: GraduationCap,
-      color: 'text-aivora-purple',
+      color: 'text-pink-600',
     },
     {
       label: 'Verified Revenue',
       value: formatPrice(stats?.totalRevenue || 0),
       icon: DollarSign,
-      color: 'text-emerald-400',
+      color: 'text-emerald-600',
     },
   ]
 
@@ -78,10 +78,10 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-display font-black text-white">
+            <h1 className="text-2xl font-display font-black text-slate-900">
               Administrator Overview
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-600">
               Complete platform metrics, revenue analytics, and real-time operational logs.
             </p>
           </div>
@@ -99,16 +99,16 @@ export default function AdminDashboard() {
             return (
               <div
                 key={k.label}
-                className="glass rounded-2xl p-5 border border-white/10 flex items-center gap-4"
+                className="bg-white rounded-2xl p-5 border border-pink-100 flex items-center gap-4 shadow-sm"
               >
-                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-pink-50 border border-pink-200 flex items-center justify-center flex-shrink-0">
                   <Icon className={`w-6 h-6 ${k.color}`} />
                 </div>
                 <div>
-                  <p className="text-xl sm:text-2xl font-display font-black text-white">
+                  <p className="text-xl sm:text-2xl font-display font-black text-slate-900">
                     {loading ? '...' : k.value}
                   </p>
-                  <p className="text-xs text-slate-400">{k.label}</p>
+                  <p className="text-xs text-slate-500 font-medium">{k.label}</p>
                 </div>
               </div>
             )
@@ -118,13 +118,13 @@ export default function AdminDashboard() {
         {/* Revenue Chart & Popular Courses */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Revenue Chart */}
-          <div className="lg:col-span-7 glass rounded-2xl p-6 border border-white/10 space-y-4">
+          <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-pink-100 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-display font-bold text-white flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-base font-display font-bold text-slate-900 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
                 Verified Monthly Revenue
               </h2>
-              <span className="text-xs text-slate-400">Last 12 Months</span>
+              <span className="text-xs text-slate-500">Last 12 Months</span>
             </div>
 
             {revenueData.length > 0 ? (
@@ -135,27 +135,27 @@ export default function AdminDashboard() {
                   return (
                     <div key={idx} className="flex-1 flex flex-col items-center gap-2">
                       <div
-                        className="w-full rounded-t-lg bg-gradient-to-t from-aivora-indigo to-aivora-cyan transition-all"
+                        className="w-full rounded-t-lg bg-gradient-to-t from-pink-500 to-rose-500 transition-all shadow-sm"
                         style={{ height: `${pct}%` }}
                         title={`${label}: ${formatPrice(d.revenue)}`}
                       />
-                      <span className="text-[10px] text-slate-400">{label}</span>
+                      <span className="text-[10px] text-slate-500 font-medium">{label}</span>
                     </div>
                   )
                 })}
               </div>
             ) : (
-              <div className="h-52 flex items-center justify-center text-sm text-slate-500">
+              <div className="h-52 flex items-center justify-center text-sm text-slate-400">
                 Revenue bars will populate as verified transactions are processed.
               </div>
             )}
           </div>
 
           {/* Popular Courses */}
-          <div className="lg:col-span-5 glass rounded-2xl p-6 border border-white/10 space-y-4">
+          <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-pink-100 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-display font-bold text-white">Popular Courses</h2>
-              <Link to="/admin/courses" className="text-xs text-aivora-indigo hover:underline">
+              <h2 className="text-base font-display font-bold text-slate-900">Popular Courses</h2>
+              <Link to="/admin/courses" className="text-xs text-pink-600 font-semibold hover:underline">
                 Manage →
               </Link>
             </div>
@@ -163,11 +163,11 @@ export default function AdminDashboard() {
               {(stats?.popularCourses || []).map((c) => (
                 <div
                   key={c._id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/5"
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-pink-50/50 border border-pink-100"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{c.title}</p>
-                    <p className="text-xs text-slate-400">{formatPrice(c.price)}</p>
+                    <p className="text-sm font-semibold text-slate-900 truncate">{c.title}</p>
+                    <p className="text-xs text-slate-500">{formatPrice(c.price)}</p>
                   </div>
                   <Badge color={c.isPublished ? 'success' : 'warning'}>
                     {c.isPublished ? 'Published' : 'Draft'}
@@ -181,10 +181,10 @@ export default function AdminDashboard() {
         {/* Recent Purchases & Admin Audit Trail */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Recent Purchases */}
-          <div className="lg:col-span-7 glass rounded-2xl p-6 border border-white/10 space-y-4">
+          <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-pink-100 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-display font-bold text-white">Recent Transactions</h2>
-              <Link to="/admin/orders" className="text-xs text-aivora-indigo hover:underline">
+              <h2 className="text-base font-display font-bold text-slate-900">Recent Transactions</h2>
+              <Link to="/admin/orders" className="text-xs text-pink-600 font-semibold hover:underline">
                 View All →
               </Link>
             </div>
@@ -193,18 +193,18 @@ export default function AdminDashboard() {
                 {stats.recentPurchases.map((p) => (
                   <div
                     key={p._id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/5 text-sm"
+                    className="flex items-center justify-between p-3 rounded-xl bg-pink-50/50 border border-pink-100 text-sm"
                   >
                     <div className="min-w-0">
-                      <p className="font-semibold text-white truncate">
+                      <p className="font-semibold text-slate-900 truncate">
                         {p.student?.name || 'Student'}
                       </p>
-                      <p className="text-xs text-slate-400 truncate">
+                      <p className="text-xs text-slate-500 truncate">
                         {p.course?.title || 'Course'}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-white">{formatPrice(p.amount)}</p>
+                      <p className="font-bold text-slate-900">{formatPrice(p.amount)}</p>
                       <Badge color={p.status === 'success' ? 'success' : 'warning'}>
                         {p.status}
                       </Badge>
@@ -213,22 +213,22 @@ export default function AdminDashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">No recent purchases recorded yet.</p>
+              <p className="text-sm text-slate-400">No recent purchases recorded yet.</p>
             )}
           </div>
 
           {/* Audit Logs */}
-          <div className="lg:col-span-5 glass rounded-2xl p-6 border border-white/10 space-y-4">
-            <h2 className="text-base font-display font-bold text-white flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-aivora-cyan" />
+          <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-pink-100 shadow-sm space-y-4">
+            <h2 className="text-base font-display font-bold text-slate-900 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-pink-600" />
               Admin Activity Audit Log
             </h2>
             {logs.length > 0 ? (
               <div className="space-y-2.5">
                 {logs.map((log) => (
-                  <div key={log._id} className="p-3 rounded-xl bg-white/5 text-xs space-y-1">
+                  <div key={log._id} className="p-3 rounded-xl bg-pink-50/50 border border-pink-100 text-xs space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono font-semibold text-aivora-cyan">
+                      <span className="font-mono font-semibold text-pink-600">
                         {log.action}
                       </span>
                       <span className="text-slate-500 flex items-center gap-1">
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
                         {new Date(log.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-slate-400">
+                    <p className="text-slate-600">
                       By {log.admin?.name || 'Admin'} on {log.targetModel || 'System'}
                     </p>
                   </div>

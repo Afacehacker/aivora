@@ -3,10 +3,10 @@ import { Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
 
 const variants = {
-  primary: 'bg-gradient-to-r from-aivora-indigo to-aivora-purple text-white hover:opacity-90 shadow-glow-indigo',
-  secondary: 'glass text-white hover:bg-white/10 border border-white/10',
-  outline: 'border border-aivora-indigo text-aivora-indigo hover:bg-aivora-indigo/10',
-  ghost: 'text-slate-300 hover:text-white hover:bg-white/5',
+  primary: 'bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white hover:opacity-95 shadow-md shadow-pink-500/25',
+  secondary: 'bg-white text-pink-600 hover:bg-pink-50/80 border border-pink-200 shadow-sm',
+  outline: 'border border-pink-500 text-pink-600 hover:bg-pink-50',
+  ghost: 'text-slate-600 hover:text-pink-600 hover:bg-pink-50/50',
   danger: 'bg-red-500/90 text-white hover:bg-red-600',
 }
 

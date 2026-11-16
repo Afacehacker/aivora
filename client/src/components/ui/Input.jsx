@@ -18,7 +18,7 @@ const Input = forwardRef(function Input(
   return (
     <div className={clsx('flex flex-col gap-1.5', containerClassName)}>
       {label && (
-        <label className="text-sm font-medium text-slate-300">
+        <label className="text-sm font-medium text-slate-700">
           {label}
         </label>
       )}
@@ -32,13 +32,13 @@ const Input = forwardRef(function Input(
           ref={ref}
           type={type}
           className={clsx(
-            'w-full rounded-xl bg-aivora-navy border transition-all duration-200 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2',
+            'w-full rounded-xl bg-white border transition-all duration-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2',
             'py-3 px-4',
             Icon && 'pl-10',
             IconRight && 'pr-10',
             error
-              ? 'border-red-500/50 focus:ring-red-500/30'
-              : 'border-white/10 focus:ring-aivora-indigo/30 focus:border-aivora-indigo/50',
+              ? 'border-red-400 focus:ring-red-400/30'
+              : 'border-pink-200 focus:ring-pink-400/30 focus:border-pink-500 shadow-sm',
             className
           )}
           {...props}

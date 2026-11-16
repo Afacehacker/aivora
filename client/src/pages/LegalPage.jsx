@@ -214,22 +214,22 @@ export default function LegalPage({ type }) {
         url={activeDoc.path}
       />
 
-      <div className="pt-28 pb-24 bg-aivora-dark min-h-screen">
+      <div className="pt-28 pb-24 bg-[#fff5f7] min-h-screen">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto space-y-4">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-aivora-indigo/30 text-xs font-semibold uppercase tracking-wider text-aivora-cyan">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-100/70 border border-pink-200 text-xs font-semibold uppercase tracking-wider text-pink-700 shadow-sm">
               <Sparkles className="w-3.5 h-3.5" />
               AIVORA Legal & Compliance Center
             </span>
-            <h1 className="text-3xl sm:text-5xl font-display font-black text-white">
+            <h1 className="text-3xl sm:text-5xl font-display font-black text-slate-900">
               {activeDoc.title}
             </h1>
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
               {activeDoc.subtitle}
             </p>
             <p className="text-xs text-slate-500">
-              Last Updated: <span className="text-slate-300 font-medium">{activeDoc.lastUpdated}</span>
+              Last Updated: <span className="text-slate-700 font-medium">{activeDoc.lastUpdated}</span>
             </p>
           </div>
 
@@ -242,10 +242,10 @@ export default function LegalPage({ type }) {
                 <Link
                   key={tab.key}
                   to={tab.path}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all border ${
+                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all border shadow-sm ${
                     isActive
-                      ? 'bg-gradient-to-r from-aivora-indigo to-aivora-purple text-white border-transparent shadow-glow-sm'
-                      : 'glass border-white/10 text-slate-300 hover:text-white hover:border-aivora-indigo/40'
+                      ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white border-transparent'
+                      : 'bg-white border-pink-200 text-slate-700 hover:text-pink-600 hover:border-pink-300'
                   }`}
                 >
                   <TabIcon className="w-4 h-4" />
@@ -256,16 +256,16 @@ export default function LegalPage({ type }) {
           </div>
 
           {/* Ethical AI Highlight Banner */}
-          <div className="rounded-2xl glass border border-aivora-cyan/25 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-aivora-cyan/15 border border-aivora-cyan/30 flex items-center justify-center text-aivora-cyan shrink-0">
+          <div className="rounded-2xl bg-white border border-pink-100 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
+            <div className="w-11 h-11 rounded-xl bg-pink-50 border border-pink-200 flex items-center justify-center text-pink-600 shrink-0">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-semibold text-slate-900 flex items-center gap-2">
                 Commitment to Responsible & Consented AI Education
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 AIVORA strictly requires explicit consent for any real-person likeness or voice synthesis workflow and prohibits deceptive or non-consensual synthetic media across all courses and student projects.
               </p>
             </div>
@@ -277,17 +277,17 @@ export default function LegalPage({ type }) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="rounded-3xl glass border border-white/10 p-6 sm:p-10 space-y-8 shadow-card"
+            className="rounded-3xl bg-white border border-pink-100 p-6 sm:p-10 space-y-8 shadow-sm"
           >
-            <div className="flex items-center gap-3 pb-6 border-b border-white/10">
-              <div className="w-10 h-10 rounded-xl bg-aivora-indigo/20 border border-aivora-indigo/30 flex items-center justify-center text-aivora-indigo">
+            <div className="flex items-center gap-3 pb-6 border-b border-pink-100">
+              <div className="w-10 h-10 rounded-xl bg-pink-50 border border-pink-200 flex items-center justify-center text-pink-600">
                 <ActiveIcon className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-display font-bold text-white">
+                <h2 className="text-lg sm:text-xl font-display font-bold text-slate-900">
                   {activeDoc.title}
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Official policy governing AIVORA courses, accounts, and creative AI tools
                 </p>
               </div>
@@ -296,14 +296,14 @@ export default function LegalPage({ type }) {
             <div className="space-y-8">
               {activeDoc.sections.map((section) => (
                 <section key={section.heading} className="space-y-3">
-                  <h3 className="text-base sm:text-lg font-display font-bold text-white">
+                  <h3 className="text-base sm:text-lg font-display font-bold text-slate-900">
                     {section.heading}
                   </h3>
                   <div className="space-y-3">
                     {section.body.map((paragraph, idx) => (
                       <p
                         key={idx}
-                        className="text-sm sm:text-base text-slate-300 leading-relaxed"
+                        className="text-sm sm:text-base text-slate-700 leading-relaxed"
                       >
                         {paragraph}
                       </p>
@@ -314,20 +314,20 @@ export default function LegalPage({ type }) {
             </div>
 
             {/* Footer Contact Box */}
-            <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="pt-6 border-t border-pink-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-white">
+                <p className="text-sm font-semibold text-slate-900">
                   Have questions about our legal terms or ethical AI policies?
                 </p>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Our compliance and student support team responds within 24 business hours.
                 </p>
               </div>
               <Link
                 to="/contact"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-xs sm:text-sm font-semibold text-white transition-colors self-start sm:self-auto"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-pink-50 hover:bg-pink-100 border border-pink-200 text-xs sm:text-sm font-semibold text-pink-700 transition-colors self-start sm:self-auto"
               >
-                <Mail className="w-4 h-4 text-aivora-cyan" />
+                <Mail className="w-4 h-4 text-pink-600" />
                 Contact Legal & Support
               </Link>
             </div>

@@ -1,14 +1,14 @@
 import { clsx } from 'clsx'
 
 const colorMap = {
-  success: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
-  warning: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
-  error: 'bg-red-500/20 text-red-400 border border-red-500/30',
-  info: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
-  purple: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
-  indigo: 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30',
-  cyan: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30',
-  default: 'bg-white/10 text-slate-300 border border-white/10',
+  success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  warning: 'bg-amber-50 text-amber-700 border border-amber-200',
+  error: 'bg-rose-50 text-rose-700 border border-rose-200',
+  info: 'bg-pink-50 text-pink-700 border border-pink-200',
+  purple: 'bg-rose-50 text-rose-700 border border-rose-200',
+  indigo: 'bg-pink-50 text-pink-700 border border-pink-200',
+  cyan: 'bg-pink-100/70 text-pink-800 border border-pink-300/60',
+  default: 'bg-white text-slate-700 border border-pink-200 shadow-sm',
 }
 
 export default function Badge({ children, color = 'default', className = '' }) {

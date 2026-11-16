@@ -43,17 +43,17 @@ export default function BeforeAfterShowcase() {
   const [sliderPos, setSliderPos] = useState(50)
 
   return (
-    <section className="py-12 sm:py-20 lg:py-24 relative bg-aivora-navy/60 border-y border-white/5">
+    <section className="py-12 sm:py-20 lg:py-24 relative bg-white border-y border-pink-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full glass border border-aivora-cyan/30 text-xs font-semibold uppercase tracking-wider text-aivora-cyan mb-3">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-pink-100/70 border border-pink-200 text-xs font-semibold uppercase tracking-wider text-pink-700 mb-3 shadow-sm">
             <Sliders className="w-3.5 h-3.5" />
             Interactive Transformation Lab
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-slate-900 mb-4">
             Before & After <span className="gradient-text">AI Showcase</span>
           </h2>
-          <p className="text-slate-400 text-base">
+          <p className="text-slate-600 text-base">
             Drag the interactive comparison slider to inspect how raw creative inputs are transformed through AIVORA production workflows.
           </p>
         </div>
@@ -67,10 +67,10 @@ export default function BeforeAfterShowcase() {
               <button
                 key={mode.id}
                 onClick={() => setActiveTab(mode)}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm ${
                   active
-                    ? 'bg-gradient-to-r from-aivora-indigo to-aivora-purple text-white shadow-glow-indigo'
-                    : 'glass text-slate-300 hover:text-white'
+                    ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-glow-pink'
+                    : 'bg-white text-slate-700 border border-pink-100 hover:bg-pink-50 hover:text-pink-600'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -127,7 +127,7 @@ export default function BeforeAfterShowcase() {
               className="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_15px_rgba(255,255,255,0.9)] pointer-events-none"
               style={{ left: `${sliderPos}%` }}
             >
-              <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gradient-to-r from-aivora-indigo to-aivora-purple border-2 border-white flex items-center justify-center shadow-lg">
+              <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 border-2 border-white flex items-center justify-center shadow-lg">
                 <Sliders className="w-4 h-4 text-white" />
               </div>
             </div>
@@ -145,9 +145,9 @@ export default function BeforeAfterShowcase() {
           </div>
 
           {/* Caption & Ethical Notice */}
-          <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass rounded-2xl p-5 border border-white/10">
-            <p className="text-sm text-slate-300">{activeTab.description}</p>
-            <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium flex-shrink-0">
+          <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white rounded-2xl p-5 border border-pink-100 shadow-sm">
+            <p className="text-sm text-slate-700">{activeTab.description}</p>
+            <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold flex-shrink-0">
               <ShieldCheck className="w-4 h-4" />
               <span>100% Licensed & Consented Media</span>
             </div>

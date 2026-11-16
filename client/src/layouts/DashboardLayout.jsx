@@ -26,31 +26,31 @@ function Sidebar({ onClose }) {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
       {/* Logo */}
-      <div className="flex items-center justify-between p-6 border-b border-white/5">
+      <div className="flex items-center justify-between p-6 border-b border-pink-100">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-aivora-indigo to-aivora-purple flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-sm">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <span className="text-lg font-display font-black gradient-text">AIVORA</span>
         </Link>
         {onClose && (
-          <button onClick={onClose} className="lg:hidden p-1 text-slate-400 hover:text-white">
+          <button onClick={onClose} className="lg:hidden p-1 text-slate-500 hover:text-slate-900">
             <X className="w-5 h-5" />
           </button>
         )}
       </div>
 
       {/* User info */}
-      <div className="p-4 border-b border-white/5">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-aivora-indigo/10 border border-aivora-indigo/20">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-aivora-indigo to-aivora-purple flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+      <div className="p-4 border-b border-pink-100">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-pink-50/70 border border-pink-100">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center font-bold text-white text-sm flex-shrink-0 shadow-sm">
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
-            <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+            <p className="text-sm font-semibold text-slate-900 truncate">{user?.name}</p>
+            <p className="text-xs text-slate-500 truncate">{user?.email}</p>
           </div>
         </div>
       </div>
@@ -66,16 +66,16 @@ function Sidebar({ onClose }) {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
                 isActive
-                  ? 'bg-gradient-to-r from-aivora-indigo/20 to-aivora-purple/10 text-aivora-indigo border border-aivora-indigo/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-pink-50 text-pink-600 font-semibold border border-pink-200'
+                  : 'text-slate-600 hover:text-pink-600 hover:bg-pink-50/60'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-aivora-indigo' : 'text-slate-500 group-hover:text-white'}`} />
+                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-pink-600' : 'text-slate-500 group-hover:text-pink-600'}`} />
                 <span className="flex-1">{label}</span>
-                {isActive && <ChevronRight className="w-4 h-4 text-aivora-indigo" />}
+                {isActive && <ChevronRight className="w-4 h-4 text-pink-600" />}
               </>
             )}
           </NavLink>
@@ -83,10 +83,10 @@ function Sidebar({ onClose }) {
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-white/5">
+      <div className="p-4 border-t border-pink-100">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 transition-all w-full"
         >
           <LogOut className="w-5 h-5" />
           <span>Logout</span>
@@ -100,9 +100,9 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-aivora-dark flex">
+    <div className="min-h-screen bg-[#fff5f7] flex">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 glass-dark border-r border-white/5 fixed inset-y-0 left-0 z-30">
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-pink-100 fixed inset-y-0 left-0 z-30 shadow-sm">
         <Sidebar />
       </aside>
 
@@ -115,14 +115,14 @@ export default function DashboardLayout() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSidebarOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
             />
             <motion.aside
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 35 }}
-              className="fixed inset-y-0 left-0 w-72 glass-dark border-r border-white/5 z-50 lg:hidden"
+              className="fixed inset-y-0 left-0 w-72 bg-white border-r border-pink-100 z-50 lg:hidden shadow-2xl"
             >
               <Sidebar onClose={() => setSidebarOpen(false)} />
             </motion.aside>
@@ -133,22 +133,22 @@ export default function DashboardLayout() {
       {/* Main content */}
       <div className="lg:pl-64 flex-1 flex flex-col min-h-screen">
         {/* Top header */}
-        <header className="sticky top-0 z-20 glass-dark border-b border-white/5 h-16 flex items-center justify-between px-4 md:px-6">
+        <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-pink-100 h-16 flex items-center justify-between px-4 md:px-6 shadow-sm">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-lg glass text-slate-400 hover:text-white"
+            className="lg:hidden p-2 rounded-lg bg-pink-50/70 border border-pink-200 text-slate-700 hover:text-pink-600"
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <Link to="/" className="text-xs text-slate-500 hover:text-slate-300 transition-colors hidden sm:block">← Back to Site</Link>
+            <Link to="/" className="text-xs text-slate-600 hover:text-pink-600 transition-colors hidden sm:block font-medium">← Back to Site</Link>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative p-2 rounded-lg glass text-slate-400 hover:text-white transition-colors">
+            <button className="relative p-2 rounded-lg bg-pink-50/70 border border-pink-200 text-slate-600 hover:text-pink-600 transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-aivora-indigo" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-pink-500" />
             </button>
-            <Link to="/courses" className="hidden sm:flex px-3 py-1.5 rounded-lg bg-gradient-to-r from-aivora-indigo to-aivora-purple text-xs font-semibold text-white hover:opacity-90 transition-opacity">
+            <Link to="/courses" className="hidden sm:flex px-3 py-1.5 rounded-lg bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-xs font-semibold text-white hover:opacity-90 transition-opacity shadow-sm">
               Browse Courses
             </Link>
           </div>

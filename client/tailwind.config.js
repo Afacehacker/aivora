@@ -5,14 +5,18 @@ export default {
     extend: {
       colors: {
         aivora: {
-          dark: '#030712',
-          navy: '#0f172a',
-          'navy-light': '#1e293b',
-          indigo: '#6366f1',
-          purple: '#8b5cf6',
-          cyan: '#06b6d4',
-          magenta: '#ec4899',
-          blue: '#3b82f6',
+          dark: '#fff5f7',          // Soft light pink/white primary background
+          navy: '#ffffff',          // Crisp pure white cards and surfaces
+          'navy-light': '#fdf2f8',  // Delicate blush pink accent surface
+          pink: '#ec4899',          // Primary vibrant pink
+          'pink-light': '#fce7f3',  // Light pastel pink
+          'pink-dark': '#db2777',   // Deep rose pink
+          rose: '#f43f5e',          // Rose accent
+          indigo: '#ec4899',        // Mapped to pink for seamless compatibility
+          purple: '#f43f5e',        // Mapped to rose for seamless compatibility
+          cyan: '#db2777',          // Mapped to deep pink
+          magenta: '#ec4899',       // Pink
+          blue: '#f43f5e',          // Rose
         }
       },
       fontFamily: {
@@ -21,8 +25,8 @@ export default {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-gradient': 'linear-gradient(135deg, #030712 0%, #0f172a 50%, #1e1b4b 100%)',
-        'card-gradient': 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.05))',
+        'hero-gradient': 'linear-gradient(135deg, #fff1f5 0%, #fdf2f8 50%, #ffffff 100%)',
+        'card-gradient': 'linear-gradient(135deg, rgba(236,72,153,0.06), rgba(244,63,94,0.03))',
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',
@@ -44,11 +48,11 @@ export default {
         }
       },
       boxShadow: {
-        'glow-indigo': '0 0 30px rgba(99,102,241,0.3)',
-        'glow-purple': '0 0 30px rgba(139,92,246,0.3)',
-        'glow-cyan': '0 0 30px rgba(6,182,212,0.3)',
-        'card': '0 4px 24px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.5)',
-        'card-hover': '0 8px 40px rgba(0,0,0,0.5), 0 0 20px rgba(99,102,241,0.2)',
+        'glow-indigo': '0 4px 20px rgba(236,72,153,0.25)',
+        'glow-purple': '0 4px 20px rgba(244,63,94,0.25)',
+        'glow-cyan': '0 4px 20px rgba(219,39,119,0.25)',
+        'card': '0 2px 16px rgba(244,63,94,0.06), 0 1px 3px rgba(0,0,0,0.04)',
+        'card-hover': '0 10px 30px rgba(244,63,94,0.12), 0 2px 6px rgba(0,0,0,0.04)',
       }
     }
   },
