@@ -47,18 +47,18 @@ export default function CourseCard({ course, onPreview }) {
 
   return (
     <div className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-aivora-indigo/50 shadow-card hover:shadow-card-hover flex flex-col h-full transition-all md:hover:-translate-y-1">
-      {/* Thumbnail or Full-Frame Video Cover */}
+      {/* Thumbnail or Full-Frame Video Cover — Scaled perfectly for mobile & desktop */}
       <div
         className={
           isVideoCover
-            ? 'relative w-full overflow-hidden bg-black flex items-center justify-center'
-            : 'relative h-48 overflow-hidden bg-aivora-navy'
+            ? 'relative w-full overflow-hidden bg-black flex items-center justify-center min-h-[160px] max-h-[220px] sm:max-h-[300px] md:max-h-[360px]'
+            : 'relative aspect-video sm:h-48 overflow-hidden bg-aivora-navy flex items-center justify-center'
         }
       >
         <CourseMediaPreview
           course={course}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          videoClassName="w-full h-auto max-h-[440px] object-contain block"
+          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+          videoClassName="w-full h-auto max-h-[220px] sm:max-h-[300px] md:max-h-[360px] object-contain block mx-auto"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-aivora-dark/60 via-transparent to-transparent pointer-events-none" />
 

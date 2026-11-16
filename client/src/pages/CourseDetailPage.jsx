@@ -262,10 +262,117 @@ export default function CourseDetailPage() {
         </div>
 
         {/* Main Content + Sticky Checkout Sidebar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10">
+            {/* On mobile (< lg): render Checkout & Video Preview card first so students see price & media immediately */}
+            <div className="lg:col-span-4 lg:order-last">
+              <div className="sticky top-20 sm:top-24 glass-dark rounded-2xl sm:rounded-3xl overflow-hidden border border-white/15 shadow-card-hover">
+                {/* Preview Thumbnail or Responsive Video Cover */}
+                <div
+                  className={
+                    courseUsesVideoCover(course)
+                      ? 'relative w-full bg-black flex items-center justify-center overflow-hidden min-h-[180px] max-h-[240px] sm:max-h-[320px] lg:max-h-[420px]'
+                      : 'relative aspect-video bg-aivora-navy flex items-center justify-center'
+                  }
+                >
+                  <CourseMediaPreview
+                    course={course}
+                    className="w-full h-full object-cover object-center"
+                    videoClassName="w-full h-auto max-h-[240px] sm:max-h-[320px] lg:max-h-[420px] object-contain block mx-auto"
+                  />
+                  {course.previewVideo && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewUrl(course.previewVideo)}
+                      className="absolute bottom-3 right-3 inline-flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl glass-dark border border-white/20 text-xs font-semibold text-white hover:bg-aivora-indigo transition-colors shadow-lg"
+                    >
+                      <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-white" />
+                      <span>Preview With Sound</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="p-5 sm:p-6 space-y-5 sm:space-y-6">
+                  {/* Pricing */}
+                  <div>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-2xl sm:text-3xl font-display font-black text-white">
+                        {formatPrice(finalPrice)}
+                      </span>
+                      {(hasDiscount || couponDiscount > 0) && (
+                        <span className="text-sm sm:text-base text-slate-500 line-through">
+                          {formatPrice(course.price)}
+                        </span>
+                      )}
+                    </div>
+                    {couponDiscount > 0 && (
+                      <p className="text-xs text-emerald-400 mt-1">
+                        Coupon discount applied (-{formatPrice(couponDiscount)})
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Primary Action Button */}
+                  <Button
+                    fullWidth
+                    size="lg"
+                    loading={processingPayment}
+                    onClick={handleEnrollOrBuy}
+                  >
+                    {isEnrolled ? 'Continue Learning' : 'Proceed to Bank Transfer Payment'}
+                  </Button>
+
+                  {!isEnrolled && finalPrice > 0 && (
+                    <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-200 leading-relaxed">
+                      <strong className="text-amber-300">Payment Notice:</strong> Transfers from{' '}
+                      <strong>OPay</strong> cannot be received due to gateway problems. We accept
+                      transfers from any other Nigerian bank (PalmPay, Kuda, Moniepoint, UBA,
+                      Access Bank, FirstBank, etc.).
+                    </div>
+                  )}
+
+                  {/* Coupon Box */}
+                  {!isEnrolled && basePrice > 0 && (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Coupon code (e.g. WELCOME10)"
+                        className="flex-1 px-3 py-2 rounded-xl bg-aivora-dark border border-white/10 text-xs text-white uppercase"
+                      />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={applyingCoupon}
+                        onClick={handleApplyCoupon}
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Trust guarantees */}
+                  <div className="pt-2 border-t border-white/10 space-y-2.5 text-xs text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-aivora-cyan flex-shrink-0" />
+                      <span>Instant automatic access after bank transfer</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-aivora-indigo flex-shrink-0" />
+                      <span>Lifetime access to all video tutorials</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-aivora-purple flex-shrink-0" />
+                      <span>Verifiable Certificate of Completion included</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Left Details */}
-            <div className="lg:col-span-8 space-y-12">
+            <div className="lg:col-span-8 space-y-8 sm:space-y-12">
               {/* What You Will Learn */}
               {course.objectives?.length > 0 && (
                 <div className="glass rounded-2xl p-6 sm:p-8 border border-white/10">
@@ -477,118 +584,6 @@ export default function CourseDetailPage() {
                     No student reviews published for this course yet.
                   </p>
                 )}
-              </div>
-            </div>
-
-            {/* Right Sticky Checkout Card */}
-            <div className="lg:col-span-4">
-              <div className="sticky top-24 glass-dark rounded-3xl overflow-hidden border border-white/15 shadow-card-hover">
-                {/* Preview Thumbnail or Full-Height/Width Video */}
-                <div
-                  className={
-                    courseUsesVideoCover(course)
-                      ? 'relative w-full bg-black flex items-center justify-center overflow-hidden'
-                      : 'relative aspect-video bg-aivora-navy'
-                  }
-                >
-                  <CourseMediaPreview
-                    course={course}
-                    className="w-full h-full object-cover"
-                    videoClassName="w-full h-auto max-h-[480px] object-contain block"
-                  />
-                  {course.previewVideo && (
-                    <button
-                      type="button"
-                      onClick={() => setPreviewUrl(course.previewVideo)}
-                      className="absolute bottom-3 right-3 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl glass-dark border border-white/20 text-xs font-semibold text-white hover:bg-aivora-indigo transition-colors shadow-lg"
-                    >
-                      <Play className="w-4 h-4 text-white fill-white" />
-                      <span>Preview With Sound</span>
-                    </button>
-                  )}
-                </div>
-
-                <div className="p-6 space-y-6">
-                  {/* Pricing */}
-                  <div>
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-3xl font-display font-black text-white">
-                        {formatPrice(finalPrice)}
-                      </span>
-                      {(hasDiscount || couponDiscount > 0) && (
-                        <span className="text-base text-slate-500 line-through">
-                          {formatPrice(course.price)}
-                        </span>
-                      )}
-                    </div>
-                    {couponDiscount > 0 && (
-                      <p className="text-xs text-emerald-400 mt-1">
-                        Coupon discount applied (-{formatPrice(couponDiscount)})
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Primary Action Button */}
-                  <Button
-                    fullWidth
-                    size="lg"
-                    loading={processingPayment}
-                    onClick={handleEnrollOrBuy}
-                  >
-                    {isEnrolled ? 'Continue Learning' : 'Proceed to Bank Transfer Payment'}
-                  </Button>
-
-                  {!isEnrolled && finalPrice > 0 && (
-                    <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-200 leading-relaxed">
-                      <strong className="text-amber-300">Payment Notice:</strong> Transfers from{' '}
-                      <strong>OPay</strong> cannot be received due to gateway problems. We accept
-                      transfers from any other Nigerian bank (PalmPay, Kuda, Moniepoint, UBA,
-                      Access Bank, FirstBank, etc.).
-                    </div>
-                  )}
-
-                  {/* Coupon Box */}
-                  {!isEnrolled && basePrice > 0 && (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        placeholder="Coupon code (e.g. WELCOME10)"
-                        className="flex-1 px-3 py-2 rounded-xl bg-aivora-dark border border-white/10 text-xs text-white uppercase"
-                      />
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        loading={applyingCoupon}
-                        onClick={handleApplyCoupon}
-                      >
-                        Apply
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Course Includes */}
-                  <div className="space-y-3 pt-4 border-t border-white/10 text-xs text-slate-300">
-                    <p className="font-semibold text-white text-sm">This course includes:</p>
-                    <div className="flex items-center gap-2.5">
-                      <Video className="w-4 h-4 text-aivora-cyan" />
-                      <span>{course.totalLessons || 0} on-demand HD tutorial {course.totalLessons === 1 ? 'video' : 'videos'}</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <Clock className="w-4 h-4 text-aivora-cyan" />
-                      <span>Self-paced access on desktop & mobile</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <Award className="w-4 h-4 text-aivora-purple" />
-                      <span>Verifiable Certificate of Completion</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                      <span>Secure verified payment & instant unlock</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

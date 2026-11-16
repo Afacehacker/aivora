@@ -49,7 +49,7 @@ const reasons = [
 
 export default function WhyAivora() {
   return (
-    <section className="py-24 relative bg-aivora-dark overflow-hidden">
+    <section className="py-12 sm:py-20 lg:py-24 relative bg-aivora-dark overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column */}

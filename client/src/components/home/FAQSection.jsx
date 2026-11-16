@@ -55,7 +55,7 @@ export default function FAQSection({ faqs = [] }) {
   const [openIndex, setOpenIndex] = useState(0)
 
   return (
-    <section className="py-24 relative bg-aivora-dark">
+    <section className="py-12 sm:py-20 lg:py-24 relative bg-aivora-dark">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full glass border border-aivora-indigo/30 text-xs font-semibold uppercase tracking-wider text-aivora-indigo mb-3">

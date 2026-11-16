@@ -70,7 +70,7 @@ const FALLBACK_POSTER =
  */
 export default function CourseMediaPreview({
   course,
-  className = 'w-full h-full object-cover',
+  className = 'w-full h-full object-cover object-center',
   videoClassName,
   autoPlay = true,
   muted = true,

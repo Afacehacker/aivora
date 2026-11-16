@@ -4,6 +4,7 @@ import Lesson from '../models/Lesson.js';
 import Enrollment from '../models/Enrollment.js';
 import Payment from '../models/Payment.js';
 import Review from '../models/Review.js';
+import SiteSettings from '../models/SiteSettings.js';
 import catchAsync from '../utils/catchAsync.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { successResponse, paginationMeta } from '../utils/apiResponse.js';
@@ -362,6 +363,23 @@ export const deleteCourse = catchAsync(async (req, res, next) => {
       console.error('Cloudinary delete error:', err.message);
     }
   }
+
+  // Delete preview video from cloudinary if exists
+  if (course.previewVideo && course.previewVideo.includes('res.cloudinary.com')) {
+    try {
+      const parts = course.previewVideo.split('/');
+      const publicId = parts.slice(-2).join('/').replace(/\.[^.]+$/, '');
+      await deleteFile(publicId);
+    } catch (err) {
+      console.error('Cloudinary preview video delete error:', err.message);
+    }
+  }
+
+  // Cascade delete all modules, lessons, and reviews attached to this course
+  await Module.deleteMany({ course: course._id });
+  await Lesson.deleteMany({ course: course._id });
+  await Review.deleteMany({ course: course._id });
+  await SiteSettings.updateMany({}, { $pull: { featuredCourses: course._id } });
 
   await course.deleteOne();
   return successResponse(res, 200, 'Course deleted successfully.');

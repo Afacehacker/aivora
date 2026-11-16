@@ -120,9 +120,10 @@ export const ensureInitialData = async () => {
         });
       }
 
-      // 3. Ensure "IMAGE to VIDEO" course and demo courses exist if database has no courses
+      // 3. Ensure "IMAGE to VIDEO" course and demo courses exist ONLY if this is a fresh database (never initialized)
+      const existingSettingsDoc = await SiteSettings.findOne();
       const courseCount = await Course.countDocuments();
-      if (courseCount === 0) {
+      if (courseCount === 0 && !existingSettingsDoc) {
         // First: Create the featured "IMAGE to VIDEO" course
         const imageToVideoCourse = await Course.create({
           title: 'IMAGE to VIDEO',

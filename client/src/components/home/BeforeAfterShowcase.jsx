@@ -43,7 +43,7 @@ export default function BeforeAfterShowcase() {
   const [sliderPos, setSliderPos] = useState(50)
 
   return (
-    <section className="py-24 relative bg-aivora-navy/60 border-y border-white/5">
+    <section className="py-12 sm:py-20 lg:py-24 relative bg-aivora-navy/60 border-y border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full glass border border-aivora-cyan/30 text-xs font-semibold uppercase tracking-wider text-aivora-cyan mb-3">

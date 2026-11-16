@@ -386,6 +386,27 @@ export default function AdminCourseForm() {
     }
   }
 
+  // Delete entire course handler
+  const handleDeleteCourse = async () => {
+    if (!courseId) return
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete "${form.title || 'this course'}"? This cannot be undone.`
+      )
+    ) {
+      return
+    }
+    setSaving(true)
+    try {
+      await adminService.deleteCourse(courseId)
+      toast.success('Course deleted permanently')
+      navigate('/admin/courses')
+    } catch (err) {
+      toast.error(err.message || 'Could not delete course')
+      setSaving(false)
+    }
+  }
+
   // Calculate live counters
   const totalVideoCount = tutorials.length
   const totalDurationSeconds = tutorials.reduce(
@@ -437,13 +458,27 @@ export default function AdminCourseForm() {
             </div>
           </div>
 
-          <Button
-            onClick={handleSaveCourse}
-            loading={saving}
-            iconLeft={<Save className="w-4 h-4" />}
-          >
-            {courseId ? 'Save All Course Changes' : 'Publish Product Now'}
-          </Button>
+          <div className="flex items-center gap-2.5">
+            {courseId && (
+              <button
+                type="button"
+                onClick={handleDeleteCourse}
+                disabled={saving}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50"
+                title="Permanently Delete This Course"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Delete Course</span>
+              </button>
+            )}
+            <Button
+              onClick={handleSaveCourse}
+              loading={saving}
+              iconLeft={<Save className="w-4 h-4" />}
+            >
+              {courseId ? 'Save Changes' : 'Publish Product'}
+            </Button>
+          </div>
         </div>
 
         {/* STEP 1: Product Media Studio (Thumbnail & Promo Preview Video) */}

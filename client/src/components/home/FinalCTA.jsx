@@ -5,7 +5,7 @@ import Button from '../ui/Button'
 
 export default function FinalCTA() {
   return (
-    <section className="py-24 relative overflow-hidden bg-aivora-dark">
+    <section className="py-12 sm:py-20 lg:py-24 relative overflow-hidden bg-aivora-dark">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}

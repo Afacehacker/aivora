@@ -8,6 +8,7 @@
   html {
     scroll-behavior: smooth;
     overflow-x: hidden;
+    width: 100%;
     -webkit-tap-highlight-color: transparent;
   }
   body {
@@ -15,8 +16,23 @@
     color: #f8fafc;
     font-family: 'Inter', system-ui, sans-serif;
     overflow-x: hidden;
+    width: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  #root {
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  img, video, iframe {
+    max-width: 100%;
+  }
+  /* Prevent iOS automatic page zoom on focus by ensuring minimum 16px input font size */
+  @media screen and (max-width: 767px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
   }
 }
 

@@ -6,7 +6,7 @@ export default function Testimonials({ testimonials = [] }) {
   const approved = testimonials.filter((t) => t.isApproved !== false)
 
   return (
-    <section className="py-24 relative bg-aivora-navy/40 border-t border-white/5">
+    <section className="py-12 sm:py-20 lg:py-24 relative bg-aivora-navy/40 border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-14">
           <span className="inline-block px-3.5 py-1.5 rounded-full glass border border-aivora-indigo/30 text-xs font-semibold uppercase tracking-wider text-aivora-cyan mb-3">
