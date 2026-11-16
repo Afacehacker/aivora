@@ -8,6 +8,6 @@
     "start": "npm start --prefix server"
   },
   "engines": {
-    "node": "20.x"
+    "node": "26.x"
   }
 }
