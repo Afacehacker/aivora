@@ -87,6 +87,74 @@ export const adminService = {
       onUploadProgress,
     })
   },
+
+  // Chunked Media Upload (Reliable for videos of ANY duration/size, bypasses Vercel 4.5MB limit)
+  uploadMediaChunked: async (file, onProgress) => {
+    // 2.5 MB chunk size (strictly below Vercel's 4.5 MB serverless limit)
+    const CHUNK_SIZE = 2.5 * 1024 * 1024
+    const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE))
+    const uploadId = `upl-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+
+    // Generate safe clean filename with original extension
+    const dotIdx = file.name.lastIndexOf('.')
+    const ext = (dotIdx > 0 ? file.name.substring(dotIdx) : '.mp4').toLowerCase()
+    const rawBase = dotIdx > 0 ? file.name.substring(0, dotIdx) : file.name
+    const safeBase = rawBase.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40)
+    const filename = `${Date.now()}-${safeBase}${ext}`
+
+    let finalResponse = null
+
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      const start = chunkIndex * CHUNK_SIZE
+      const end = Math.min(start + CHUNK_SIZE, file.size)
+      const chunkBlob = file.slice(start, end)
+
+      const formData = new FormData()
+      formData.append('chunk', chunkBlob, file.name)
+      formData.append('uploadId', uploadId)
+      formData.append('chunkIndex', String(chunkIndex))
+      formData.append('totalChunks', String(totalChunks))
+      formData.append('filename', filename)
+      formData.append('folder', file.type.startsWith('image/') ? 'images' : 'videos')
+      formData.append('mimeType', file.type || 'video/mp4')
+      formData.append('originalName', file.name)
+      formData.append('totalSize', String(file.size))
+
+      let retries = 3
+      while (retries > 0) {
+        try {
+          const res = await api.post('/admin/upload-chunk', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+          finalResponse = res
+          break
+        } catch (err) {
+          retries--
+          if (retries === 0) {
+            throw new Error(
+              err.response?.data?.message ||
+                err.message ||
+                `Failed uploading video chunk ${chunkIndex + 1} of ${totalChunks}`
+            )
+          }
+          await new Promise((r) => setTimeout(r, 1200))
+        }
+      }
+
+      if (typeof onProgress === 'function') {
+        const pct = Math.round(((chunkIndex + 1) / totalChunks) * 100)
+        onProgress({
+          chunkIndex,
+          totalChunks,
+          percent: pct,
+          loaded: end,
+          total: file.size,
+        })
+      }
+    }
+
+    return finalResponse
+  },
   getUploadedMedia: () => get('/admin/media'),
 }
 

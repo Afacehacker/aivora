@@ -74,10 +74,11 @@ import {
 } from '../controllers/category.controller.js';
 import {
   handleMediaUpload,
+  handleChunkUpload,
   listUploadedMedia,
 } from '../controllers/upload.controller.js';
 import { protect, restrictTo } from '../middleware/auth.js';
-import { uploadMediaFile } from '../middleware/upload.js';
+import { uploadMediaFile, uploadChunkMiddleware } from '../middleware/upload.js';
 import auditLog from '../middleware/auditLog.js';
 
 const router = express.Router();
@@ -86,6 +87,7 @@ router.use(protect, restrictTo('admin'));
 
 // Media Upload & Media Library (Videos, Images, PDFs)
 router.post('/upload', uploadMediaFile, auditLog('UPLOAD_MEDIA', 'Media'), handleMediaUpload);
+router.post('/upload-chunk', uploadChunkMiddleware, auditLog('UPLOAD_MEDIA_CHUNK', 'Media'), handleChunkUpload);
 router.get('/media', listUploadedMedia);
 
 // Dashboard & Analytics

@@ -149,4 +149,13 @@ export const uploadMediaFile = multer({
   limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
 }).single('file');
 
+// Chunked media upload (memory storage for assembling chunk by chunk in MongoDB)
+export const uploadChunkMiddleware = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB per chunk (each chunk is ~2.5MB)
+}).fields([
+  { name: 'chunk', maxCount: 1 },
+  { name: 'file', maxCount: 1 },
+]);
+
 export { isCloudinaryConfigured, uploadsDir };

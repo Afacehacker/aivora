@@ -49,6 +49,7 @@ export default function AdminCourseForm() {
   // Upload progress indicators
   const [uploadingPreview, setUploadingPreview] = useState(false)
   const [previewProgress, setPreviewProgress] = useState(0)
+  const [previewStatus, setPreviewStatus] = useState('')
 
   // Batch multi-video upload state
   const [uploadingBatch, setUploadingBatch] = useState(false)
@@ -130,18 +131,20 @@ export default function AdminCourseForm() {
     if (!file) return
     setUploadingPreview(true)
     setPreviewProgress(0)
+    setPreviewStatus('Preparing video upload...')
     try {
-      const res = await adminService.uploadMedia(file, (evt) => {
-        if (evt.total) {
-          setPreviewProgress(Math.round((evt.loaded * 100) / evt.total))
-        }
+      const res = await adminService.uploadMediaChunked(file, (p) => {
+        setPreviewProgress(p.percent)
+        setPreviewStatus(`Uploading video ${p.percent}% (Part ${p.chunkIndex + 1}/${p.totalChunks})...`)
       })
-      setForm((prev) => ({ ...prev, previewVideo: res.data.url }))
+      const uploadedUrl = res?.data?.data?.url || res?.data?.url || ''
+      setForm((prev) => ({ ...prev, previewVideo: uploadedUrl }))
       toast.success('Course preview video uploaded!')
     } catch (err) {
       toast.error(err.message || 'Video upload failed')
     } finally {
       setUploadingPreview(false)
+      setPreviewStatus('')
       e.target.value = ''
     }
   }
@@ -159,19 +162,22 @@ export default function AdminCourseForm() {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        setBatchStatus(`Uploading video ${i + 1} of ${files.length}: "${file.name}"...`)
+        setBatchStatus(`Preparing video ${i + 1} of ${files.length}: "${file.name}"...`)
 
         // Extract duration from video file metadata
         const duration = await getVideoDurationFromFile(file)
 
-        // Upload video file
-        const res = await adminService.uploadMedia(file, (evt) => {
-          if (evt.total) {
-            const filePct = Math.round((evt.loaded * 100) / evt.total)
-            const overallPct = Math.round(((i + filePct / 100) / files.length) * 100)
-            setBatchProgress(overallPct)
-          }
+        // Upload video file using chunked uploader
+        const res = await adminService.uploadMediaChunked(file, (p) => {
+          const filePct = p.percent
+          const overallPct = Math.round(((i + filePct / 100) / files.length) * 100)
+          setBatchProgress(overallPct)
+          setBatchStatus(
+            `Uploading video ${i + 1} of ${files.length} (${p.percent}%, Part ${p.chunkIndex + 1}/${p.totalChunks}): "${file.name}"`
+          )
         })
+
+        const videoUrl = res?.data?.data?.url || res?.data?.url || ''
 
         // Clean up filename for human-readable title
         const lastDot = file.name.lastIndexOf('.')
@@ -185,8 +191,8 @@ export default function AdminCourseForm() {
           _id: `tut-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
           title: cleanName || `Video Tutorial ${tutorials.length + i + 1}`,
           description: '',
-          videoUrl: res.data.url,
-          videoDuration: duration || res.data.duration || 300,
+          videoUrl: videoUrl,
+          videoDuration: duration || res?.data?.data?.duration || res?.data?.duration || 300,
           isPreview: false, // Access unlocked only after payment!
           resources: [],
         })
@@ -215,19 +221,19 @@ export default function AdminCourseForm() {
 
     try {
       const duration = await getVideoDurationFromFile(file)
-      const res = await adminService.uploadMedia(file, (evt) => {
-        if (evt.total) {
-          setSingleProgress(Math.round((evt.loaded * 100) / evt.total))
-        }
+      const res = await adminService.uploadMediaChunked(file, (p) => {
+        setSingleProgress(p.percent)
       })
+
+      const videoUrl = res?.data?.data?.url || res?.data?.url || ''
 
       setTutorials((prev) => {
         const next = [...prev]
         if (next[index]) {
           next[index] = {
             ...next[index],
-            videoUrl: res.data.url,
-            videoDuration: duration || res.data.duration || next[index].videoDuration || 300,
+            videoUrl: videoUrl || next[index].videoUrl,
+            videoDuration: duration || res?.data?.data?.duration || res?.data?.duration || next[index].videoDuration || 300,
             title: next[index].title || file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '),
           }
         }
@@ -479,6 +485,21 @@ export default function AdminCourseForm() {
                 {uploadingPreview ? `Uploading ${previewProgress}%` : 'Upload Video File'}
               </Button>
             </div>
+
+            {uploadingPreview && (
+              <div className="p-3 rounded-xl bg-pink-100/70 border border-pink-200 space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-800">{previewStatus}</span>
+                  <span className="text-pink-600 font-bold">{previewProgress}%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-pink-200 overflow-hidden">
+                  <div
+                    className="h-full bg-pink-500 transition-all duration-300"
+                    style={{ width: `${previewProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             {form.previewVideo ? (
               <div className="relative rounded-xl overflow-hidden bg-black border border-pink-200 flex items-center justify-center">
