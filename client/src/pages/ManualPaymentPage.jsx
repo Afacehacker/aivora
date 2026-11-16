@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import {
   AlertTriangle,
@@ -11,6 +11,12 @@ import {
   Clock,
   Ban,
   Send,
+  Upload,
+  FileText,
+  Image,
+  X,
+  Eye,
+  Loader2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import SEO from '../components/common/SEO'
@@ -71,6 +77,60 @@ export default function ManualPaymentPage() {
   const [transferNote, setTransferNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submittedReceipt, setSubmittedReceipt] = useState(null)
+
+  // Local Payment Receipt File Upload State
+  const receiptFileInputRef = useRef(null)
+  const [receiptFile, setReceiptFile] = useState(null)
+  const [receiptUrl, setReceiptUrl] = useState('')
+  const [receiptPreview, setReceiptPreview] = useState('')
+  const [uploadingReceipt, setUploadingReceipt] = useState(false)
+  const [receiptProgress, setReceiptProgress] = useState(0)
+
+  const handleReceiptFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error('Receipt file is too large. Please select a picture or PDF under 15MB.')
+      return
+    }
+
+    setReceiptFile(file)
+    if (file.type.startsWith('image/')) {
+      setReceiptPreview(URL.createObjectURL(file))
+    } else {
+      setReceiptPreview('')
+    }
+
+    setUploadingReceipt(true)
+    setReceiptProgress(0)
+
+    try {
+      const res = await paymentService.uploadReceipt(file, (evt) => {
+        if (evt.total) {
+          setReceiptProgress(Math.round((evt.loaded * 100) / evt.total))
+        }
+      })
+      const uploadedUrl = res?.data?.url || res?.url || res?.data?.data?.url || ''
+      if (!uploadedUrl) {
+        throw new Error('Could not upload receipt. Please try again.')
+      }
+      setReceiptUrl(uploadedUrl)
+      toast.success('Payment receipt screenshot attached successfully!')
+    } catch (err) {
+      toast.error(err.message || 'Failed to upload receipt screenshot.')
+    } finally {
+      setUploadingReceipt(false)
+      if (receiptFileInputRef.current) receiptFileInputRef.current.value = ''
+    }
+  }
+
+  const handleRemoveReceipt = () => {
+    setReceiptFile(null)
+    setReceiptUrl('')
+    setReceiptPreview('')
+    if (receiptFileInputRef.current) receiptFileInputRef.current.value = ''
+  }
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -190,6 +250,7 @@ export default function ManualPaymentPage() {
         recipientBank: selectedAccount?.bankName || '',
         recipientAccountNumber: selectedAccount?.accountNumber || '',
         transferNote: transferNote.trim(),
+        proofUrl: receiptUrl || undefined,
       })
 
       if (res.data?.enrolled) {
@@ -324,6 +385,19 @@ export default function ManualPaymentPage() {
                   <span className="text-slate-500">Verification Status:</span>
                   <Badge color="warning">Pending Admin Confirmation</Badge>
                 </div>
+                {receiptUrl && (
+                  <div className="pt-2 border-t border-pink-100 flex items-center justify-between">
+                    <span className="text-slate-500">Transfer Receipt:</span>
+                    <a
+                      href={receiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold text-pink-600 hover:text-pink-700 underline inline-flex items-center gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> View Uploaded Receipt
+                    </a>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
@@ -502,6 +576,112 @@ export default function ManualPaymentPage() {
                     value={transferNote}
                     onChange={(e) => setTransferNote(e.target.value)}
                   />
+
+                  {/* Payment Receipt / Screenshot Upload from Local Device */}
+                  <div className="space-y-2.5 rounded-2xl bg-pink-50/70 border border-pink-200 p-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                        <Upload className="w-4 h-4 text-pink-600" />
+                        Upload Payment Receipt / Transfer Screenshot
+                      </label>
+                      <span className="text-[11px] text-pink-600 font-semibold bg-pink-100 px-2 py-0.5 rounded-full">
+                        Recommended
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600">
+                      Upload the bank transfer screenshot or receipt picture from your phone gallery or computer for faster automatic confirmation.
+                    </p>
+
+                    <input
+                      ref={receiptFileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf"
+                      onChange={handleReceiptFileChange}
+                      className="hidden"
+                    />
+
+                    {uploadingReceipt && (
+                      <div className="p-3 rounded-xl bg-white border border-pink-200 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-slate-700 flex items-center gap-2">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-500" />
+                            Uploading receipt from your device...
+                          </span>
+                          <span className="text-pink-600 font-bold">{receiptProgress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-pink-100 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-pink-500 to-rose-500 transition-all duration-300"
+                            style={{ width: `${receiptProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {receiptUrl ? (
+                      <div className="relative rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 flex items-center gap-3">
+                        {receiptPreview ? (
+                          <img
+                            src={receiptPreview}
+                            alt="Receipt Preview"
+                            className="w-16 h-16 rounded-lg object-cover border border-emerald-300 flex-shrink-0 bg-white"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-lg bg-emerald-100 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-emerald-700">
+                            <FileText className="w-7 h-7" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                            Receipt Attached
+                          </div>
+                          <p className="text-xs text-slate-700 truncate font-medium mt-0.5">
+                            {receiptFile?.name || 'receipt-image'}
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            {receiptFile?.size ? `${Math.round(receiptFile.size / 1024)} KB` : 'Uploaded'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => receiptFileInputRef.current?.click()}
+                            className="text-xs font-semibold text-pink-600 hover:text-pink-700 px-2.5 py-1 rounded-lg bg-white border border-pink-200 shadow-sm"
+                          >
+                            Change
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemoveReceipt}
+                            className="text-xs text-rose-600 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50"
+                            title="Remove receipt"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      !uploadingReceipt && (
+                        <div
+                          onClick={() => receiptFileInputRef.current?.click()}
+                          className="rounded-xl border-2 border-dashed border-pink-300 hover:border-pink-500 bg-white p-5 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2 group"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Upload className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-slate-800 block">
+                              Click to select receipt picture from phone or computer
+                            </span>
+                            <span className="text-[11px] text-slate-500 block mt-0.5">
+                              Supports JPG, PNG, WEBP, or PDF (Max 15MB)
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
 
                   <Button
                     type="submit"

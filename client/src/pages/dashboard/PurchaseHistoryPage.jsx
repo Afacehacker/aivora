@@ -78,6 +78,16 @@ export default function PurchaseHistoryPage() {
                           Sender: {p.senderName || p.metadata?.senderName}
                         </span>
                       )}
+                      {p.proofUrl && (
+                        <a
+                          href={p.proofUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-pink-400 hover:text-pink-300 underline mt-1"
+                        >
+                          View Receipt Screenshot ↗
+                        </a>
+                      )}
                     </td>
                     <td className="py-3.5 px-4">
                       <Badge color={statusColor[p.status] || 'default'} className="capitalize">

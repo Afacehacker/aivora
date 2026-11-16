@@ -7,6 +7,9 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  Eye,
+  X,
+  ExternalLink,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import SEO from '../../components/common/SEO'
@@ -28,6 +31,7 @@ export default function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
+  const [viewingReceiptUrl, setViewingReceiptUrl] = useState(null)
 
   // Manual Payment Bank Accounts State
   const [paymentAccounts, setPaymentAccounts] = useState([])
@@ -347,6 +351,17 @@ export default function AdminOrders() {
                             <p className="font-semibold text-emerald-300">{sBank}</p>
                             <p className="text-slate-300">Sender: {sName}</p>
                             {tNote && <p className="text-slate-400">Note: {tNote}</p>}
+                            {o.proofUrl || o.payment?.proofUrl ? (
+                              <button
+                                type="button"
+                                onClick={() => setViewingReceiptUrl(o.proofUrl || o.payment?.proofUrl)}
+                                className="mt-1.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-500/20 text-pink-300 border border-pink-500/40 text-[11px] font-semibold hover:bg-pink-500/30 transition-colors"
+                              >
+                                <Eye className="w-3.5 h-3.5" /> View Receipt
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-slate-500 block mt-1">No receipt uploaded</span>
+                            )}
                           </td>
                           <td className="py-3.5 px-4">
                             <Badge color={statusColor[o.status] || 'default'} className="capitalize">
@@ -398,6 +413,61 @@ export default function AdminOrders() {
           )}
         </div>
       </div>
+
+      {/* Payment Receipt Image / PDF Viewer Modal */}
+      {viewingReceiptUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-white/20 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Eye className="w-4 h-4 text-pink-400" />
+                <span>Student Bank Transfer Receipt</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setViewingReceiptUrl(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[65vh] overflow-auto rounded-xl bg-black flex items-center justify-center p-2 border border-white/10">
+              {viewingReceiptUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={viewingReceiptUrl}
+                  className="w-full h-96 rounded-lg"
+                  title="Receipt PDF"
+                />
+              ) : (
+                <img
+                  src={viewingReceiptUrl}
+                  alt="Student Payment Receipt"
+                  className="max-h-[60vh] w-auto object-contain rounded-lg shadow-lg"
+                />
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href={viewingReceiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-pink-400 hover:text-pink-300 underline inline-flex items-center gap-1"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Open Full-Size in New Tab
+              </a>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setViewingReceiptUrl(null)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

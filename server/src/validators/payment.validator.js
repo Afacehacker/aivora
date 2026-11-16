@@ -26,4 +26,8 @@ export const initializePaymentValidator = [
     .optional()
     .trim()
     .isLength({ max: 20 }).withMessage('Coupon code cannot exceed 20 characters'),
+
+  body('proofUrl')
+    .optional({ nullable: true })
+    .trim(),
 ];
