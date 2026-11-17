@@ -117,12 +117,13 @@ export const adminService = {
     const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE))
     const uploadId = `upl-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 
-    // Generate safe clean filename with original extension
+    // Generate opaque safe filename with original extension (never exposes device file names)
     const dotIdx = file.name.lastIndexOf('.')
     const ext = (dotIdx > 0 ? file.name.substring(dotIdx) : '.mp4').toLowerCase()
-    const rawBase = dotIdx > 0 ? file.name.substring(0, dotIdx) : file.name
-    const safeBase = rawBase.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40)
-    const filename = `${Date.now()}-${safeBase}${ext}`
+    const randomToken = Math.random().toString(36).substring(2, 10)
+    const isImage = file.type?.startsWith('image/')
+    const prefix = isImage ? 'img' : 'vid'
+    const filename = `${prefix}-${Date.now()}-${randomToken}${ext}`
 
     let finalResponse = null
 
@@ -132,14 +133,14 @@ export const adminService = {
       const chunkBlob = file.slice(start, end)
 
       const formData = new FormData()
-      formData.append('chunk', chunkBlob, file.name)
+      formData.append('chunk', chunkBlob, filename)
       formData.append('uploadId', uploadId)
       formData.append('chunkIndex', String(chunkIndex))
       formData.append('totalChunks', String(totalChunks))
       formData.append('filename', filename)
-      formData.append('folder', file.type?.startsWith('image/') ? 'images' : 'videos')
+      formData.append('folder', isImage ? 'images' : 'videos')
       formData.append('mimeType', file.type || 'video/mp4')
-      formData.append('originalName', file.name)
+      formData.append('originalName', filename)
       formData.append('totalSize', String(file.size))
 
       let retries = 3

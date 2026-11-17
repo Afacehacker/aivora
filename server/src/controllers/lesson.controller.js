@@ -5,7 +5,7 @@ import Enrollment from '../models/Enrollment.js';
 import catchAsync from '../utils/catchAsync.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { successResponse } from '../utils/apiResponse.js';
-import { recalculateCourseStats } from './course.controller.js';
+import { recalculateCourseStats, sanitizeLessonTitle } from './course.controller.js';
 
 // Helper to check if student is enrolled
 const checkEnrolled = async (userId, courseId) =>
@@ -25,9 +25,10 @@ export const getLessonsByCourse = catchAsync(async (req, res, next) => {
     .populate('module', 'title order')
     .sort({ order: 1 });
 
-  // Redact video URLs for non-enrolled, non-preview lessons
-  const sanitized = lessons.map((lesson) => {
+  // Redact video URLs for non-enrolled, non-preview lessons & sanitize title
+  const sanitized = lessons.map((lesson, idx) => {
     const obj = lesson.toObject();
+    obj.title = sanitizeLessonTitle(obj.title, idx);
     if (!isAdmin && !enrolled && !lesson.isPreview) {
       obj.videoUrl = null;
       obj.content = null;
@@ -52,7 +53,10 @@ export const getLesson = catchAsync(async (req, res, next) => {
     if (!enrolled) return next(new AppError('You must be enrolled to access this lesson.', 403));
   }
 
-  return successResponse(res, 200, 'Lesson fetched.', lesson);
+  const lessonObj = lesson.toObject();
+  lessonObj.title = sanitizeLessonTitle(lessonObj.title, lessonObj.order ? lessonObj.order - 1 : 0);
+
+  return successResponse(res, 200, 'Lesson fetched.', lessonObj);
 });
 
 /**
@@ -89,7 +93,7 @@ export const createLesson = catchAsync(async (req, res, next) => {
   const lesson = await Lesson.create({
     module: moduleId,
     course: courseId,
-    title,
+    title: sanitizeLessonTitle(title, order || 0),
     description,
     videoUrl: finalVideoUrl,
     videoPublicId,
@@ -123,7 +127,13 @@ export const updateLesson = catchAsync(async (req, res, next) => {
   ];
 
   allowedFields.forEach((field) => {
-    if (req.body[field] !== undefined) lesson[field] = req.body[field];
+    if (req.body[field] !== undefined) {
+      if (field === 'title') {
+        lesson.title = sanitizeLessonTitle(req.body.title, lesson.order || 0);
+      } else {
+        lesson[field] = req.body[field];
+      }
+    }
   });
 
   if (req.file) {

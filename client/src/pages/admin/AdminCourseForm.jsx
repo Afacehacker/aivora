@@ -12,6 +12,7 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import adminService from '../../services/adminService'
 import { formatMinutesLong } from '../../components/home/CourseCard'
+import { cleanLessonTitle } from '../../utils/lessonTitle'
 
 const getVideoDurationFromFile = (file) => {
   return new Promise((resolve) => {
@@ -109,14 +110,14 @@ export default function AdminCourseForm() {
             isPublished: Boolean(c.isPublished),
           })
 
-          // Extract all tutorial videos from modules
+          // Extract all tutorial videos from modules (guaranteeing no device filenames)
           const loadedModules = c.modules || []
           const initialTutorials = []
           loadedModules.forEach((m) => {
-            (m.lessons || []).forEach((l) => {
+            (m.lessons || []).forEach((l, idx) => {
               initialTutorials.push({
                 _id: l._id,
-                title: l.title || '',
+                title: cleanLessonTitle(l.title, idx),
                 description: l.description || '',
                 videoUrl: l.videoUrl || '',
                 videoDuration: Number(l.videoDuration) || 0,
@@ -172,7 +173,7 @@ export default function AdminCourseForm() {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        setBatchStatus(`Preparing video ${i + 1} of ${files.length}: "${file.name}"...`)
+        setBatchStatus(`Preparing video ${i + 1} of ${files.length}...`)
 
         // Extract duration from video file metadata
         const duration = await getVideoDurationFromFile(file)
@@ -183,23 +184,18 @@ export default function AdminCourseForm() {
           const overallPct = Math.round(((i + filePct / 100) / files.length) * 100)
           setBatchProgress(overallPct)
           setBatchStatus(
-            `Uploading video ${i + 1} of ${files.length} (${p.percent}%, Part ${p.chunkIndex + 1}/${p.totalChunks}): "${file.name}"`
+            `Uploading video ${i + 1} of ${files.length} (${p.percent}%)...`
           )
         })
 
         const videoUrl = res?.data?.url || res?.url || res?.data?.data?.url || ''
 
-        // Clean up filename for human-readable title
-        const lastDot = file.name.lastIndexOf('.')
-        const baseName = lastDot > 0 ? file.name.substring(0, lastDot) : file.name
-        const cleanName = baseName
-          .replace(/[-_]+/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
+        // Never display or store device filenames. Use clean professional tutorial title.
+        const defaultTitle = `Video Tutorial ${tutorials.length + i + 1}`
 
         addedTutorials.push({
           _id: `tut-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
-          title: cleanName || `Video Tutorial ${tutorials.length + i + 1}`,
+          title: defaultTitle,
           description: '',
           videoUrl: videoUrl,
           videoDuration: duration || res?.data?.duration || res?.data?.data?.duration || 300,
@@ -245,7 +241,7 @@ export default function AdminCourseForm() {
             ...next[index],
             videoUrl: videoUrl || next[index].videoUrl,
             videoDuration: duration || res?.data?.duration || res?.data?.data?.duration || next[index].videoDuration || 300,
-            title: next[index].title || file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '),
+            title: cleanLessonTitle(next[index].title, index),
           }
         }
         return next
@@ -338,7 +334,7 @@ export default function AdminCourseForm() {
         isFeatured: form.isFeatured,
         isPublished: form.isPublished,
         tutorials: tutorials.map((t, idx) => ({
-          title: t.title?.trim() || `Video Tutorial ${idx + 1}`,
+          title: cleanLessonTitle(t.title?.trim(), idx),
           description: t.description || '',
           videoUrl: t.videoUrl || null,
           videoDuration: Number(t.videoDuration) || 0,
@@ -889,8 +885,8 @@ export default function AdminCourseForm() {
                             {tut.videoUrl ? 'Replace Video File' : 'Upload Video File'}
                           </Button>
                           {tut.videoUrl && (
-                            <span className="text-[11px] text-slate-500 truncate flex-1">
-                              {tut.videoUrl}
+                            <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                              ✓ Video ready
                             </span>
                           )}
                         </div>

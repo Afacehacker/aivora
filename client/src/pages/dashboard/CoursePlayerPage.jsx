@@ -9,6 +9,7 @@ import SEO from '../../components/common/SEO'
 import Button from '../../components/ui/Button'
 import ProgressBar from '../../components/ui/ProgressBar'
 import PageLoader from '../../components/common/PageLoader'
+import { cleanLessonTitle } from '../../utils/lessonTitle'
 import api from '../../services/api'
 
 const speeds = [0.75, 1, 1.25, 1.5, 2]
@@ -137,7 +138,9 @@ export default function CoursePlayerPage() {
 
   return (
     <>
-      <SEO title={`${activeLesson?.title || course.title} — Course Player`} />
+      <SEO
+        title={`${cleanLessonTitle(activeLesson?.title, currentIndex >= 0 ? currentIndex : 0)} — Course Player`}
+      />
 
       <div className="min-h-screen bg-aivora-dark flex flex-col">
         {/* Top Bar */}
@@ -254,7 +257,9 @@ export default function CoursePlayerPage() {
             {/* Lesson Title & Description */}
             {activeLesson && (
               <div className="glass rounded-2xl p-6 border border-white/10 space-y-3">
-                <h2 className="text-xl font-display font-bold text-white">{activeLesson.title}</h2>
+                <h2 className="text-xl font-display font-bold text-white">
+                  {cleanLessonTitle(activeLesson.title, currentIndex >= 0 ? currentIndex : 0)}
+                </h2>
                 {activeLesson.description && (
                   <p className="text-sm text-slate-300 leading-relaxed">
                     {activeLesson.description}
@@ -336,6 +341,7 @@ export default function CoursePlayerPage() {
                     </div>
                     <div className="divide-y divide-white/5">
                       {modLessons.map((lesson) => {
+                        const lIdx = lessons.findIndex((l) => String(l._id) === String(lesson._id))
                         const isActive = String(activeLesson?._id) === String(lesson._id)
                         const isDone = completedIds.includes(String(lesson._id))
                         return (
@@ -354,7 +360,9 @@ export default function CoursePlayerPage() {
                             ) : (
                               <PlayCircle className="w-4 h-4 text-slate-500 flex-shrink-0" />
                             )}
-                            <span className="flex-1 line-clamp-2">{lesson.title}</span>
+                            <span className="flex-1 line-clamp-2">
+                              {cleanLessonTitle(lesson.title, lIdx >= 0 ? lIdx : 0)}
+                            </span>
                           </button>
                         )
                       })}

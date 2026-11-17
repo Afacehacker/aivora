@@ -173,21 +173,36 @@ export const handleChunkUpload = catchAsync(async (req, res, next) => {
   const isVideo = subFolder === 'videos' || (mimeType || '').startsWith('video/') || isVideoExt;
   const isImage = subFolder === 'images' || (mimeType || '').startsWith('image/') || isImageExt;
 
+  // Periodically purge orphaned chunks older than 20 minutes to keep database storage free
+  UploadChunk.deleteMany({ createdAt: { $lt: new Date(Date.now() - 20 * 60 * 1000) } }).catch(() => {});
+
   // 1) Upsert chunk in MongoDB
-  await UploadChunk.findOneAndUpdate(
-    { uploadId, chunkIndex },
-    {
-      uploadId,
-      chunkIndex,
-      totalChunks,
-      filename,
-      folder: subFolder,
-      mimeType: mimeType || file.mimetype || 'video/mp4',
-      originalName: originalName || '',
-      data: file.buffer,
-    },
-    { upsert: true, new: true }
-  );
+  try {
+    await UploadChunk.findOneAndUpdate(
+      { uploadId, chunkIndex },
+      {
+        uploadId,
+        chunkIndex,
+        totalChunks,
+        filename,
+        folder: subFolder,
+        mimeType: mimeType || file.mimetype || 'video/mp4',
+        originalName: originalName || '',
+        data: file.buffer,
+      },
+      { upsert: true, new: true }
+    );
+  } catch (chunkErr) {
+    if (chunkErr.code === 8000 || chunkErr.message?.includes('space quota')) {
+      return next(
+        new AppError(
+          'Database storage quota reached on MongoDB Atlas. Please free up space or upgrade storage.',
+          413
+        )
+      );
+    }
+    throw chunkErr;
+  }
 
   const chunkCount = await UploadChunk.countDocuments({ uploadId });
 

@@ -39,7 +39,7 @@ const uploadChunkSchema = new mongoose.Schema(
     createdAt: {
       type: Date,
       default: Date.now,
-      expires: 7200, // MongoDB TTL index: automatically deletes chunks 2 hours after creation
+      expires: 1800, // MongoDB TTL index: automatically deletes stale chunks 30 minutes after creation
     },
   },
   { timestamps: false }

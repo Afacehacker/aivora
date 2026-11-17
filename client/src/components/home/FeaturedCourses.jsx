@@ -89,9 +89,21 @@ const INITIAL_COURSES = [
   },
 ]
 
+// Initial instant-render courses with persistent browser cache so reloads have 0ms delay
+const getInitialFeaturedCourses = () => {
+  try {
+    const cached = localStorage.getItem('aivora_cached_featured_courses')
+    if (cached) {
+      const parsed = JSON.parse(cached)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
+  } catch {}
+  return INITIAL_COURSES
+}
+
 export default function FeaturedCourses() {
   const [activeFilter, setActiveFilter] = useState(filterTabs[0])
-  const [courses, setCourses] = useState(INITIAL_COURSES)
+  const [courses, setCourses] = useState(getInitialFeaturedCourses)
   const [loading, setLoading] = useState(false)
   const [previewCourse, setPreviewCourse] = useState(null)
 
@@ -106,6 +118,11 @@ export default function FeaturedCourses() {
         const res = await courseService.getAllCourses(params)
         if (isMounted && res?.data?.length) {
           setCourses(res.data)
+          if (activeFilter.id === 'all') {
+            try {
+              localStorage.setItem('aivora_cached_featured_courses', JSON.stringify(res.data))
+            } catch {}
+          }
         } else if (isMounted && activeFilter.id !== 'all') {
           setCourses([])
         }

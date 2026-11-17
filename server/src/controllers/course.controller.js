@@ -11,6 +11,28 @@ import { successResponse, paginationMeta } from '../utils/apiResponse.js';
 import generateSlug from '../utils/generateSlug.js';
 import { deleteFile } from '../services/cloudinary.service.js';
 
+const DEVICE_FILENAME_REGEX = /\.(mp4|webm|mov|mkv|avi|m4v|3gp|flv|wmv)$/i;
+const DEVICE_PREFIX_REGEX = /^(vid|img|mov|pxl|rec|screen\s*recording|whatsapp\s*video|mvi|sam|dji|gopr|gp|clip)[_\s-0-9]/i;
+const TIMESTAMP_REGEX = /^\d{10,}[-_]/;
+const RAW_DATE_PREFIX = /^\d{4}[-_]?\d{2}[-_]?\d{2}/;
+
+export function sanitizeLessonTitle(rawTitle, fallbackIndex = 0) {
+  const fallback = `Video Tutorial ${fallbackIndex + 1}`;
+  if (!rawTitle || typeof rawTitle !== 'string') return fallback;
+  const stripped = rawTitle.replace(/\.(mp4|webm|mov|mkv|avi|m4v|3gp|flv|wmv)$/i, '').trim();
+  if (
+    !stripped ||
+    DEVICE_FILENAME_REGEX.test(rawTitle) ||
+    DEVICE_PREFIX_REGEX.test(stripped) ||
+    TIMESTAMP_REGEX.test(stripped) ||
+    RAW_DATE_PREFIX.test(stripped) ||
+    /^(upl|empty|upload|temp|file)[-_]/i.test(stripped)
+  ) {
+    return fallback;
+  }
+  return stripped;
+}
+
 /**
  * GET /api/v1/courses — Public, with pagination, filtering, sorting
  */
@@ -113,12 +135,15 @@ export const getCourseBySlug = catchAsync(async (req, res, next) => {
   ]);
 
   // Attach lessons to each module (redact non-preview video URLs if user has not paid / enrolled)
+  let lessonCounter = 0;
   const modulesWithLessons = modules.map((mod) => {
     const modObj = mod.toObject();
     modObj.lessons = lessons
       .filter((l) => String(l.module) === String(mod._id))
       .map((l) => {
         const lObj = l.toObject();
+        // Clean lesson title to guarantee no device filenames are exposed
+        lObj.title = sanitizeLessonTitle(lObj.title, lessonCounter++);
         // A user only gets access to the video tutorial after making payment, unless marked as free sample preview
         if (!isAdmin && !isEnrolled && !lObj.isPreview) {
           lObj.videoUrl = null;
@@ -218,11 +243,11 @@ export const createCourse = catchAsync(async (req, res, next) => {
 
     for (let j = 0; j < tutorials.length; j++) {
       const tData = tutorials[j];
-      if (!tData.title) continue;
+      const cleanTitle = sanitizeLessonTitle(tData.title, j);
       await Lesson.create({
         module: modDoc._id,
         course: course._id,
-        title: tData.title,
+        title: cleanTitle,
         description: tData.description || '',
         videoUrl: tData.videoUrl || null,
         videoDuration: Number(tData.videoDuration) || 0,
@@ -313,13 +338,13 @@ export const updateCourse = catchAsync(async (req, res, next) => {
     let totalDuration = 0;
     for (let j = 0; j < tutorials.length; j++) {
       const t = tutorials[j];
-      if (!t.title) continue;
+      const cleanTitle = sanitizeLessonTitle(t.title, j);
       const dur = Number(t.videoDuration) || 0;
       totalDuration += dur;
       await Lesson.create({
         module: modDoc._id,
         course: course._id,
-        title: t.title,
+        title: cleanTitle,
         description: t.description || '',
         videoUrl: t.videoUrl || null,
         videoDuration: dur,

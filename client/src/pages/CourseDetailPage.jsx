@@ -13,6 +13,7 @@ import Modal from '../components/ui/Modal'
 import PageLoader from '../components/common/PageLoader'
 import CourseMediaPreview, { courseUsesVideoCover } from '../components/common/CourseMediaPreview'
 import { formatDuration, formatPrice, formatMinutesLong } from '../components/home/CourseCard'
+import { cleanLessonTitle } from '../utils/lessonTitle'
 import courseService from '../services/courseService'
 import paymentService from '../services/paymentService'
 import reviewService from '../services/reviewService'
@@ -435,7 +436,7 @@ export default function CourseDetailPage() {
 
                           {isOpen && mod.lessons?.length > 0 && (
                             <div className="border-t border-pink-100 divide-y divide-pink-100">
-                              {mod.lessons.map((lesson) => (
+                              {mod.lessons.map((lesson, idx) => (
                                 <div
                                   key={lesson._id}
                                   className="px-5 py-3.5 flex items-center justify-between gap-4 text-sm"
@@ -446,7 +447,9 @@ export default function CourseDetailPage() {
                                     ) : (
                                       <Lock className="w-4 h-4 text-amber-500 flex-shrink-0" />
                                     )}
-                                    <span className="text-slate-800 truncate font-medium">{lesson.title}</span>
+                                    <span className="text-slate-800 truncate font-medium">
+                                      {cleanLessonTitle(lesson.title, idx)}
+                                    </span>
                                     {lesson.isPreview ? (
                                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 flex-shrink-0">
                                         Free Preview

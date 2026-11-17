@@ -80,6 +80,30 @@ const siteSettingsSchema = new mongoose.Schema(
       youtube: { type: String, default: '' },
       tiktok: { type: String, default: '' },
       linkedin: { type: String, default: '' },
+      telegram: { type: String, default: '' },
+    },
+
+    // Telegram Channel & Popup Settings (Managed via Admin Settings)
+    telegramChannelUrl: {
+      type: String,
+      default: '',
+    },
+    telegramPopup: {
+      enabled: { type: Boolean, default: true },
+      channelUrl: { type: String, default: '' },
+      title: { type: String, default: 'Join our Telegram Channel! 🚀' },
+      description: {
+        type: String,
+        default:
+          'Be the first to get exclusive AI video prompts, course drops, free tutorials, and direct support from fellow creators.',
+      },
+      buttonText: { type: String, default: 'Join Telegram Channel' },
+      additionalLinks: [
+        {
+          label: { type: String, default: '' },
+          url: { type: String, default: '' },
+        },
+      ],
     },
 
     // Footer

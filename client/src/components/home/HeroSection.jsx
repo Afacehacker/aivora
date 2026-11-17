@@ -39,8 +39,19 @@ const defaultHeroCourse = {
   rating: { avg: 0, count: 0 },
 }
 
+const getInitialHeroCourse = () => {
+  try {
+    const cached = localStorage.getItem('aivora_cached_hero_course')
+    if (cached) {
+      const parsed = JSON.parse(cached)
+      if (parsed && (parsed._id || parsed.title)) return parsed
+    }
+  } catch {}
+  return defaultHeroCourse
+}
+
 export default function HeroSection({ settings }) {
-  const [heroCourse, setHeroCourse] = useState(defaultHeroCourse)
+  const [heroCourse, setHeroCourse] = useState(getInitialHeroCourse)
   const [previewCourse, setPreviewCourse] = useState(null)
 
   useEffect(() => {
@@ -50,6 +61,9 @@ export default function HeroSection({ settings }) {
       .then((res) => {
         if (isMounted && res?.data) {
           setHeroCourse(res.data)
+          try {
+            localStorage.setItem('aivora_cached_hero_course', JSON.stringify(res.data))
+          } catch {}
         }
       })
       .catch(() => {})

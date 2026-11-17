@@ -34,6 +34,8 @@ export const getSiteSettings = catchAsync(async (req, res) => {
     seoSettings: settings.seoSettings,
     paymentAccounts: (settings.paymentAccounts || []).filter((acc) => acc.isActive !== false),
     paymentNotice: settings.paymentNotice,
+    telegramChannelUrl: settings.telegramChannelUrl || settings.telegramPopup?.channelUrl || settings.socialLinks?.telegram || '',
+    telegramPopup: settings.telegramPopup,
   };
 
   return successResponse(res, 200, 'Site settings fetched.', publicSettings);
@@ -57,7 +59,7 @@ export const updateSiteSettings = catchAsync(async (req, res) => {
     'heroHeadline', 'heroSubHeadline', 'heroCTAPrimary', 'heroCTASecondary',
     'featuredCourses', 'contactEmail', 'contactPhone', 'contactAddress',
     'socialLinks', 'footerText', 'announcementBanner', 'seoSettings', 'faqs', 'testimonials',
-    'paymentAccounts', 'paymentNotice',
+    'paymentAccounts', 'paymentNotice', 'telegramChannelUrl', 'telegramPopup',
   ];
 
   allowedFields.forEach((field) => {

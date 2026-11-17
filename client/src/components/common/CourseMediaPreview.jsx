@@ -1,41 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { clsx } from 'clsx'
-import { Film, Play } from 'lucide-react'
+import { Play } from 'lucide-react'
 
 const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|mkv|avi|m4v)(\?.*)?$/i
-
-// Shared in-memory Blob URL cache so identical videos on the same page download ONCE
-// and never trigger Chromium's net::ERR_CACHE_OPERATION_NOT_SUPPORTED concurrent range lock.
-const videoBlobUrlCache = new Map()
-const videoFetchPromiseCache = new Map()
-
-function getOrFetchVideoBlobUrl(url) {
-  if (videoBlobUrlCache.has(url)) {
-    return Promise.resolve(videoBlobUrlCache.get(url))
-  }
-  if (videoFetchPromiseCache.has(url)) {
-    return videoFetchPromiseCache.get(url)
-  }
-
-  const promise = fetch(url, { cache: 'force-cache' })
-    .then((res) => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      return res.blob()
-    })
-    .then((blob) => {
-      const blobUrl = URL.createObjectURL(blob)
-      videoBlobUrlCache.set(url, blobUrl)
-      videoFetchPromiseCache.delete(url)
-      return blobUrl
-    })
-    .catch((err) => {
-      videoFetchPromiseCache.delete(url)
-      throw err
-    })
-
-  videoFetchPromiseCache.set(url, promise)
-  return promise
-}
 
 export function normalizeMediaUrl(url = '') {
   if (!url || typeof url !== 'string') return url
@@ -57,8 +24,9 @@ export function courseUsesVideoCover(course) {
 }
 
 /**
- * Product cover display: 100% video only.
- * Renders the preview promo video with smart caching, playsInline, and autoplay.
+ * Product cover display: 100% video.
+ * Renders HTML5 <video> directly with preload="auto", playsInline, and autoplay
+ * for instant 0ms first-frame rendering and immediate playback on page reload.
  */
 export default function CourseMediaPreview({
   course,
@@ -71,7 +39,6 @@ export default function CourseMediaPreview({
 }) {
   const videoRef = useRef(null)
   const [videoFailed, setVideoFailed] = useState(false)
-  const [resolvedVideoSrc, setResolvedVideoSrc] = useState(null)
 
   const previewVid = normalizeMediaUrl(course?.previewVideo)
   const thumbVid = isVideoUrl(course?.thumbnail) ? normalizeMediaUrl(course?.thumbnail) : null
@@ -80,53 +47,36 @@ export default function CourseMediaPreview({
   const rawVideoSrc = previewVid || thumbVid || firstLessonVid
   const shouldRenderVideo = Boolean(rawVideoSrc) && !videoFailed
 
+  // Reset error state if the video URL changes
   useEffect(() => {
-    let isMounted = true
     setVideoFailed(false)
+  }, [rawVideoSrc])
 
-    if (!shouldRenderVideo || !rawVideoSrc) {
-      setResolvedVideoSrc(null)
-      return
-    }
-
-    if (videoBlobUrlCache.has(rawVideoSrc)) {
-      setResolvedVideoSrc(videoBlobUrlCache.get(rawVideoSrc))
-      return
-    }
-
-    getOrFetchVideoBlobUrl(rawVideoSrc)
-      .then((blobUrl) => {
-        if (isMounted) setResolvedVideoSrc(blobUrl)
-      })
-      .catch(() => {
-        if (isMounted) {
-          if (navigator.onLine === false) {
-            setVideoFailed(true)
-          } else {
-            setResolvedVideoSrc(rawVideoSrc)
-          }
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [rawVideoSrc, shouldRenderVideo])
-
+  // Instant autoplay & viewport intersection handling
   useEffect(() => {
     const el = videoRef.current
-    if (!el || !shouldRenderVideo || !resolvedVideoSrc || !autoPlay) return
+    if (!el || !shouldRenderVideo) return
 
-    if (typeof IntersectionObserver === 'undefined') {
-      if (navigator.onLine !== false) el.play().catch(() => {})
-      return
+    // Explicitly guarantee muted on both property and attribute for strict browser autoplay policies
+    el.muted = muted
+    el.defaultMuted = muted
+
+    if (autoPlay) {
+      const playPromise = el.play()
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay restricted or delayed by browser power-saver; handled gracefully
+        })
+      }
     }
+
+    if (typeof IntersectionObserver === 'undefined') return
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            if (navigator.onLine !== false && el.paused) {
+            if (autoPlay && el.paused) {
               el.play().catch(() => {})
             }
           } else if (!el.paused) {
@@ -134,31 +84,39 @@ export default function CourseMediaPreview({
           }
         })
       },
-      { threshold: 0.2 }
+      { threshold: 0.1 }
     )
 
     observer.observe(el)
     return () => {
       observer.disconnect()
     }
-  }, [shouldRenderVideo, autoPlay, resolvedVideoSrc])
+  }, [shouldRenderVideo, autoPlay, muted, rawVideoSrc])
 
-  if (shouldRenderVideo && resolvedVideoSrc) {
+  if (shouldRenderVideo) {
     const resolvedVideoClass =
       videoClassName ||
       className
         .replace(/\bobject-cover\b/g, 'object-contain')
         .replace(/\bgroup-hover:scale-105\b/g, '')
 
+    const posterImage =
+      course?.thumbnail && !isVideoUrl(course.thumbnail)
+        ? normalizeMediaUrl(course.thumbnail)
+        : undefined
+
     return (
       <video
         ref={videoRef}
-        src={resolvedVideoSrc}
+        key={rawVideoSrc}
+        src={rawVideoSrc}
+        poster={posterImage}
         muted={muted}
         loop={loop}
         playsInline
+        autoPlay={autoPlay}
         controls={controls}
-        preload="metadata"
+        preload="auto"
         onError={() => setVideoFailed(true)}
         className={clsx('bg-black', resolvedVideoClass)}
       />

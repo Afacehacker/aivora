@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Save, Plus, Trash2, Building2 } from 'lucide-react'
+import { Save, Plus, Trash2, Building2, Send, RotateCcw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import SEO from '../../components/common/SEO'
 import Input from '../../components/ui/Input'
@@ -16,6 +16,16 @@ export default function AdminSiteSettings() {
     footerText: '',
     paymentNotice: '',
     announcementBanner: { text: '', isActive: false, color: '#6366f1' },
+    telegramChannelUrl: '',
+    telegramPopup: {
+      enabled: true,
+      channelUrl: '',
+      title: 'Join our Telegram Channel! 🚀',
+      description:
+        'Be the first to get exclusive AI video prompts, course drops, free tutorials, and direct support from fellow creators.',
+      buttonText: 'Join Telegram Channel',
+      additionalLinks: [],
+    },
   })
   const [paymentAccounts, setPaymentAccounts] = useState([])
   const [newPaymentAcc, setNewPaymentAcc] = useState({
@@ -49,6 +59,19 @@ export default function AdminSiteSettings() {
           isActive: false,
           color: '#6366f1',
         },
+        telegramChannelUrl: data.telegramChannelUrl || data.telegramPopup?.channelUrl || '',
+        telegramPopup: {
+          enabled: data.telegramPopup?.enabled !== false,
+          channelUrl: data.telegramPopup?.channelUrl || data.telegramChannelUrl || '',
+          title: data.telegramPopup?.title || 'Join our Telegram Channel! 🚀',
+          description:
+            data.telegramPopup?.description ||
+            'Be the first to get exclusive AI video prompts, course drops, free tutorials, and direct support from fellow creators.',
+          buttonText: data.telegramPopup?.buttonText || 'Join Telegram Channel',
+          additionalLinks: Array.isArray(data.telegramPopup?.additionalLinks)
+            ? data.telegramPopup.additionalLinks
+            : [],
+        },
       })
       setPaymentAccounts(data.paymentAccounts || [])
       setFaqs(data.faqs || [])
@@ -72,6 +95,52 @@ export default function AdminSiteSettings() {
       toast.error(err.message || 'Failed to update settings')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleAddTelegramLink = () => {
+    const currentLinks = settings.telegramPopup?.additionalLinks || []
+    setSettings({
+      ...settings,
+      telegramPopup: {
+        ...settings.telegramPopup,
+        additionalLinks: [...currentLinks, { label: '', url: '' }],
+      },
+    })
+  }
+
+  const handleUpdateTelegramLink = (index, field, value) => {
+    const currentLinks = [...(settings.telegramPopup?.additionalLinks || [])]
+    if (currentLinks[index]) {
+      currentLinks[index] = { ...currentLinks[index], [field]: value }
+      setSettings({
+        ...settings,
+        telegramPopup: {
+          ...settings.telegramPopup,
+          additionalLinks: currentLinks,
+        },
+      })
+    }
+  }
+
+  const handleRemoveTelegramLink = (index) => {
+    const currentLinks = [...(settings.telegramPopup?.additionalLinks || [])]
+    currentLinks.splice(index, 1)
+    setSettings({
+      ...settings,
+      telegramPopup: {
+        ...settings.telegramPopup,
+        additionalLinks: currentLinks,
+      },
+    })
+  }
+
+  const handleReset2HourTimer = () => {
+    try {
+      localStorage.removeItem('aivora_hide_telegram_popup_until')
+      toast.success('2-hour snooze timer cleared! The popup will show on homepage reload.')
+    } catch {
+      toast.success('Timer cleared!')
     }
   }
 
@@ -246,6 +315,194 @@ export default function AdminSiteSettings() {
             Save Website Settings
           </Button>
         </form>
+
+        {/* Telegram Community & Homepage Pop-up Card Management */}
+        <div className="glass rounded-2xl p-6 border border-white/10 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#229ED9]/15 text-[#229ED9] flex items-center justify-center">
+                <Send className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-display font-bold text-white">
+                  Telegram Channel & Homepage Pop-up Card
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Configure the card that pops up on the homepage encouraging visitors to join your Telegram. You can change your channel link or add another link anytime.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleReset2HourTimer}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/30 text-xs font-semibold text-pink-300 self-start sm:self-auto transition-colors"
+              title="Clears any active 2-hour snooze so the popup will immediately appear when you reload the homepage"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset 2hr Snooze (For Testing)</span>
+            </button>
+          </div>
+
+          <form onSubmit={handleSaveGeneral} className="space-y-4">
+            {/* Pop-up Toggle */}
+            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={settings.telegramPopup?.enabled !== false}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    telegramPopup: {
+                      ...settings.telegramPopup,
+                      enabled: e.target.checked,
+                    },
+                  })
+                }
+                className="rounded border-white/20 bg-aivora-navy text-aivora-indigo"
+              />
+              <span>Enable Homepage Pop-up Encouraging Users to Join Telegram</span>
+            </label>
+
+            {/* Primary Channel Link */}
+            <div className="space-y-1.5">
+              <Input
+                label="Primary Telegram Channel Link"
+                placeholder="e.g. https://t.me/your_telegram_channel or https://t.me/aivora_official"
+                value={settings.telegramChannelUrl || settings.telegramPopup?.channelUrl || ''}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setSettings({
+                    ...settings,
+                    telegramChannelUrl: val,
+                    telegramPopup: {
+                      ...settings.telegramPopup,
+                      channelUrl: val,
+                    },
+                  })
+                }}
+              />
+              <p className="text-[11px] text-slate-400">
+                This is the main link that opens when users click the &ldquo;Join Telegram Channel&rdquo; button.
+              </p>
+            </div>
+
+            {/* Additional Community Links */}
+            <div className="pt-3 border-t border-white/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">Additional Telegram / Community Links</h3>
+                  <p className="text-[11px] text-slate-400">
+                    Add another link you feel like adding (e.g. Discussion Group, VIP Channel, Backup Group, WhatsApp).
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleAddTelegramLink}
+                  iconLeft={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Add Another Link
+                </Button>
+              </div>
+
+              {(!settings.telegramPopup?.additionalLinks || settings.telegramPopup.additionalLinks.length === 0) ? (
+                <p className="text-xs text-slate-500 italic p-3 rounded-xl bg-white/5 border border-dashed border-white/10">
+                  No additional links added yet. Click &ldquo;Add Another Link&rdquo; if you want to include extra links (like a discussion group or secondary channel).
+                </p>
+              ) : (
+                <div className="space-y-2.5">
+                  {settings.telegramPopup.additionalLinks.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10"
+                    >
+                      <div className="w-full sm:w-1/3">
+                        <Input
+                          placeholder="Link Label (e.g. Discussion Group)"
+                          value={item.label || ''}
+                          onChange={(e) => handleUpdateTelegramLink(idx, 'label', e.target.value)}
+                        />
+                      </div>
+                      <div className="w-full sm:flex-1">
+                        <Input
+                          placeholder="Link URL (e.g. https://t.me/+groupInviteCode)"
+                          value={item.url || ''}
+                          onChange={(e) => handleUpdateTelegramLink(idx, 'url', e.target.value)}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTelegramLink(idx)}
+                        className="p-2.5 rounded-xl hover:bg-red-500/20 text-slate-400 hover:text-red-300 self-end sm:self-auto transition-colors"
+                        title="Remove Link"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Custom Pop-up Texts */}
+            <div className="pt-3 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Pop-up Title"
+                placeholder="e.g. Join our Telegram Channel! 🚀"
+                value={settings.telegramPopup?.title || ''}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    telegramPopup: {
+                      ...settings.telegramPopup,
+                      title: e.target.value,
+                    },
+                  })
+                }
+              />
+              <Input
+                label="Primary Button Text"
+                placeholder="e.g. Join Telegram Channel"
+                value={settings.telegramPopup?.buttonText || ''}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    telegramPopup: {
+                      ...settings.telegramPopup,
+                      buttonText: e.target.value,
+                    },
+                  })
+                }
+              />
+              <div className="sm:col-span-2">
+                <Input
+                  label="Pop-up Description"
+                  placeholder="e.g. Be the first to get exclusive AI video prompts, course drops, and creator support."
+                  value={settings.telegramPopup?.description || ''}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      telegramPopup: {
+                        ...settings.telegramPopup,
+                        description: e.target.value,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              loading={saving}
+              iconLeft={<Save className="w-4 h-4" />}
+            >
+              Save Telegram Settings
+            </Button>
+          </form>
+        </div>
 
         {/* Manual Bank Payment Details Management */}
         <div className="glass rounded-2xl p-6 border border-white/10 space-y-5">
