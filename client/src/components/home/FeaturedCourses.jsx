@@ -43,10 +43,10 @@ const INITIAL_COURSES = [
     slug: 'phone-video-call',
     shortDescription: 'Learn smartphone AI video workflows and live avatar calls.',
     thumbnail: null,
-    previewVideo: '/api/v1/media/videos/1794837379037-tk-7681649057323830558-1794815383521.mp4',
+    previewVideo: '/api/v1/media/videos/phone-video-call.mp4',
     category: { name: 'AI Character Transformation', slug: 'ai-character-transformation' },
     instructor: { name: 'AIVORA Administrator' },
-    price: 25000,
+    price: 45000,
     discountPrice: null,
     level: 'beginner',
     totalLessons: 1,
@@ -59,10 +59,10 @@ const INITIAL_COURSES = [
     slug: 'laptoppc-video-call',
     shortDescription: 'Master PC and laptop real-time AI video streaming and recording.',
     thumbnail: null,
-    previewVideo: '/api/v1/media/videos/1794882702135-ScreenRecording_11-16-2026-8-47-14-AM_1.mov',
+    previewVideo: '/api/v1/media/videos/laptop-video-call.mp4',
     category: { name: 'AI Video Creation', slug: 'ai-video-creation' },
     instructor: { name: 'AIVORA Administrator' },
-    price: 35000,
+    price: 85000,
     discountPrice: null,
     level: 'intermediate',
     totalLessons: 1,
@@ -89,11 +89,11 @@ const INITIAL_COURSES = [
 ]
 
 // Initial instant-render courses with persistent browser cache so reloads have 0ms delay
-const CACHE_KEY = 'aivora_cached_featured_courses_v5'
+const CACHE_KEY = 'aivora_cached_featured_courses_v6'
 const getInitialFeaturedCourses = () => {
   try {
     // Purge outdated stale caches that had duplicate videos
-    ['aivora_cached_featured_courses_v1', 'aivora_cached_featured_courses_v2', 'aivora_cached_featured_courses_v3', 'aivora_cached_featured_courses_v4'].forEach((k) => {
+    ['aivora_cached_featured_courses_v1', 'aivora_cached_featured_courses_v2', 'aivora_cached_featured_courses_v3', 'aivora_cached_featured_courses_v4', 'aivora_cached_featured_courses_v5'].forEach((k) => {
       try { localStorage.removeItem(k) } catch {}
     })
     const cached = localStorage.getItem(CACHE_KEY)

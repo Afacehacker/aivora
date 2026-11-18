@@ -21,24 +21,50 @@ export async function restoreDistinctCourseVideos() {
     );
 
     // 2. Phone Video Call
-    await db.collection('courses').updateOne(
-      { slug: 'phone-video-call' },
-      {
-        $set: {
-          previewVideo: '/api/v1/media/videos/1794837379037-tk-7681649057323830558-1794815383521.mp4',
-        },
-      }
-    );
+    const phoneCourse = await db.collection('courses').findOne({ slug: 'phone-video-call' });
+    if (phoneCourse) {
+      await db.collection('courses').updateOne(
+        { _id: phoneCourse._id },
+        {
+          $set: {
+            previewVideo: '/api/v1/media/videos/phone-video-call.mp4',
+          },
+        }
+      );
+      await db.collection('lessons').updateMany(
+        { course: phoneCourse._id },
+        {
+          $set: {
+            title: 'Phone Video Call Master Tutorial',
+            videoUrl: '/api/v1/media/videos/laptop-video-call-paid-tutorial.mov',
+            isPreview: false,
+          },
+        }
+      );
+    }
 
     // 3. Laptop/PC Video Call
-    await db.collection('courses').updateOne(
-      { slug: 'laptoppc-video-call' },
-      {
-        $set: {
-          previewVideo: '/api/v1/media/videos/1794882702135-ScreenRecording_11-16-2026-8-47-14-AM_1.mov',
-        },
-      }
-    );
+    const laptopCourse = await db.collection('courses').findOne({ slug: 'laptoppc-video-call' });
+    if (laptopCourse) {
+      await db.collection('courses').updateOne(
+        { _id: laptopCourse._id },
+        {
+          $set: {
+            previewVideo: '/api/v1/media/videos/laptop-video-call.mp4',
+          },
+        }
+      );
+      await db.collection('lessons').updateMany(
+        { course: laptopCourse._id },
+        {
+          $set: {
+            title: 'Laptop/PC Video Call Master Tutorial',
+            videoUrl: '/api/v1/media/videos/laptop-video-call-paid-tutorial.mov',
+            isPreview: false,
+          },
+        }
+      );
+    }
 
     // 4. [Demo] Professional AI Voiceover
     await db.collection('courses').updateOne(

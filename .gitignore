@@ -24,3 +24,9 @@ server/logs/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local staging uploads
+upload_videos/
+uploads/
+server/uploads/
+client/public/uploads/
