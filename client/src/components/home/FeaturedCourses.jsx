@@ -27,7 +27,7 @@ const INITIAL_COURSES = [
     slug: 'image-to-video',
     shortDescription: 'Image to a talking video',
     thumbnail: null,
-    previewVideo: '/api/v1/media/videos/1794654991023-Empty-1794653741016.mp4',
+    previewVideo: '/uploads/videos/1794654991023-Empty-1794653741016.mp4',
     category: { name: 'Image to Video', slug: 'image-to-video' },
     instructor: { name: 'AIVORA Administrator' },
     price: 10000,

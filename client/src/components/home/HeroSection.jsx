@@ -24,7 +24,7 @@ const defaultHeroCourse = {
   shortDescription: 'Image to a talking video',
   description: 'Learn how to change image to a talking video in less than 5minutes',
   thumbnail: null,
-  previewVideo: '/api/v1/media/videos/1794654991023-Empty-1794653741016.mp4',
+  previewVideo: '/uploads/videos/1794654991023-Empty-1794653741016.mp4',
   category: {
     name: 'Image to Video',
     slug: 'image-to-video',

@@ -78,9 +78,15 @@ export default function CourseMediaPreview({
     const el = videoRef.current
     if (!el || !shouldRenderVideo) return
 
-    el.muted = muted
-    el.defaultMuted = muted
-    el.playsInline = true
+    // Explicitly set DOM attributes for iOS Safari & Android WebViews
+    el.setAttribute('playsinline', 'true')
+    el.setAttribute('webkit-playsinline', 'true')
+    el.setAttribute('x5-playsinline', 'true')
+    if (muted) {
+      el.setAttribute('muted', 'true')
+      el.muted = true
+      el.defaultMuted = true
+    }
 
     // Immediate start
     triggerPlay()
@@ -93,12 +99,24 @@ export default function CourseMediaPreview({
     el.addEventListener('loadeddata', onDataReady)
     el.addEventListener('canplay', onDataReady)
 
+    // Touch listener for stubborn mobile power saver / data saver modes
+    const onMobileInteraction = () => {
+      if (el && el.paused && autoPlay) {
+        el.muted = true
+        el.play().catch(() => {})
+      }
+    }
+    window.addEventListener('touchstart', onMobileInteraction, { once: true, passive: true })
+    window.addEventListener('click', onMobileInteraction, { once: true, passive: true })
+
     return () => {
       el.removeEventListener('loadedmetadata', onDataReady)
       el.removeEventListener('loadeddata', onDataReady)
       el.removeEventListener('canplay', onDataReady)
+      window.removeEventListener('touchstart', onMobileInteraction)
+      window.removeEventListener('click', onMobileInteraction)
     }
-  }, [shouldRenderVideo, activeVideoSrc, triggerPlay, muted])
+  }, [shouldRenderVideo, activeVideoSrc, triggerPlay, muted, autoPlay])
 
   // Viewport intersection observer (play when visible, pause when scrolled far out of view)
   useEffect(() => {
@@ -173,6 +191,8 @@ export default function CourseMediaPreview({
           muted={muted}
           loop={loop}
           playsInline
+          webkit-playsinline="true"
+          x5-playsinline="true"
           autoPlay={autoPlay}
           controls={controls}
           preload="auto"
@@ -180,7 +200,6 @@ export default function CourseMediaPreview({
           className={clsx('bg-black block', resolvedVideoClass)}
         >
           <source src={activeVideoSrc} type="video/mp4" onError={handleVideoError} />
-          <source src={activeVideoSrc} type="video/quicktime" onError={handleVideoError} />
           <source src={activeVideoSrc} onError={handleVideoError} />
         </video>
       </div>

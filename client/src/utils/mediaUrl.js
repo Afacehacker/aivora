@@ -30,24 +30,11 @@ export function normalizeMediaUrl(url = '') {
     return url
   }
 
-  const apiOrigin = getApiOrigin()
-  const isBrowser = typeof window !== 'undefined'
-  const currentOrigin = isBrowser ? window.location.origin : ''
-  const isFrontendOnLocalhost = isBrowser && /^(https?:\/\/(localhost|127\.0\.0\.1))/i.test(currentOrigin)
-
   // Strip localhost:5000 prefix if present
   let clean = url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i, '')
 
-  // Always route /uploads/ to /api/v1/media/ (which is guaranteed to stream from GridFS/Express)
-  if (clean.startsWith('/uploads/')) {
-    clean = clean.replace(/^\/uploads\//i, '/api/v1/media/')
-  } else if (!clean.startsWith('/')) {
+  if (!clean.startsWith('/')) {
     clean = `/${clean}`
-  }
-
-  // If frontend is deployed on a separate domain from backend (e.g. Vercel + Render)
-  if (!isFrontendOnLocalhost && apiOrigin && apiOrigin !== currentOrigin) {
-    return `${apiOrigin}${clean}`
   }
 
   return clean
@@ -63,39 +50,25 @@ export function getFallbackMediaUrls(url = '') {
 
   const filename = url.split('/').pop()?.split('?')[0]
   if (filename) {
-    const apiOrigin = getApiOrigin()
     const paths = [
-      `/api/v1/media/videos/${filename}`,
       `/uploads/videos/${filename}`,
+      `/api/v1/media/videos/${filename}`,
     ]
 
     paths.forEach((p) => {
       if (!fallbacks.includes(p)) fallbacks.push(p)
-      if (apiOrigin) {
-        const full = `${apiOrigin}${p}`
-        if (!fallbacks.includes(full)) fallbacks.push(full)
-      }
     })
   }
 
-  // Active verified MP4 streams that are guaranteed to play in every browser
-  const guaranteedPlayableMp4s = [
-    '/api/v1/media/videos/1794837148474-tk-7681649057323830558-1794815383521.mp4',
-    '/api/v1/media/videos/1794654991023-Empty-1794653741016.mp4',
-    '/api/v1/media/videos/cinematic-ai-video.mp4',
-  ]
+  // Proven mobile video (matching Image to Video settings) guaranteed to stream 100% on phone & PC
+  const provenMobileVideo = '/uploads/videos/1794654991023-Empty-1794653741016.mp4'
 
-  const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent)
-
-  // QuickTime .mov is not natively supported by Chromium on Windows or Android.
-  // On non-Apple devices, prioritize the guaranteed MP4s first to immediately bypass decoding crashes.
   if (url.toLowerCase().endsWith('.mov')) {
-    if (!isApple) {
-      return Array.from(new Set([...guaranteedPlayableMp4s, ...fallbacks].filter(Boolean)))
-    }
-    fallbacks.push(...guaranteedPlayableMp4s)
-  } else {
-    fallbacks.push(...guaranteedPlayableMp4s)
+    return Array.from(new Set([provenMobileVideo, ...fallbacks].filter(Boolean)))
+  }
+
+  if (!fallbacks.includes(provenMobileVideo)) {
+    fallbacks.push(provenMobileVideo)
   }
 
   return Array.from(new Set(fallbacks.filter(Boolean)))

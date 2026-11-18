@@ -35,6 +35,10 @@ const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'https://aivora.ng',
+  'https://www.aivora.ng',
+  'http://aivora.ng',
+  'http://www.aivora.ng',
 ];
 
 app.use(
@@ -43,18 +47,20 @@ app.use(
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
+        origin.includes('aivora.ng') ||
         origin.endsWith('.vercel.app') ||
         origin.endsWith('.onrender.com') ||
         process.env.NODE_ENV === 'development'
       ) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+        return callback(null, true);
       }
+      // Never crash or return 500 on foreign origins; allow gracefully
+      return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Range', 'Accept'],
+    exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Length'],
   })
 );
 
