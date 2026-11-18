@@ -24,6 +24,7 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { formatPrice } from '../../components/home/CourseCard'
 import adminService from '../../services/adminService'
+import ReceiptViewerModal from '../../components/admin/ReceiptViewerModal'
 
 const statusColor = {
   success: 'success',
@@ -41,7 +42,7 @@ export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
-  const [viewingReceiptUrl, setViewingReceiptUrl] = useState(null)
+  const [inspectingPayment, setInspectingPayment] = useState(null)
 
   // Manual Payment Bank Accounts State
   const [paymentAccounts, setPaymentAccounts] = useState([])
@@ -313,10 +314,10 @@ export default function AdminOrders() {
                             {receipt ? (
                               <button
                                 type="button"
-                                onClick={() => setViewingReceiptUrl(receipt)}
+                                onClick={() => setInspectingPayment(o)}
                                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200 text-xs font-bold transition-colors"
                               >
-                                <Eye className="w-3.5 h-3.5" /> View Receipt
+                                <Eye className="w-3.5 h-3.5" /> Inspect Receipt
                               </button>
                             ) : (
                               <span className="text-xs text-slate-400 italic">No receipt attached</span>
@@ -496,59 +497,17 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {/* Payment Receipt Image / PDF Modal */}
-      {viewingReceiptUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
-          <div className="bg-white border border-pink-100 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-pink-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Eye className="w-4 h-4 text-pink-600" />
-                <span>Student Bank Transfer Receipt</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setViewingReceiptUrl(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-pink-50"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="max-h-[65vh] overflow-auto rounded-xl bg-slate-50 flex items-center justify-center p-2 border border-pink-100">
-              {viewingReceiptUrl.toLowerCase().endsWith('.pdf') ? (
-                <iframe
-                  src={viewingReceiptUrl}
-                  className="w-full h-96 rounded-lg"
-                  title="Receipt PDF"
-                />
-              ) : (
-                <img
-                  src={viewingReceiptUrl}
-                  alt="Student Payment Receipt"
-                  className="max-h-[60vh] w-auto object-contain rounded-lg shadow-sm"
-                />
-              )}
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <a
-                href={viewingReceiptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-pink-600 hover:text-pink-700 underline inline-flex items-center gap-1"
-              >
-                <ExternalLink className="w-3.5 h-3.5" /> Open Full-Size in New Tab
-              </a>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setViewingReceiptUrl(null)}
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
+      {/* Full Receipt Modal Viewer with Zoom, Rotation & 1-Click Decisions */}
+      {inspectingPayment && (
+        <ReceiptViewerModal
+          isOpen={Boolean(inspectingPayment)}
+          onClose={() => setInspectingPayment(null)}
+          receiptUrl={inspectingPayment.proofUrl || inspectingPayment.payment?.proofUrl}
+          payment={inspectingPayment}
+          isProcessing={updatingOrderId === inspectingPayment._id}
+          onApprove={(id) => handleStatusUpdate(id, 'success')}
+          onReject={(id) => handleStatusUpdate(id, 'failed')}
+        />
       )}
     </>
   )

@@ -70,6 +70,63 @@ export function getFallbackMediaUrls(url = '') {
   return Array.from(new Set(fallbacks.filter(Boolean)))
 }
 
+/**
+ * Resolves receipt proof media URLs.
+ * Handles both relative paths (/api/v1/media/images/..., /uploads/images/...)
+ * and full external URLs (Cloudinary, S3, etc.).
+ * Ensures that if frontend and backend domains differ in production,
+ * the API origin is prepended so the receipt actually loads from the backend!
+ */
+export function getReceiptMediaUrl(url = '') {
+  if (!url || typeof url !== 'string') return ''
+
+  // Full external URL (Cloudinary, S3, etc.)
+  if (/^https?:\/\//i.test(url) && !/^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?)/i.test(url)) {
+    return url
+  }
+
+  const apiOrigin = getApiOrigin()
+  let clean = url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i, '')
+  if (!clean.startsWith('/')) clean = `/${clean}`
+
+  if (apiOrigin) {
+    return `${apiOrigin}${clean}`
+  }
+
+  return clean
+}
+
+/**
+ * Returns prioritized fallback URLs specifically for payment receipts.
+ */
+export function getReceiptFallbackUrls(url = '') {
+  if (!url || typeof url !== 'string') return []
+  const primary = getReceiptMediaUrl(url)
+  const fallbacks = [primary]
+
+  const apiOrigin = getApiOrigin()
+  const filename = url.split('/').pop()?.split('?')[0]
+
+  if (filename) {
+    const paths = [
+      `/api/v1/media/images/${filename}`,
+      `/uploads/images/${filename}`,
+      `/api/v1/media/resources/${filename}`,
+      `/uploads/resources/${filename}`,
+    ]
+
+    paths.forEach((p) => {
+      if (apiOrigin) {
+        const full = `${apiOrigin}${p}`
+        if (!fallbacks.includes(full)) fallbacks.push(full)
+      }
+      if (!fallbacks.includes(p)) fallbacks.push(p)
+    })
+  }
+
+  return Array.from(new Set(fallbacks.filter(Boolean)))
+}
+
 export function isVideoUrl(url = '') {
   if (!url || typeof url !== 'string') return false
   return (

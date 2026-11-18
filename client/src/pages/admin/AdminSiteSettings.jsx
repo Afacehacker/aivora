@@ -225,10 +225,10 @@ export default function AdminSiteSettings() {
 
       <div className="space-y-8 max-w-4xl">
         <div>
-          <h1 className="text-2xl font-display font-bold text-white">
+          <h1 className="text-2xl font-display font-bold text-slate-900">
             Website & Content Management
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600">
             Update homepage headlines, promotional banners, FAQs, verified testimonials, and contact info without editing code.
           </p>
         </div>
@@ -236,9 +236,9 @@ export default function AdminSiteSettings() {
         {/* General & Hero Form */}
         <form
           onSubmit={handleSaveGeneral}
-          className="glass rounded-2xl p-6 border border-white/10 space-y-5"
+          className="bg-white rounded-2xl p-6 border border-pink-200/80 shadow-sm space-y-5"
         >
-          <h2 className="text-lg font-display font-bold text-white">
+          <h2 className="text-lg font-display font-bold text-slate-900">
             Homepage Hero & Contact Information
           </h2>
 
@@ -249,12 +249,12 @@ export default function AdminSiteSettings() {
           />
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-300">Hero Supporting Headline</label>
+            <label className="text-sm font-medium text-slate-700">Hero Supporting Headline</label>
             <textarea
               rows={3}
               value={settings.heroSubHeadline}
               onChange={(e) => setSettings({ ...settings, heroSubHeadline: e.target.value })}
-              className="w-full rounded-xl bg-aivora-navy border border-white/10 p-3.5 text-sm text-white"
+              className="w-full rounded-xl bg-white border border-slate-300 p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 shadow-sm"
             />
           </div>
 
@@ -276,8 +276,8 @@ export default function AdminSiteSettings() {
             />
           </div>
 
-          <div className="pt-2 border-t border-white/10 space-y-3">
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+          <div className="pt-2 border-t border-slate-200 space-y-3">
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={settings.announcementBanner?.isActive || false}
@@ -290,7 +290,7 @@ export default function AdminSiteSettings() {
                     },
                   })
                 }
-                className="rounded border-white/20 bg-aivora-navy text-aivora-indigo"
+                className="rounded border-slate-300 text-pink-600 focus:ring-pink-500"
               />
               <span>Enable Top Promotional Announcement Banner</span>
             </label>
@@ -317,17 +317,17 @@ export default function AdminSiteSettings() {
         </form>
 
         {/* Telegram Community & Homepage Pop-up Card Management */}
-        <div className="glass rounded-2xl p-6 border border-white/10 space-y-5">
+        <div className="bg-white rounded-2xl p-6 border border-pink-200/80 shadow-sm space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#229ED9]/15 text-[#229ED9] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center">
                 <Send className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-display font-bold text-white">
+                <h2 className="text-lg font-display font-bold text-slate-900">
                   Telegram Channel & Homepage Pop-up Card
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600">
                   Configure the card that pops up on the homepage encouraging visitors to join your Telegram. You can change your channel link or add another link anytime.
                 </p>
               </div>
@@ -336,7 +336,7 @@ export default function AdminSiteSettings() {
             <button
               type="button"
               onClick={handleReset2HourTimer}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/30 text-xs font-semibold text-pink-300 self-start sm:self-auto transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-50 hover:bg-pink-100 border border-pink-200 text-xs font-semibold text-pink-700 self-start sm:self-auto transition-colors"
               title="Clears any active 2-hour snooze so the popup will immediately appear when you reload the homepage"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -346,7 +346,7 @@ export default function AdminSiteSettings() {
 
           <form onSubmit={handleSaveGeneral} className="space-y-4">
             {/* Pop-up Toggle */}
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={settings.telegramPopup?.enabled !== false}
@@ -359,7 +359,7 @@ export default function AdminSiteSettings() {
                     },
                   })
                 }
-                className="rounded border-white/20 bg-aivora-navy text-aivora-indigo"
+                className="rounded border-slate-300 text-pink-600 focus:ring-pink-500"
               />
               <span>Enable Homepage Pop-up Encouraging Users to Join Telegram</span>
             </label>
@@ -382,17 +382,17 @@ export default function AdminSiteSettings() {
                   })
                 }}
               />
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500">
                 This is the main link that opens when users click the &ldquo;Join Telegram Channel&rdquo; button.
               </p>
             </div>
 
             {/* Additional Community Links */}
-            <div className="pt-3 border-t border-white/10 space-y-3">
+            <div className="pt-3 border-t border-slate-200 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Additional Telegram / Community Links</h3>
-                  <p className="text-[11px] text-slate-400">
+                  <h3 className="text-sm font-semibold text-slate-900">Additional Telegram / Community Links</h3>
+                  <p className="text-[11px] text-slate-500">
                     Add another link you feel like adding (e.g. Discussion Group, VIP Channel, Backup Group, WhatsApp).
                   </p>
                 </div>
@@ -408,7 +408,7 @@ export default function AdminSiteSettings() {
               </div>
 
               {(!settings.telegramPopup?.additionalLinks || settings.telegramPopup.additionalLinks.length === 0) ? (
-                <p className="text-xs text-slate-500 italic p-3 rounded-xl bg-white/5 border border-dashed border-white/10">
+                <p className="text-xs text-slate-500 italic p-3 rounded-xl bg-slate-50 border border-dashed border-slate-300">
                   No additional links added yet. Click &ldquo;Add Another Link&rdquo; if you want to include extra links (like a discussion group or secondary channel).
                 </p>
               ) : (
@@ -416,7 +416,7 @@ export default function AdminSiteSettings() {
                   {settings.telegramPopup.additionalLinks.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10"
+                      className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200"
                     >
                       <div className="w-full sm:w-1/3">
                         <Input
@@ -435,7 +435,7 @@ export default function AdminSiteSettings() {
                       <button
                         type="button"
                         onClick={() => handleRemoveTelegramLink(idx)}
-                        className="p-2.5 rounded-xl hover:bg-red-500/20 text-slate-400 hover:text-red-300 self-end sm:self-auto transition-colors"
+                        className="p-2.5 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-600 self-end sm:self-auto transition-colors"
                         title="Remove Link"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -447,7 +447,7 @@ export default function AdminSiteSettings() {
             </div>
 
             {/* Custom Pop-up Texts */}
-            <div className="pt-3 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="pt-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 label="Pop-up Title"
                 placeholder="e.g. Join our Telegram Channel! 🚀"
@@ -505,14 +505,16 @@ export default function AdminSiteSettings() {
         </div>
 
         {/* Manual Bank Payment Details Management */}
-        <div className="glass rounded-2xl p-6 border border-white/10 space-y-5">
+        <div className="bg-white rounded-2xl p-6 border border-pink-200/80 shadow-sm space-y-5">
           <div className="flex items-center gap-3">
-            <Building2 className="w-5 h-5 text-aivora-cyan" />
+            <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center">
+              <Building2 className="w-5 h-5" />
+            </div>
             <div>
-              <h2 className="text-lg font-display font-bold text-white">
+              <h2 className="text-lg font-display font-bold text-slate-900">
                 Manual Payment Bank Accounts (Add / Remove Payment Details)
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Manage the bank accounts displayed on the student checkout page. You can remove any bank account or add new ones anytime.
               </p>
             </div>
@@ -522,19 +524,19 @@ export default function AdminSiteSettings() {
             {paymentAccounts.map((acc) => (
               <div
                 key={acc._id || acc.accountNumber}
-                className="flex items-center justify-between gap-4 p-4 rounded-xl bg-aivora-navy/80 border border-white/10 text-xs"
+                className="flex items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs"
               >
                 <div className="space-y-0.5">
-                  <span className="font-bold uppercase text-aivora-cyan">{acc.bankName}</span>
-                  <p className="text-base font-mono font-bold text-white">{acc.accountNumber}</p>
-                  <p className="text-slate-300">Account Name: {acc.accountName}</p>
-                  {acc.instructions && <p className="text-slate-400">{acc.instructions}</p>}
+                  <span className="font-bold uppercase text-pink-600 tracking-wide">{acc.bankName}</span>
+                  <p className="text-base font-mono font-bold text-slate-900">{acc.accountNumber}</p>
+                  <p className="text-slate-700">Account Name: <span className="font-semibold text-slate-900">{acc.accountName}</span></p>
+                  {acc.instructions && <p className="text-slate-500">{acc.instructions}</p>}
                 </div>
                 {acc._id && (
                   <button
                     type="button"
                     onClick={() => handleDeletePaymentAccount(acc._id)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-xs font-semibold text-red-300"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-xs font-semibold text-red-600 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Remove</span>
@@ -544,8 +546,8 @@ export default function AdminSiteSettings() {
             ))}
           </div>
 
-          <form onSubmit={handleAddPaymentAccount} className="space-y-3 pt-3 border-t border-white/10">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+          <form onSubmit={handleAddPaymentAccount} className="space-y-3 pt-3 border-t border-slate-200">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-700">
               Add Another Payment Account
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -590,8 +592,8 @@ export default function AdminSiteSettings() {
         </div>
 
         {/* FAQ Management */}
-        <div className="glass rounded-2xl p-6 border border-white/10 space-y-5">
-          <h2 className="text-lg font-display font-bold text-white">Manage Homepage FAQs</h2>
+        <div className="bg-white rounded-2xl p-6 border border-pink-200/80 shadow-sm space-y-5">
+          <h2 className="text-lg font-display font-bold text-slate-900">Manage Homepage FAQs</h2>
 
           <form onSubmit={handleAddFaq} className="space-y-3">
             <Input
@@ -611,20 +613,20 @@ export default function AdminSiteSettings() {
             </Button>
           </form>
 
-          <div className="space-y-2 pt-3 border-t border-white/10">
+          <div className="space-y-2 pt-3 border-t border-slate-200">
             {faqs.map((f) => (
               <div
                 key={f._id || f.question}
-                className="flex items-start justify-between gap-4 p-3 rounded-xl bg-white/5 text-xs"
+                className="flex items-start justify-between gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs"
               >
                 <div>
-                  <p className="font-semibold text-white">{f.question}</p>
-                  <p className="text-slate-400 mt-0.5">{f.answer}</p>
+                  <p className="font-semibold text-slate-900">{f.question}</p>
+                  <p className="text-slate-600 mt-0.5">{f.answer}</p>
                 </div>
                 {f._id && (
                   <button
                     onClick={() => handleDeleteFaq(f._id)}
-                    className="text-slate-400 hover:text-red-400"
+                    className="text-slate-400 hover:text-red-600 p-1 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -635,8 +637,8 @@ export default function AdminSiteSettings() {
         </div>
 
         {/* Testimonials Management */}
-        <div className="glass rounded-2xl p-6 border border-white/10 space-y-5">
-          <h2 className="text-lg font-display font-bold text-white">
+        <div className="bg-white rounded-2xl p-6 border border-pink-200/80 shadow-sm space-y-5">
+          <h2 className="text-lg font-display font-bold text-slate-900">
             Manage Verified Student Testimonials
           </h2>
 
@@ -666,22 +668,22 @@ export default function AdminSiteSettings() {
             </Button>
           </form>
 
-          <div className="space-y-2 pt-3 border-t border-white/10">
+          <div className="space-y-2 pt-3 border-t border-slate-200">
             {testimonials.map((t) => (
               <div
                 key={t._id || t.name}
-                className="flex items-start justify-between gap-4 p-3 rounded-xl bg-white/5 text-xs"
+                className="flex items-start justify-between gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs"
               >
                 <div>
-                  <p className="font-semibold text-white">
-                    {t.name} <span className="text-slate-400">({t.role})</span>
+                  <p className="font-semibold text-slate-900">
+                    {t.name} <span className="text-slate-500">({t.role})</span>
                   </p>
-                  <p className="text-slate-300 mt-0.5">&ldquo;{t.comment}&rdquo;</p>
+                  <p className="text-slate-700 mt-0.5">&ldquo;{t.comment}&rdquo;</p>
                 </div>
                 {t._id && (
                   <button
                     onClick={() => handleDeleteTestimonial(t._id)}
-                    className="text-slate-400 hover:text-red-400"
+                    className="text-slate-400 hover:text-red-600 p-1 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

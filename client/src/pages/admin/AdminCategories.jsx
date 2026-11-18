@@ -53,15 +53,15 @@ export default function AdminCategories() {
 
       <div className="space-y-6 max-w-4xl">
         <div>
-          <h1 className="text-2xl font-display font-bold text-white">AI Learning Categories</h1>
-          <p className="text-sm text-slate-400">
+          <h1 className="text-2xl font-display font-black text-slate-900">AI Learning Categories</h1>
+          <p className="text-sm text-slate-600 font-medium">
             Organize courses into structured AI creative specialization tracks.
           </p>
         </div>
 
         <form
           onSubmit={handleCreate}
-          className="glass rounded-2xl p-6 border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-4 items-end"
+          className="bg-white rounded-2xl p-6 border border-pink-200 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-4 items-end"
         >
           <Input
             label="Category Name"
@@ -87,18 +87,18 @@ export default function AdminCategories() {
           {categories.map((cat) => (
             <div
               key={cat._id}
-              className="glass rounded-2xl p-5 border border-white/10 flex items-start justify-between gap-4"
+              className="bg-white rounded-2xl p-5 border border-pink-200 shadow-sm flex items-start justify-between gap-4"
             >
               <div>
-                <h3 className="text-base font-display font-bold text-white">{cat.name}</h3>
-                <p className="text-xs text-aivora-cyan font-mono mt-0.5">/{cat.slug}</p>
+                <h3 className="text-base font-display font-black text-slate-900">{cat.name}</h3>
+                <p className="text-xs text-pink-600 font-mono font-bold mt-0.5">/{cat.slug}</p>
                 {cat.description && (
-                  <p className="text-xs text-slate-400 mt-2">{cat.description}</p>
+                  <p className="text-xs text-slate-600 font-medium mt-2">{cat.description}</p>
                 )}
               </div>
               <button
                 onClick={() => handleDelete(cat._id)}
-                className="p-2 rounded-lg text-slate-400 hover:text-red-400"
+                className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

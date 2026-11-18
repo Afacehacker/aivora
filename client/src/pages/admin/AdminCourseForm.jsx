@@ -616,24 +616,24 @@ export default function AdminCourseForm() {
           </div>
 
           <div className="flex flex-wrap items-center gap-6 pt-2">
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer font-medium">
               <input
                 type="checkbox"
                 checked={form.isPublished}
                 onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
-                className="rounded border-white/20 bg-aivora-navy text-aivora-indigo"
+                className="rounded border-slate-300 text-pink-600 focus:ring-pink-500"
               />
               <span>Publish Immediately</span>
             </label>
 
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer font-medium">
               <input
                 type="checkbox"
                 checked={form.isFeatured}
                 onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
                 className="rounded border-pink-300 text-pink-600 focus:ring-pink-500/20"
               />
-              <span className="text-slate-800 font-medium">Feature on Homepage</span>
+              <span>Feature on Homepage</span>
             </label>
           </div>
         </div>
@@ -1020,16 +1020,16 @@ export default function AdminCourseForm() {
               </Button>
             </div>
 
-            <div className="text-xs text-slate-400">
-              Total: <strong className="text-white">{totalVideoCount} Tutorial Videos</strong> •{' '}
-              <strong className="text-aivora-cyan">{formatMinutesLong(totalDurationSeconds)}</strong>
+            <div className="text-xs text-slate-600">
+              Total: <strong className="text-slate-900 font-semibold">{totalVideoCount} Tutorial Videos</strong> •{' '}
+              <strong className="text-pink-600 font-bold">{formatMinutesLong(totalDurationSeconds)}</strong>
             </div>
           </div>
         </div>
 
         {/* Bottom Publish Bar */}
-        <div className="glass rounded-2xl p-5 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-slate-400">
+        <div className="bg-white rounded-2xl p-5 border border-pink-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-xs text-slate-600">
             Ready to publish? All uploaded pictures, preview promo video, and payment-protected video tutorials will be saved together.
           </div>
           <Button

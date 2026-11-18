@@ -12,6 +12,7 @@ import Badge from '../../components/ui/Badge'
 import { formatPrice } from '../../components/home/CourseCard'
 import adminService from '../../services/adminService'
 import api from '../../services/api'
+import ReceiptViewerModal from '../../components/admin/ReceiptViewerModal'
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -22,7 +23,7 @@ export default function AdminDashboard() {
   const [pendingOrders, setPendingOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
-  const [viewingReceiptUrl, setViewingReceiptUrl] = useState(null)
+  const [inspectingPayment, setInspectingPayment] = useState(null)
 
   const loadDashboardData = () => {
     setLoading(true)
@@ -109,9 +110,9 @@ export default function AdminDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/admin/orders">
-              <Button variant="secondary" size="sm" iconLeft={<CreditCard className="w-4 h-4 text-pink-600" />}>
-                All Payments &amp; Orders
+            <Link to="/admin/payments">
+              <Button variant="secondary" size="sm" iconLeft={<ShieldCheck className="w-4 h-4 text-pink-600" />}>
+                Payment Approvals
               </Button>
             </Link>
             <Link to="/admin/courses/create">
@@ -143,10 +144,10 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <Link
-                to="/admin/orders?status=pending"
+                to="/admin/payments?status=pending"
                 className="text-xs font-bold text-amber-800 hover:text-amber-900 underline flex items-center gap-1 self-start sm:self-center"
               >
-                Manage all in Orders page <ArrowRight className="w-3.5 h-3.5" />
+                Open Payment Approvals Page <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
@@ -189,10 +190,10 @@ export default function AdminDashboard() {
                       {receipt ? (
                         <button
                           type="button"
-                          onClick={() => setViewingReceiptUrl(receipt)}
+                          onClick={() => setInspectingPayment(order)}
                           className="inline-flex items-center gap-1 text-[11px] font-bold text-pink-600 hover:text-pink-700 underline"
                         >
-                          <Eye className="w-3.5 h-3.5" /> View Receipt
+                          <Eye className="w-3.5 h-3.5" /> Inspect Receipt
                         </button>
                       ) : (
                         <span className="text-[10px] text-slate-400">No receipt file</span>
@@ -424,59 +425,17 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Payment Receipt Image / PDF Modal */}
-      {viewingReceiptUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
-          <div className="bg-white border border-pink-100 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-pink-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Eye className="w-4 h-4 text-pink-600" />
-                <span>Student Transfer Receipt</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setViewingReceiptUrl(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-pink-50"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="max-h-[65vh] overflow-auto rounded-xl bg-slate-50 flex items-center justify-center p-2 border border-pink-100">
-              {viewingReceiptUrl.toLowerCase().endsWith('.pdf') ? (
-                <iframe
-                  src={viewingReceiptUrl}
-                  className="w-full h-96 rounded-lg"
-                  title="Receipt PDF"
-                />
-              ) : (
-                <img
-                  src={viewingReceiptUrl}
-                  alt="Student Payment Receipt"
-                  className="max-h-[60vh] w-auto object-contain rounded-lg shadow-sm"
-                />
-              )}
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <a
-                href={viewingReceiptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-pink-600 hover:text-pink-700 underline inline-flex items-center gap-1"
-              >
-                <ExternalLink className="w-3.5 h-3.5" /> Open Full-Size in New Tab
-              </a>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setViewingReceiptUrl(null)}
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
+      {/* Full Receipt Modal Viewer with Zoom, Rotation & 1-Click Decisions */}
+      {inspectingPayment && (
+        <ReceiptViewerModal
+          isOpen={Boolean(inspectingPayment)}
+          onClose={() => setInspectingPayment(null)}
+          receiptUrl={inspectingPayment.proofUrl || inspectingPayment.payment?.proofUrl}
+          payment={inspectingPayment}
+          isProcessing={updatingOrderId === inspectingPayment._id}
+          onApprove={(id) => handleUpdatePaymentStatus(id, 'success')}
+          onReject={(id) => handleUpdatePaymentStatus(id, 'failed')}
+        />
       )}
     </>
   )

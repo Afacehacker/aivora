@@ -71,26 +71,26 @@ export default function AdminSupport() {
 
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-white">Support Ticket Management</h1>
-          <p className="text-sm text-slate-400">
+          <h1 className="text-2xl font-display font-bold text-slate-900">Support Ticket Management</h1>
+          <p className="text-sm text-slate-600">
             Respond to student inquiries and update support ticket statuses.
           </p>
         </div>
 
         {loading ? (
-          <div className="h-48 rounded-2xl glass animate-pulse" />
+          <div className="h-48 rounded-2xl bg-white border border-pink-100 shadow-sm animate-pulse" />
         ) : tickets.length > 0 ? (
           <div className="space-y-3">
             {tickets.map((t) => (
               <div
                 key={t._id}
                 onClick={() => openTicket(t._id)}
-                className="glass rounded-2xl p-5 border border-white/10 hover:border-aivora-indigo/40 cursor-pointer flex items-center justify-between gap-4"
+                className="bg-white rounded-2xl p-5 border border-pink-200/80 shadow-sm hover:border-pink-400 hover:shadow-md cursor-pointer flex items-center justify-between gap-4 transition-all"
               >
                 <div>
-                  <h3 className="text-base font-semibold text-white">{t.subject}</h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    From: {t.student?.name} ({t.student?.email}) • Category: {t.category}
+                  <h3 className="text-base font-semibold text-slate-900">{t.subject}</h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    From: <span className="font-medium text-slate-700">{t.student?.name}</span> ({t.student?.email}) • Category: <span className="font-medium text-slate-700">{t.category}</span>
                   </p>
                 </div>
                 <Badge color={t.status === 'resolved' ? 'success' : 'info'} className="capitalize">
@@ -100,7 +100,7 @@ export default function AdminSupport() {
             ))}
           </div>
         ) : (
-          <div className="glass rounded-2xl p-10 text-center border border-white/10 text-slate-400 text-sm">
+          <div className="bg-white rounded-2xl p-10 text-center border border-pink-200/80 shadow-sm text-slate-500 text-sm">
             No support tickets open right now.
           </div>
         )}
@@ -114,14 +114,14 @@ export default function AdminSupport() {
       >
         {selected && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <span className="text-xs text-slate-400">
-                Student: <strong className="text-white">{selected.student?.name}</strong>
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <span className="text-xs text-slate-600">
+                Student: <strong className="text-slate-900">{selected.student?.name}</strong>
               </span>
               <select
                 value={selected.status}
                 onChange={(e) => handleStatusChange(e.target.value)}
-                className="rounded-lg bg-aivora-navy border border-white/10 px-3 py-1 text-xs text-white"
+                className="rounded-lg bg-white border border-slate-300 px-3 py-1.5 text-xs text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-pink-500 shadow-sm"
               >
                 <option value="open">Open</option>
                 <option value="inProgress">In Progress</option>
@@ -136,26 +136,26 @@ export default function AdminSupport() {
                   key={idx}
                   className={`p-3.5 rounded-2xl text-sm ${
                     m.sender?.role === 'admin'
-                      ? 'bg-aivora-indigo/20 border border-aivora-indigo/30 text-white'
-                      : 'bg-white/5 text-slate-200'
+                      ? 'bg-pink-50 border border-pink-200 text-slate-900'
+                      : 'bg-slate-50 border border-slate-200 text-slate-800'
                   }`}
                 >
-                  <div className="flex justify-between text-xs text-slate-400 mb-1">
-                    <span>{m.sender?.name || 'User'}</span>
+                  <div className="flex justify-between text-xs text-slate-500 mb-1">
+                    <span className="font-semibold text-slate-700">{m.sender?.name || 'User'}</span>
                     <span>{new Date(m.createdAt).toLocaleString()}</span>
                   </div>
-                  <p>{m.message}</p>
+                  <p className="leading-relaxed">{m.message}</p>
                 </div>
               ))}
             </div>
 
-            <form onSubmit={handleReply} className="flex gap-2 pt-2 border-t border-white/10">
+            <form onSubmit={handleReply} className="flex gap-2 pt-2 border-t border-slate-200">
               <input
                 type="text"
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
                 placeholder="Type an official support response..."
-                className="flex-1 rounded-xl bg-aivora-navy border border-white/10 px-4 py-2 text-sm text-white"
+                className="flex-1 rounded-xl bg-white border border-slate-300 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 shadow-sm"
               />
               <Button type="submit" size="sm" iconLeft={<Send className="w-4 h-4" />}>
                 Send

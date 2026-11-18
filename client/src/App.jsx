@@ -34,6 +34,7 @@ import SupportPage from './pages/dashboard/SupportPage'
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminPaymentApprovals from './pages/admin/AdminPaymentApprovals'
 import AdminCourses from './pages/admin/AdminCourses'
 import AdminCourseForm from './pages/admin/AdminCourseForm'
 import AdminStudents from './pages/admin/AdminStudents'
@@ -91,6 +92,8 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/payments" element={<AdminPaymentApprovals />} />
+            <Route path="/admin/payment-approvals" element={<AdminPaymentApprovals />} />
             <Route path="/admin/courses" element={<AdminCourses />} />
             <Route path="/admin/courses/create" element={<AdminCourseForm />} />
             <Route path="/admin/courses/:id/edit" element={<AdminCourseForm />} />

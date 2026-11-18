@@ -98,8 +98,8 @@ export default function AdminStudents() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-display font-bold text-white">Student Management</h1>
-            <p className="text-sm text-slate-400">
+            <h1 className="text-2xl font-display font-bold text-slate-900">Student Management</h1>
+            <p className="text-sm text-slate-600">
               View student profiles, manage account status, and grant or revoke course access with audit logging.
             </p>
           </div>
@@ -111,17 +111,17 @@ export default function AdminStudents() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name or email..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-aivora-navy border border-white/10 text-sm text-white"
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-pink-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500 shadow-sm"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="h-64 rounded-2xl glass animate-pulse" />
+          <div className="h-64 rounded-2xl bg-white border border-pink-100 shadow-sm animate-pulse" />
         ) : (
-          <div className="glass rounded-2xl border border-white/10 overflow-x-auto">
+          <div className="bg-white rounded-2xl border border-pink-200/80 shadow-sm overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-white/10 text-xs uppercase text-slate-400">
+              <thead className="bg-pink-50/50 border-b border-pink-100 text-xs uppercase font-semibold text-slate-600">
                 <tr>
                   <th className="py-3.5 px-4">Student</th>
                   <th className="py-3.5 px-4">Email</th>
@@ -130,12 +130,12 @@ export default function AdminStudents() {
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-slate-200">
+              <tbody className="divide-y divide-pink-100/60 text-slate-700">
                 {students.map((s) => (
-                  <tr key={s._id} className="hover:bg-white/5">
-                    <td className="py-3.5 px-4 font-semibold text-white">{s.name}</td>
-                    <td className="py-3.5 px-4 text-slate-300">{s.email}</td>
-                    <td className="py-3.5 px-4 text-xs text-slate-400">
+                  <tr key={s._id} className="hover:bg-pink-50/30 transition-colors">
+                    <td className="py-3.5 px-4 font-semibold text-slate-900">{s.name}</td>
+                    <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">{s.email}</td>
+                    <td className="py-3.5 px-4 text-xs text-slate-500">
                       {new Date(s.createdAt).toLocaleDateString()}
                     </td>
                     <td className="py-3.5 px-4">
@@ -147,14 +147,14 @@ export default function AdminStudents() {
                       <div className="inline-flex items-center gap-2">
                         <button
                           onClick={() => handleViewStudent(s)}
-                          className="p-2 rounded-lg hover:bg-white/10 text-slate-300 hover:text-aivora-cyan"
+                          className="p-2 rounded-lg hover:bg-pink-50 text-slate-600 hover:text-pink-600 border border-transparent hover:border-pink-200 transition-colors"
                           title="Manage Enrollments & Details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleToggleStatus(s)}
-                          className="p-2 rounded-lg hover:bg-white/10 text-slate-300 hover:text-amber-400"
+                          className="p-2 rounded-lg hover:bg-amber-50 text-slate-600 hover:text-amber-600 border border-transparent hover:border-amber-200 transition-colors"
                           title={s.isActive ? 'Suspend Account' : 'Reactivate Account'}
                         >
                           {s.isActive ? (
@@ -185,10 +185,10 @@ export default function AdminStudents() {
       >
         {selectedStudent && (
           <div className="space-y-6">
-            <div className="p-4 rounded-xl bg-white/5 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-white">{selectedStudent.email}</p>
-                <p className="text-xs text-slate-400">
+                <p className="text-sm font-semibold text-slate-900">{selectedStudent.email}</p>
+                <p className="text-xs text-slate-500">
                   Joined {new Date(selectedStudent.createdAt).toLocaleDateString()}
                 </p>
               </div>
@@ -199,7 +199,7 @@ export default function AdminStudents() {
 
             {/* Manual Course Access Grant */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-aivora-cyan flex items-center gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-pink-600 flex items-center gap-1.5">
                 <KeyRound className="w-3.5 h-3.5" />
                 Manually Grant Course Access (Audited)
               </label>
@@ -207,7 +207,7 @@ export default function AdminStudents() {
                 <select
                   value={grantCourseId}
                   onChange={(e) => setGrantCourseId(e.target.value)}
-                  className="flex-1 rounded-xl bg-aivora-navy border border-white/10 px-3 py-2 text-sm text-white"
+                  className="flex-1 rounded-xl bg-white border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   {courses.map((c) => (
                     <option key={c._id} value={c._id}>
@@ -223,20 +223,20 @@ export default function AdminStudents() {
 
             {/* Enrolled Courses */}
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-white">Enrolled Courses</h4>
+              <h4 className="text-sm font-semibold text-slate-900">Enrolled Courses</h4>
               {studentDetails?.enrollments?.length > 0 ? (
                 <div className="space-y-2">
                   {studentDetails.enrollments.map((enr) => (
                     <div
                       key={enr._id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-white/5 text-xs"
+                      className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs"
                     >
-                      <span className="font-medium text-white">
+                      <span className="font-medium text-slate-900">
                         {enr.course?.title || 'Course'} ({enr.progress || 0}%)
                       </span>
                       <button
                         onClick={() => handleRevokeAccess(enr.course?._id)}
-                        className="text-red-400 hover:underline"
+                        className="text-red-600 hover:text-red-700 font-semibold hover:underline"
                       >
                         Revoke Access
                       </button>

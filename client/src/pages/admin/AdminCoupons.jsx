@@ -64,15 +64,15 @@ export default function AdminCoupons() {
 
       <div className="space-y-6 max-w-4xl">
         <div>
-          <h1 className="text-2xl font-display font-bold text-white">Discount Codes & Coupons</h1>
-          <p className="text-sm text-slate-400">
+          <h1 className="text-2xl font-display font-black text-slate-900">Discount Codes & Coupons</h1>
+          <p className="text-sm text-slate-600 font-medium">
             Create and manage promotional discount codes for courses.
           </p>
         </div>
 
         <form
           onSubmit={handleCreate}
-          className="glass rounded-2xl p-6 border border-white/10 grid grid-cols-1 sm:grid-cols-5 gap-4 items-end"
+          className="bg-white rounded-2xl p-6 border border-pink-200 shadow-sm grid grid-cols-1 sm:grid-cols-5 gap-4 items-end"
         >
           <Input
             label="Coupon Code"
@@ -82,11 +82,11 @@ export default function AdminCoupons() {
             required
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-300">Type</label>
+            <label className="text-sm font-semibold text-slate-700">Type</label>
             <select
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value })}
-              className="w-full rounded-xl bg-aivora-navy border border-white/10 py-3 px-3 text-sm text-white"
+              className="w-full rounded-xl bg-white border border-slate-300 py-3 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500"
             >
               <option value="percentage">Percentage (%)</option>
               <option value="fixed">Fixed (₦)</option>
@@ -110,9 +110,9 @@ export default function AdminCoupons() {
           </Button>
         </form>
 
-        <div className="glass rounded-2xl border border-white/10 overflow-x-auto">
+        <div className="bg-white rounded-2xl border border-pink-200 shadow-sm overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-white/10 text-xs uppercase text-slate-400">
+            <thead className="bg-pink-50/60 border-b border-pink-100 text-xs uppercase font-bold text-slate-700">
               <tr>
                 <th className="py-3.5 px-4">Code</th>
                 <th className="py-3.5 px-4">Discount</th>
@@ -121,7 +121,7 @@ export default function AdminCoupons() {
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-slate-200">
+            <tbody className="divide-y divide-pink-100 text-slate-800">
               {coupons.map((c) => (
                 <tr key={c._id}>
                   <td className="py-3.5 px-4 font-mono font-bold text-aivora-cyan">{c.code}</td>
