@@ -70,8 +70,8 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Body parsers
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Data sanitization against NoSQL query injection & XSS
 app.use(mongoSanitize());

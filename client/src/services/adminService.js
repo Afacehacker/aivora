@@ -101,24 +101,34 @@ export const adminService = {
   updateLesson: (lessonId, data) => patch(`/admin/lessons/${lessonId}`, data),
   deleteLesson: (lessonId) => del(`/admin/lessons/${lessonId}`),
 
-  // Media Uploads (Single-part direct upload with progress, 10 min timeout, zero chunking)
-  uploadMedia: (file, onUploadProgress) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return api.post('/admin/upload', formData, {
-      timeout: 600000,
-      onUploadProgress,
-    })
-  },
-
-  // Fast Chunked Media Upload (< 5 minutes guaranteed for HD video tutorials)
-  uploadMediaChunked: async (file, onProgress) => {
-    // 8 MB chunk size for 4x faster upload speed and minimal roundtrips
-    const CHUNK_SIZE = 8 * 1024 * 1024
+  // Media Uploads (Handles both small assets and large HD videos seamlessly on Vercel without 413 errors)
+  uploadMedia: async (file, onUploadProgress) => {
+    // Vercel serverless request body ceiling is 4.5 MB.
+    // 3 MB chunk size guarantees requests never exceed Vercel's limit and never trigger 413.
+    const CHUNK_SIZE = 3 * 1024 * 1024
     const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE))
-    const uploadId = `upl-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 
-    // Generate opaque safe filename with original extension (never exposes device file names)
+    // For small files <= 3.5MB, use direct single upload
+    if (file.size <= 3.5 * 1024 * 1024) {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await api.post('/admin/upload', formData, {
+        timeout: 60000,
+        onUploadProgress: (progressEvent) => {
+          if (typeof onUploadProgress === 'function') {
+            const pct = progressEvent.total
+              ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              : 50
+            onUploadProgress(pct)
+          }
+        },
+      })
+      if (typeof onUploadProgress === 'function') onUploadProgress(100)
+      return res
+    }
+
+    // For files > 3.5MB, use safe 3MB chunk streaming (bypasses Vercel 4.5MB ceiling)
+    const uploadId = `upl-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
     const dotIdx = file.name.lastIndexOf('.')
     const ext = (dotIdx > 0 ? file.name.substring(dotIdx) : '.mp4').toLowerCase()
     const randomToken = Math.random().toString(36).substring(2, 10)
@@ -141,7 +151,7 @@ export const adminService = {
       formData.append('filename', filename)
       formData.append('folder', isImage ? 'images' : 'videos')
       formData.append('mimeType', file.type || 'video/mp4')
-      formData.append('originalName', filename)
+      formData.append('originalName', file.name || filename)
       formData.append('totalSize', String(file.size))
 
       let retries = 3
@@ -158,27 +168,24 @@ export const adminService = {
             const msg =
               err?.message ||
               err?.data?.message ||
-              `Failed uploading video part ${chunkIndex + 1} of ${totalChunks}`
+              'Video upload failed. Please check your network and try again.'
             throw new Error(msg)
           }
           await new Promise((r) => setTimeout(r, 800))
         }
       }
 
-      if (typeof onProgress === 'function') {
+      if (typeof onUploadProgress === 'function') {
         const pct = Math.round(((chunkIndex + 1) / totalChunks) * 100)
-        onProgress({
-          chunkIndex,
-          totalChunks,
-          percent: pct,
-          loaded: end,
-          total: file.size,
-        })
+        onUploadProgress(pct)
       }
     }
 
     return finalResponse
   },
+
+  // Alias for backward compatibility
+  uploadMediaChunked: (file, onProgress) => adminService.uploadMedia(file, onProgress),
   getUploadedMedia: () => get('/admin/media'),
 }
 

@@ -205,20 +205,8 @@ export const handleChunkUpload = catchAsync(async (req, res, next) => {
   const isVideo = subFolder === 'videos' || (mimeType || '').startsWith('video/') || isVideoExt;
   const isImage = subFolder === 'images' || (mimeType || '').startsWith('image/') || isImageExt;
 
-  // 1) Write chunk directly to local SSD/disk staging (instant, 0 network latency)
-  const safeUploadId = uploadId.replace(/[^a-zA-Z0-9_-]/g, '');
-  const tempChunkDir = path.join(os.tmpdir(), 'aivora-chunks', safeUploadId);
-  try {
-    if (!fs.existsSync(tempChunkDir)) {
-      fs.mkdirSync(tempChunkDir, { recursive: true });
-    }
-    fs.writeFileSync(path.join(tempChunkDir, `part_${chunkIndex}`), file.buffer);
-  } catch (fsErr) {
-    console.warn('[ChunkUpload] Disk temp write error:', fsErr.message);
-  }
-
-  // Also backup to MongoDB UploadChunk in background (non-blocking)
-  UploadChunk.findOneAndUpdate(
+  // 1) Persist chunk into MongoDB UploadChunk (shared across 100% of serverless instances on Vercel/Render)
+  await UploadChunk.findOneAndUpdate(
     { uploadId, chunkIndex },
     {
       uploadId,
@@ -226,21 +214,15 @@ export const handleChunkUpload = catchAsync(async (req, res, next) => {
       totalChunks,
       filename,
       folder: subFolder,
-      mimeType: mimeType || file.mimetype || 'video/mp4',
+      mimeType: mimeType || file.mimetype || (isVideo ? 'video/mp4' : 'application/octet-stream'),
       originalName: originalName || '',
       data: file.buffer,
     },
-    { upsert: true }
-  ).catch(() => {});
+    { upsert: true, new: true }
+  );
 
-  // 2) Count parts received on disk
-  let receivedParts = 0;
-  try {
-    const existingParts = fs.readdirSync(tempChunkDir).filter((f) => f.startsWith('part_'));
-    receivedParts = existingParts.length;
-  } catch {
-    receivedParts = chunkIndex + 1;
-  }
+  // 2) Count total chunks safely persisted in MongoDB
+  const receivedParts = await UploadChunk.countDocuments({ uploadId });
 
   // 3) If not all chunks received yet, return instant 200 acknowledgment
   if (receivedParts < totalChunks && chunkIndex + 1 < totalChunks) {
@@ -250,98 +232,78 @@ export const handleChunkUpload = catchAsync(async (req, res, next) => {
       totalChunks,
       completed: false,
       receivedChunks: receivedParts,
-      percent: Math.round(((chunkIndex + 1) / totalChunks) * 100),
+      percent: Math.round((receivedParts / totalChunks) * 100),
     });
   }
 
-  // 4) All chunks received! Assemble stream directly on disk (0 MB excess RAM)
-  const assembledTempFile = path.join(tempChunkDir, `assembled_${filename}`);
-  let assembledSize = 0;
+  // 4) All chunks received! Fetch all chunks in exact sequential order
+  const allChunks = await UploadChunk.find({ uploadId }).sort({ chunkIndex: 1 });
+  if (allChunks.length < totalChunks) {
+    return successResponse(res, 200, `Waiting for remaining chunks (${allChunks.length}/${totalChunks}).`, {
+      uploadId,
+      chunkIndex,
+      totalChunks,
+      completed: false,
+      receivedChunks: allChunks.length,
+      percent: Math.round((allChunks.length / totalChunks) * 100),
+    });
+  }
+
+  // 5) Assemble directly into MongoDB GridFS bucket
+  const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
   try {
-    const writeStream = fs.createWriteStream(assembledTempFile);
-    for (let i = 0; i < totalChunks; i++) {
-      const partPath = path.join(tempChunkDir, `part_${i}`);
-      if (fs.existsSync(partPath)) {
-        const partBuffer = fs.readFileSync(partPath);
-        writeStream.write(partBuffer);
-        assembledSize += partBuffer.length;
-        try { fs.unlinkSync(partPath); } catch {}
-      }
+    const existing = await bucket.find({ filename }).toArray().catch(() => []);
+    for (const doc of existing) {
+      await bucket.delete(doc._id).catch(() => {});
     }
-    await new Promise((resolve, reject) => {
-      writeStream.end(resolve);
-      writeStream.on('error', reject);
-    });
-  } catch (assembleErr) {
-    console.error('[ChunkUpload] Assemble error:', assembleErr.message);
-  }
+  } catch {}
 
-  // 5) Destination disk paths for native 0ms local streaming
+  const uploadStream = bucket.openUploadStream(filename, {
+    contentType: mimeType || (isVideo ? 'video/mp4' : 'application/octet-stream'),
+    metadata: {
+      folder: subFolder,
+      originalName: originalName || filename,
+      mimeType: mimeType || (isVideo ? 'video/mp4' : 'application/octet-stream'),
+    },
+  });
+
+  let assembledSize = 0;
+  for (const ch of allChunks) {
+    uploadStream.write(ch.data);
+    assembledSize += ch.data.length;
+  }
+  await new Promise((resolve, reject) => {
+    uploadStream.end(resolve);
+    uploadStream.on('error', reject);
+  });
+
+  // 6) Also write to local disk if running on persistent server (Render/Localhost)
   const diskCandidateDirs = [
     path.join(process.cwd(), 'uploads', subFolder),
     path.join(process.cwd(), 'server', 'uploads', subFolder),
     path.join(bundledUploadsDir, subFolder),
     path.join(process.cwd(), 'client', 'public', 'uploads', subFolder),
   ];
-  let finalDiskPath = null;
-  diskCandidateDirs.forEach((d) => {
-    try {
-      if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
-      const dest = path.join(d, filename);
-      if (fs.existsSync(assembledTempFile)) {
-        fs.copyFileSync(assembledTempFile, dest);
-        if (!finalDiskPath) finalDiskPath = dest;
-      }
-    } catch {}
-  });
-
-  let finalUrl = `/api/v1/media/${subFolder}/${filename}`;
-  let cloudinaryDuration = 0;
-
-  // 6) If Cloudinary is configured, upload directly from assembled disk file
-  if (isCloudinaryConfigured() && finalDiskPath && fs.existsSync(finalDiskPath)) {
-    try {
-      const cRes = isVideo
-        ? await uploadVideo(finalDiskPath, `aivora/${subFolder}`)
-        : await uploadImage(finalDiskPath, `aivora/${subFolder}`);
-      if (cRes && (cRes.secure_url || cRes.url)) {
-        finalUrl = cRes.secure_url || cRes.url;
-        cloudinaryDuration = cRes.duration || 0;
-      }
-    } catch (cErr) {
-      console.warn('Cloudinary upload warning:', cErr.message);
-    }
-  }
-
-  // 7) Stream directly from disk into MongoDB GridFS with zero excess RAM
-  const sourceToStream = finalDiskPath || (fs.existsSync(assembledTempFile) ? assembledTempFile : null);
-  if (sourceToStream) {
-    try {
-      await saveStreamToGridFS(
-        filename,
-        sourceToStream,
-        mimeType || 'video/mp4',
-        subFolder,
-        originalName || filename
-      );
-    } catch (gridErr) {
-      console.warn('GridFS stream warning:', gridErr.message);
-    }
-  }
-
-  // 8) Clean up temp chunk files & MongoDB chunks
   try {
-    if (fs.existsSync(assembledTempFile)) fs.unlinkSync(assembledTempFile);
-    if (fs.existsSync(tempChunkDir)) fs.rmSync(tempChunkDir, { recursive: true, force: true });
+    const assembledBuffer = Buffer.concat(allChunks.map((c) => c.data));
+    diskCandidateDirs.forEach((d) => {
+      try {
+        if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+        fs.writeFileSync(path.join(d, filename), assembledBuffer);
+      } catch {}
+    });
   } catch {}
+
+  // 7) Clean up temporary chunk documents from MongoDB
   UploadChunk.deleteMany({ uploadId }).catch(() => {});
+
+  const finalUrl = `/api/v1/media/${subFolder}/${filename}`;
 
   return successResponse(res, 200, 'Video file uploaded and processed successfully.', {
     url: finalUrl,
     filename,
     type: isVideo ? 'video' : isImage ? 'image' : 'file',
     size: assembledSize,
-    duration: cloudinaryDuration,
     originalName: originalName || filename,
     completed: true,
   });

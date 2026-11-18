@@ -33,19 +33,34 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor — handle 401 and extract data
+// Response interceptor — handle errors and extract data
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
       console.warn('Session expired or unauthorized request (401).')
     }
-    return Promise.reject(
-      error.response?.data || {
-        message: error.message || 'An unexpected error occurred',
-        status: error.response?.status,
-      }
-    )
+    const data = error.response?.data
+    let msg = ''
+    if (typeof data === 'string') {
+      msg = data
+    } else if (data?.message) {
+      msg = data.message
+    } else if (error.message) {
+      msg = error.message
+    } else {
+      msg = 'An unexpected error occurred'
+    }
+
+    if (error.response?.status === 413) {
+      msg = 'File size exceeds serverless payload limit. Please retry with chunk streaming.'
+    }
+
+    return Promise.reject({
+      message: msg,
+      status: error.response?.status,
+      data: data,
+    })
   }
 )
 

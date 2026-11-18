@@ -133,20 +133,20 @@ export default function AdminCourseForm() {
     }
   }, [id, isEditing])
 
-  // Upload Preview / Promo Video Handler (The Product Cover) - Single Direct Upload
+  // Upload Preview / Promo Video Handler (The Product Cover) - Direct Resilient Upload
   const handlePreviewVideoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadingPreview(true)
     setPreviewProgress(0)
-    setPreviewStatus('Uploading video...')
+    setPreviewStatus('Uploading video 0%...')
     try {
-      const res = await adminService.uploadMedia(file, (progressEvent) => {
-        const pct = progressEvent.total
-          ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-          : 0
+      const res = await adminService.uploadMedia(file, (progress) => {
+        const pct = typeof progress === 'number'
+          ? progress
+          : progress?.percent || (progress?.total ? Math.round((progress.loaded * 100) / progress.total) : 0)
         setPreviewProgress(pct)
-        setPreviewStatus(`Uploading video ${pct}%...`)
+        setPreviewStatus(pct >= 100 ? 'Finalizing and processing video...' : `Uploading video ${pct}%...`)
       })
       const uploadedUrl = res?.data?.url || res?.url || res?.data?.data?.url || ''
       if (!uploadedUrl) {
@@ -164,7 +164,7 @@ export default function AdminCourseForm() {
     }
   }
 
-  // Batch Multi-Video Upload Handler (Direct single upload per video file)
+  // Batch Multi-Video Upload Handler (Direct resilient upload per video file)
   const handleMultipleVideosUpload = async (e) => {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
@@ -182,15 +182,17 @@ export default function AdminCourseForm() {
         // Extract duration from video file metadata
         const duration = await getVideoDurationFromFile(file)
 
-        // Upload video file directly in 1 piece
-        const res = await adminService.uploadMedia(file, (progressEvent) => {
-          const filePct = progressEvent.total
-            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            : 0
+        // Upload video file safely
+        const res = await adminService.uploadMedia(file, (progress) => {
+          const filePct = typeof progress === 'number'
+            ? progress
+            : progress?.percent || (progress?.total ? Math.round((progress.loaded * 100) / progress.total) : 0)
           const overallPct = Math.round(((i + filePct / 100) / files.length) * 100)
           setBatchProgress(overallPct)
           setBatchStatus(
-            `Uploading video ${i + 1} of ${files.length} (${filePct}%)...`
+            filePct >= 100
+              ? `Processing video ${i + 1} of ${files.length}...`
+              : `Uploading video ${i + 1} of ${files.length} (${filePct}%)...`
           )
         })
 
@@ -223,7 +225,7 @@ export default function AdminCourseForm() {
     }
   }
 
-  // Single Video File Upload / Replace for a specific tutorial item - Direct single upload
+  // Single Video File Upload / Replace for a specific tutorial item - Direct resilient upload
   const handleSingleVideoUpload = async (e) => {
     const file = e.target.files?.[0]
     const index = activeSingleIndexRef.current
@@ -234,10 +236,10 @@ export default function AdminCourseForm() {
 
     try {
       const duration = await getVideoDurationFromFile(file)
-      const res = await adminService.uploadMedia(file, (progressEvent) => {
-        const pct = progressEvent.total
-          ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-          : 0
+      const res = await adminService.uploadMedia(file, (progress) => {
+        const pct = typeof progress === 'number'
+          ? progress
+          : progress?.percent || (progress?.total ? Math.round((progress.loaded * 100) / progress.total) : 0)
         setSingleProgress(pct)
       })
 
