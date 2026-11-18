@@ -10,6 +10,7 @@ import Button from '../../components/ui/Button'
 import ProgressBar from '../../components/ui/ProgressBar'
 import PageLoader from '../../components/common/PageLoader'
 import { cleanLessonTitle } from '../../utils/lessonTitle'
+import { normalizeMediaUrl } from '../../utils/mediaUrl'
 import api from '../../services/api'
 
 const speeds = [0.75, 1, 1.25, 1.5, 2]
@@ -185,9 +186,12 @@ export default function CoursePlayerPage() {
               {activeLesson?.videoUrl ? (
                 <video
                   ref={videoRef}
-                  key={activeLesson._id}
-                  src={activeLesson.videoUrl}
+                  key={activeLesson._id || activeLesson.videoUrl}
+                  src={normalizeMediaUrl(activeLesson.videoUrl)}
                   controls
+                  autoPlay
+                  playsInline
+                  preload="auto"
                   controlsList="nodownload"
                   onEnded={handleMarkComplete}
                   className="w-full h-full object-contain"

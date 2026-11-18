@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { ensureInitialData } from '../utils/autoSeed.js';
+import { syncAllMediaAssets } from '../utils/syncMediaStorage.js';
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY_MS = 5000;
@@ -28,8 +29,9 @@ const connectDB = async (attempt = 1) => {
     const conn = await cachedPromise;
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    // Run auto-seed non-blockingly in the background so API requests respond immediately
+    // Run auto-seed and media storage sync non-blockingly in the background
     ensureInitialData().catch(() => {});
+    syncAllMediaAssets().catch(() => {});
 
     // Log connection events
     mongoose.connection.on('disconnected', () => {

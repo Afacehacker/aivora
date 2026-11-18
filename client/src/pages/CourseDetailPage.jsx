@@ -11,7 +11,7 @@ import Button from '../components/ui/Button'
 import StarRating from '../components/ui/StarRating'
 import Modal from '../components/ui/Modal'
 import PageLoader from '../components/common/PageLoader'
-import CourseMediaPreview, { courseUsesVideoCover } from '../components/common/CourseMediaPreview'
+import CourseMediaPreview, { courseUsesVideoCover, normalizeMediaUrl } from '../components/common/CourseMediaPreview'
 import { formatDuration, formatPrice, formatMinutesLong } from '../components/home/CourseCard'
 import { cleanLessonTitle } from '../utils/lessonTitle'
 import courseService from '../services/courseService'
@@ -597,9 +597,12 @@ export default function CourseDetailPage() {
         {previewUrl && (
           <div className="rounded-xl overflow-hidden bg-black flex items-center justify-center">
             <video
-              src={previewUrl}
+              key={previewUrl}
+              src={normalizeMediaUrl(previewUrl)}
               controls
               autoPlay
+              playsInline
+              preload="auto"
               className="w-full h-auto max-h-[75vh] object-contain"
             />
           </div>

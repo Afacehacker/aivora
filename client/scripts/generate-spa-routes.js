@@ -49,12 +49,31 @@ if (fs.existsSync(indexHtmlPath)) {
   fs.writeFileSync(path.join(distDir, '200.html'), indexHtml)
   fs.writeFileSync(path.join(distDir, '_redirects'), '/* /index.html 200\n')
 
-  // Write vercel.json in distDir for SPA rewrites
+  // Write vercel.json in distDir with safe rewrites that protect media files from being served as index.html
   const vercelConfig = {
     rewrites: [
       {
-        source: '/(.*)',
+        source: '/((?!uploads/|api/|assets/|.*\\.(?:mp4|webm|mov|mkv|avi|png|jpg|jpeg|webp|gif|svg|css|js|json|xml|txt|ico)).*)',
         destination: '/index.html',
+      },
+    ],
+    headers: [
+      {
+        source: '/uploads/(.*)',
+        headers: [
+          { key: 'Accept-Ranges', value: 'bytes' },
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        ],
       },
     ],
   }

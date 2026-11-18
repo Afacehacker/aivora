@@ -71,9 +71,22 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(mongoSanitize());
 app.use(xss());
 
-// Serve uploaded media files (images, videos, PDFs) BEFORE compression() so video byte-range requests are never altered
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-app.get('/uploads/:folder/:filename', async (req, res, next) => {
+// Media streaming options with complete cross-origin & byte-range support
+const staticMediaOptions = {
+  setHeaders: (res) => {
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type, Accept');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  },
+};
+
+// Serve uploaded media files before compression() so video byte-range headers are never altered
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), staticMediaOptions));
+app.use('/uploads', express.static(path.join(process.cwd(), 'server', 'uploads'), staticMediaOptions));
+app.all('/uploads/:folder/:filename', async (req, res, next) => {
   try {
     await connectDB();
     return serveStoredMedia(req, res, next);
@@ -82,11 +95,17 @@ app.get('/uploads/:folder/:filename', async (req, res, next) => {
   }
 });
 
-// Response compression (skip video streams so browser range caching never fails with ERR_CACHE_OPERATION_NOT_SUPPORTED)
+// Response compression (completely skip all media and video streams to guarantee range requests succeed)
 app.use(
   compression({
     filter: (req, res) => {
-      if (req.originalUrl.startsWith('/uploads/videos') || req.originalUrl.startsWith('/api/v1/media/videos')) {
+      if (
+        req.path.startsWith('/uploads') ||
+        req.path.startsWith('/api/v1/media') ||
+        req.originalUrl.includes('/videos/') ||
+        req.originalUrl.includes('/media/') ||
+        req.originalUrl.includes('/uploads/')
+      ) {
         return false;
       }
       return compression.filter(req, res);

@@ -13,6 +13,7 @@ import Badge from '../../components/ui/Badge'
 import adminService from '../../services/adminService'
 import { formatMinutesLong } from '../../components/home/CourseCard'
 import { cleanLessonTitle } from '../../utils/lessonTitle'
+import { normalizeMediaUrl } from '../../utils/mediaUrl'
 
 const getVideoDurationFromFile = (file) => {
   return new Promise((resolve) => {
@@ -512,8 +513,11 @@ export default function AdminCourseForm() {
             {form.previewVideo ? (
               <div className="relative rounded-xl overflow-hidden bg-black border border-pink-200 flex items-center justify-center">
                 <video
-                  src={form.previewVideo}
+                  key={form.previewVideo}
+                  src={normalizeMediaUrl(form.previewVideo)}
                   controls
+                  playsInline
+                  preload="auto"
                   className="w-full h-auto max-h-[360px] object-contain block"
                 />
                 <button
@@ -852,8 +856,11 @@ export default function AdminCourseForm() {
                         {tut.videoUrl ? (
                           <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-pink-200">
                             <video
-                              src={tut.videoUrl}
+                              key={tut.videoUrl}
+                              src={normalizeMediaUrl(tut.videoUrl)}
                               controls
+                              playsInline
+                              preload="auto"
                               className="w-full h-full object-contain"
                             />
                             <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-white font-medium flex items-center gap-1">

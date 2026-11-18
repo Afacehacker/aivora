@@ -1,32 +1,21 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { clsx } from 'clsx'
 import { Play } from 'lucide-react'
+import {
+  normalizeMediaUrl,
+  getFallbackMediaUrls,
+  isVideoUrl,
+  courseUsesVideoCover,
+} from '../../utils/mediaUrl'
 
-const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|mkv|avi|m4v)(\?.*)?$/i
-
-export function normalizeMediaUrl(url = '') {
-  if (!url || typeof url !== 'string') return url
-  // Rewrite local dev uploads host to relative /uploads/... so it works seamlessly on Vercel & Render
-  return url.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000\/uploads\//i, '/uploads/')
-}
-
-export function isVideoUrl(url = '') {
-  if (!url || typeof url !== 'string') return false
-  return (
-    VIDEO_EXTENSIONS.test(url) ||
-    url.includes('/uploads/videos/') ||
-    url.includes('/api/v1/media/videos/')
-  )
-}
-
-export function courseUsesVideoCover(course) {
-  return true // Cover is exclusively video
-}
+// Re-export helpers so existing references throughout the codebase continue to work
+export { normalizeMediaUrl, getFallbackMediaUrls, isVideoUrl, courseUsesVideoCover }
 
 /**
  * Product cover display: 100% video.
- * Renders HTML5 <video> directly with preload="auto", playsInline, and autoplay
- * for instant 0ms first-frame rendering and immediate playback on page reload.
+ * Renders HTML5 <video> directly with preload="auto", playsInline, and autoplay.
+ * Features automated multi-endpoint fallback resolution, abort resilience during reloads,
+ * and guaranteed instant first-frame playback.
  */
 export default function CourseMediaPreview({
   course,
@@ -39,45 +28,90 @@ export default function CourseMediaPreview({
 }) {
   const videoRef = useRef(null)
   const [videoFailed, setVideoFailed] = useState(false)
+  const [candidateIndex, setCandidateIndex] = useState(0)
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  const previewVid = normalizeMediaUrl(course?.previewVideo)
-  const thumbVid = isVideoUrl(course?.thumbnail) ? normalizeMediaUrl(course?.thumbnail) : null
-  const firstLessonVid = normalizeMediaUrl(course?.modules?.[0]?.lessons?.[0]?.videoUrl)
+  const previewVid = course?.previewVideo
+  const thumbVid = isVideoUrl(course?.thumbnail) ? course?.thumbnail : null
+  const firstLessonVid = course?.modules?.[0]?.lessons?.[0]?.videoUrl
 
-  const rawVideoSrc = previewVid || thumbVid || firstLessonVid
-  const shouldRenderVideo = Boolean(rawVideoSrc) && !videoFailed
+  const rawSource = previewVid || thumbVid || firstLessonVid
 
-  // Reset error state if the video URL changes
+  // Generate prioritized list of candidate URLs to ensure resilient loading
+  const candidateUrls = useMemo(() => {
+    if (!rawSource) return []
+    return getFallbackMediaUrls(rawSource)
+  }, [rawSource])
+
+  const activeVideoSrc = candidateUrls[candidateIndex] || normalizeMediaUrl(rawSource)
+  const shouldRenderVideo = Boolean(activeVideoSrc) && !videoFailed
+
+  // Reset state when rawSource changes
   useEffect(() => {
     setVideoFailed(false)
-  }, [rawVideoSrc])
+    setCandidateIndex(0)
+    setIsLoaded(false)
+  }, [rawSource])
 
-  // Instant autoplay & viewport intersection handling
-  useEffect(() => {
+  // Attempt instant playback
+  const triggerPlay = useCallback(() => {
     const el = videoRef.current
-    if (!el || !shouldRenderVideo) return
+    if (!el) return
 
-    // Explicitly guarantee muted on both property and attribute for strict browser autoplay policies
+    // Ensure audio is muted so browser autoplay policies never reject playback
     el.muted = muted
     el.defaultMuted = muted
+    el.playsInline = true
 
     if (autoPlay) {
       const playPromise = el.play()
       if (playPromise !== undefined) {
         playPromise.catch(() => {
-          // Autoplay restricted or delayed by browser power-saver; handled gracefully
+          // Handled gracefully: browser autoplay or power saver paused it
         })
       }
     }
+  }, [autoPlay, muted])
 
-    if (typeof IntersectionObserver === 'undefined') return
+  // Attach lifecycle listeners for instant 0ms playback on page reload or mount
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el || !shouldRenderVideo) return
+
+    el.muted = muted
+    el.defaultMuted = muted
+    el.playsInline = true
+
+    // Immediate start
+    triggerPlay()
+
+    const onDataReady = () => {
+      setIsLoaded(true)
+      triggerPlay()
+    }
+
+    el.addEventListener('loadedmetadata', onDataReady)
+    el.addEventListener('loadeddata', onDataReady)
+    el.addEventListener('canplay', onDataReady)
+
+    return () => {
+      el.removeEventListener('loadedmetadata', onDataReady)
+      el.removeEventListener('loadeddata', onDataReady)
+      el.removeEventListener('canplay', onDataReady)
+    }
+  }, [shouldRenderVideo, activeVideoSrc, triggerPlay, muted])
+
+  // Viewport intersection observer (play when visible, pause when scrolled far out of view)
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el || !shouldRenderVideo || typeof IntersectionObserver === 'undefined') return
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             if (autoPlay && el.paused) {
-              el.play().catch(() => {})
+              triggerPlay()
             }
           } else if (!el.paused) {
             el.pause()
@@ -88,10 +122,29 @@ export default function CourseMediaPreview({
     )
 
     observer.observe(el)
-    return () => {
-      observer.disconnect()
+    return () => observer.disconnect()
+  }, [shouldRenderVideo, autoPlay, triggerPlay])
+
+  // Resilient error handler: switches to fallback candidate URLs before failing
+  const handleVideoError = (e) => {
+    const el = e?.currentTarget || videoRef.current
+    const err = el?.error
+
+    // Code 1 = MEDIA_ERR_ABORTED: Normal when page reloads or user navigates. DO NOT fail!
+    if (err && err.code === 1) {
+      return
     }
-  }, [shouldRenderVideo, autoPlay, muted, rawVideoSrc])
+
+    // Try next candidate URL if available
+    if (candidateIndex + 1 < candidateUrls.length) {
+      setCandidateIndex((prev) => prev + 1)
+      setIsLoaded(false)
+      return
+    }
+
+    // All candidate URLs exhausted
+    setVideoFailed(true)
+  }
 
   if (shouldRenderVideo) {
     const resolvedVideoClass =
@@ -106,20 +159,31 @@ export default function CourseMediaPreview({
         : undefined
 
     return (
-      <video
-        ref={videoRef}
-        key={rawVideoSrc}
-        src={rawVideoSrc}
-        poster={posterImage}
-        muted={muted}
-        loop={loop}
-        playsInline
-        autoPlay={autoPlay}
-        controls={controls}
-        preload="auto"
-        onError={() => setVideoFailed(true)}
-        className={clsx('bg-black', resolvedVideoClass)}
-      />
+      <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
+        {/* Subtle pre-load shimmer while the first frame loads */}
+        {!isLoaded && (
+          <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900 to-black animate-pulse" />
+        )}
+        <video
+          ref={videoRef}
+          key={activeVideoSrc}
+          src={activeVideoSrc}
+          poster={posterImage}
+          muted={muted}
+          loop={loop}
+          playsInline
+          autoPlay={autoPlay}
+          controls={controls}
+          preload="auto"
+          onError={handleVideoError}
+          onLoadedData={() => setIsLoaded(true)}
+          className={clsx(
+            'bg-black transition-opacity duration-300',
+            isLoaded ? 'opacity-100' : 'opacity-90',
+            resolvedVideoClass
+          )}
+        />
+      </div>
     )
   }
 
@@ -130,8 +194,8 @@ export default function CourseMediaPreview({
         className
       )}
     >
-      <div className="w-10 h-10 rounded-full bg-cyan-500/20 text-aivora-cyan flex items-center justify-center">
-        <Play className="w-5 h-5 fill-aivora-cyan" />
+      <div className="w-10 h-10 rounded-full bg-pink-500/20 text-pink-500 flex items-center justify-center">
+        <Play className="w-5 h-5 fill-pink-500" />
       </div>
       <span className="text-xs text-slate-300 font-semibold">{course?.title || 'Video Tutorial'}</span>
     </div>

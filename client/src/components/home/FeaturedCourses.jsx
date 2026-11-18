@@ -6,6 +6,7 @@ import { SkeletonCard } from '../ui/Skeleton'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import courseService from '../../services/courseService'
+import { normalizeMediaUrl } from '../../utils/mediaUrl'
 
 const filterTabs = [
   { id: 'all', label: 'All Courses', type: 'all' },
@@ -229,10 +230,12 @@ export default function FeaturedCourses() {
           <div className="space-y-4">
             <div className="rounded-xl overflow-hidden bg-black flex items-center justify-center">
               <video
-                src={previewCourse.previewVideo}
+                key={previewCourse.previewVideo}
+                src={normalizeMediaUrl(previewCourse.previewVideo)}
                 controls
                 autoPlay
                 playsInline
+                preload="auto"
                 className="w-full h-auto max-h-[75vh] object-contain"
               />
             </div>
