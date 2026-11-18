@@ -22,44 +22,12 @@ const filterTabs = [
 // Initial instant-render courses matching actual database records so reloads have 0ms delay
 const INITIAL_COURSES = [
   {
-    _id: 'initial-image-to-video',
-    title: 'IMAGE to VIDEO',
-    slug: 'image-to-video',
-    shortDescription: 'Image to a talking video',
-    thumbnail: null,
-    previewVideo: '/api/v1/media/videos/1794654991023-Empty-1794653741016.mp4',
-    category: { name: 'Image to Video', slug: 'image-to-video' },
-    instructor: { name: 'AIVORA Administrator' },
-    price: 10000,
-    discountPrice: null,
-    level: 'beginner',
-    totalLessons: 1,
-    totalDuration: 300,
-    rating: { avg: 0, count: 0 },
-  },
-  {
-    _id: 'initial-phone-video-call',
-    title: 'Phone Video Call',
-    slug: 'phone-video-call',
-    shortDescription: 'Learn smartphone AI video workflows and live avatar calls.',
-    thumbnail: null,
-    previewVideo: '/api/v1/media/videos/phone-video-call.mp4',
-    category: { name: 'AI Character Transformation', slug: 'ai-character-transformation' },
-    instructor: { name: 'AIVORA Administrator' },
-    price: 45000,
-    discountPrice: null,
-    level: 'beginner',
-    totalLessons: 1,
-    totalDuration: 420,
-    rating: { avg: 0, count: 0 },
-  },
-  {
     _id: 'initial-laptoppc-video-call',
     title: 'Laptop/PC Video Call',
     slug: 'laptoppc-video-call',
-    shortDescription: 'Master PC and laptop real-time AI video streaming and recording.',
+    shortDescription: 'Learn how to do full body swap video call, works on all Models of Laptop',
     thumbnail: null,
-    previewVideo: '/api/v1/media/videos/laptop-video-call.mp4',
+    previewVideo: '/uploads/videos/laptop-video-call.mp4',
     category: { name: 'AI Video Creation', slug: 'ai-video-creation' },
     instructor: { name: 'AIVORA Administrator' },
     price: 85000,
@@ -70,13 +38,45 @@ const INITIAL_COURSES = [
     rating: { avg: 0, count: 0 },
   },
   {
+    _id: 'initial-phone-video-call',
+    title: 'Phone Video Call',
+    slug: 'phone-video-call',
+    shortDescription: 'full phone video call tutorial, works on all phones iphones, android and all phones, works on all models of phone',
+    thumbnail: null,
+    previewVideo: '/uploads/videos/phone-video-call.mp4',
+    category: { name: 'AI Character Transformation', slug: 'ai-character-transformation' },
+    instructor: { name: 'AIVORA Administrator' },
+    price: 45000,
+    discountPrice: null,
+    level: 'beginner',
+    totalLessons: 1,
+    totalDuration: 420,
+    rating: { avg: 0, count: 0 },
+  },
+  {
+    _id: 'initial-image-to-video',
+    title: 'IMAGE to VIDEO',
+    slug: 'image-to-video',
+    shortDescription: 'Image to a talking video',
+    thumbnail: null,
+    previewVideo: '/uploads/videos/1794654991023-Empty-1794653741016.mp4',
+    category: { name: 'Image to Video', slug: 'image-to-video' },
+    instructor: { name: 'AIVORA Administrator' },
+    price: 10000,
+    discountPrice: null,
+    level: 'beginner',
+    totalLessons: 1,
+    totalDuration: 300,
+    rating: { avg: 0, count: 0 },
+  },
+  {
     _id: 'initial-voice-cloning',
     title: '[Demo] Professional AI Voiceover & Consent-Based Voice Studio',
     slug: 'demo-professional-ai-voiceover-consent-based-voice-studio',
     shortDescription:
       'Produce studio-grade narration, multilingual dubbing, and authorized voice clones with emotional nuance.',
     thumbnail: null,
-    previewVideo: '/api/v1/media/videos/voice-cloning-studio.mp4',
+    previewVideo: '/uploads/videos/voice-cloning-studio.mp4',
     category: { name: 'AI Voice Cloning', slug: 'ai-voice-cloning' },
     instructor: { name: 'AIVORA Administrator' },
     price: 38000,
@@ -89,11 +89,11 @@ const INITIAL_COURSES = [
 ]
 
 // Initial instant-render courses with persistent browser cache so reloads have 0ms delay
-const CACHE_KEY = 'aivora_cached_featured_courses_v6'
+const CACHE_KEY = 'aivora_cached_featured_courses_v7'
 const getInitialFeaturedCourses = () => {
   try {
     // Purge outdated stale caches that had duplicate videos
-    ['aivora_cached_featured_courses_v1', 'aivora_cached_featured_courses_v2', 'aivora_cached_featured_courses_v3', 'aivora_cached_featured_courses_v4', 'aivora_cached_featured_courses_v5'].forEach((k) => {
+    ['aivora_cached_featured_courses_v1', 'aivora_cached_featured_courses_v2', 'aivora_cached_featured_courses_v3', 'aivora_cached_featured_courses_v4', 'aivora_cached_featured_courses_v5', 'aivora_cached_featured_courses_v6'].forEach((k) => {
       try { localStorage.removeItem(k) } catch {}
     })
     const cached = localStorage.getItem(CACHE_KEY)

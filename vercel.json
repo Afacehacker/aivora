@@ -26,6 +26,12 @@
       }
     },
     {
+      "source": "/uploads/videos/(.*)",
+      "destination": {
+        "service": "client"
+      }
+    },
+    {
       "source": "/uploads/(.*)",
       "destination": {
         "service": "aivora-api-server"

@@ -61,8 +61,8 @@ export function getFallbackMediaUrls(url = '') {
   if (filename) {
     const apiOrigin = getApiOrigin()
     const paths = [
-      `/api/v1/media/videos/${filename}`,
       `/uploads/videos/${filename}`,
+      `/api/v1/media/videos/${filename}`,
     ]
 
     paths.forEach((p) => {

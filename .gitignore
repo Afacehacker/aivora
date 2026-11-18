@@ -26,7 +26,7 @@ server/logs/
 Thumbs.db
 
 # Local staging uploads
-upload_videos/
-uploads/
-server/uploads/
-client/public/uploads/
+/upload_videos/
+/uploads/
+/server/uploads/
+*paid-tutorial*

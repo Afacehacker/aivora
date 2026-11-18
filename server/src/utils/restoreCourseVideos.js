@@ -15,7 +15,7 @@ export async function restoreDistinctCourseVideos() {
       { slug: 'image-to-video' },
       {
         $set: {
-          previewVideo: '/api/v1/media/videos/1794654991023-Empty-1794653741016.mp4',
+          previewVideo: '/uploads/videos/1794654991023-Empty-1794653741016.mp4',
         },
       }
     );
@@ -27,7 +27,7 @@ export async function restoreDistinctCourseVideos() {
         { _id: phoneCourse._id },
         {
           $set: {
-            previewVideo: '/api/v1/media/videos/phone-video-call.mp4',
+            previewVideo: '/uploads/videos/phone-video-call.mp4',
           },
         }
       );
@@ -36,7 +36,7 @@ export async function restoreDistinctCourseVideos() {
         {
           $set: {
             title: 'Phone Video Call Master Tutorial',
-            videoUrl: '/api/v1/media/videos/laptop-video-call-paid-tutorial.mov',
+            videoUrl: '/uploads/videos/laptop-video-call-paid-tutorial.mov',
             isPreview: false,
           },
         }
@@ -50,7 +50,7 @@ export async function restoreDistinctCourseVideos() {
         { _id: laptopCourse._id },
         {
           $set: {
-            previewVideo: '/api/v1/media/videos/laptop-video-call.mp4',
+            previewVideo: '/uploads/videos/laptop-video-call.mp4',
           },
         }
       );
@@ -59,7 +59,7 @@ export async function restoreDistinctCourseVideos() {
         {
           $set: {
             title: 'Laptop/PC Video Call Master Tutorial',
-            videoUrl: '/api/v1/media/videos/laptop-video-call-paid-tutorial.mov',
+            videoUrl: '/uploads/videos/laptop-video-call-paid-tutorial.mov',
             isPreview: false,
           },
         }
@@ -71,29 +71,23 @@ export async function restoreDistinctCourseVideos() {
       { slug: 'demo-professional-ai-voiceover-consent-based-voice-studio' },
       {
         $set: {
-          previewVideo: '/api/v1/media/videos/voice-cloning-studio.mp4',
+          previewVideo: '/uploads/videos/voice-cloning-studio.mp4',
         },
       }
     );
-
-    console.log('[CourseVideos] Successfully restored distinct preview videos for each course in database.');
   } catch (err) {
-    console.error('[CourseVideos] Warning restoring course videos:', err.message);
+    console.warn('Video URL restoration warning:', err.message);
   }
 }
 
-// Direct execution support
-if (process.argv[1] && process.argv[1].includes('restoreCourseVideos')) {
+// Standalone execution if run directly
+if (process.argv[1]?.endsWith('restoreCourseVideos.js')) {
   const uri = process.env.MONGODB_URI || 'mongodb+srv://aivora_admin:AivoraDbPass2026Secure99@cluster0.s2g48sz.mongodb.net/aivora?retryWrites=true&w=majority&appName=Cluster0';
   mongoose.connect(uri).then(async () => {
     await restoreDistinctCourseVideos();
+    console.log('✅ Distinct course videos synced in MongoDB Atlas.');
     const courses = await mongoose.connection.db.collection('courses').find({}).toArray();
-    for (const c of courses) {
-      console.log(`Course "${c.title}" -> ${c.previewVideo}`);
-    }
-    process.exit(0);
-  }).catch((err) => {
-    console.error(err);
-    process.exit(1);
+    courses.forEach(c => console.log(' - Course:', c.slug, '=>', c.previewVideo));
+    await mongoose.disconnect();
   });
 }
