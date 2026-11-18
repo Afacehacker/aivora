@@ -189,7 +189,11 @@ export default function CourseMediaPreview({
           onError={handleVideoError}
           className={clsx('bg-black block', resolvedVideoClass)}
         >
-          <source src={activeVideoSrc} type="video/mp4" onError={handleVideoError} />
+          <source
+            src={activeVideoSrc}
+            type={activeVideoSrc?.toLowerCase().includes('.mov') ? 'video/quicktime' : 'video/mp4'}
+            onError={handleVideoError}
+          />
           <source src={activeVideoSrc} onError={handleVideoError} />
         </video>
       </div>

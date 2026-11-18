@@ -101,11 +101,12 @@ export const adminService = {
   updateLesson: (lessonId, data) => patch(`/admin/lessons/${lessonId}`, data),
   deleteLesson: (lessonId) => del(`/admin/lessons/${lessonId}`),
 
-  // Media Uploads (Images, Videos, Resources)
+  // Media Uploads (Single-part direct upload with progress, 10 min timeout, zero chunking)
   uploadMedia: (file, onUploadProgress) => {
     const formData = new FormData()
     formData.append('file', file)
     return api.post('/admin/upload', formData, {
+      timeout: 600000,
       onUploadProgress,
     })
   },

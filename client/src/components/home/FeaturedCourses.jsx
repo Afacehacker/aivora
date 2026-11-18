@@ -19,7 +19,7 @@ const filterTabs = [
   { id: 'image-to-video', label: 'Image Animation', type: 'category' },
 ]
 
-// Initial instant-render courses so mobile users see content in 0ms while fresh data hydrates
+// Initial instant-render courses matching actual database records so reloads have 0ms delay
 const INITIAL_COURSES = [
   {
     _id: 'initial-image-to-video',
@@ -27,7 +27,7 @@ const INITIAL_COURSES = [
     slug: 'image-to-video',
     shortDescription: 'Image to a talking video',
     thumbnail: null,
-    previewVideo: '/uploads/videos/1794654991023-Empty-1794653741016.mp4',
+    previewVideo: '/api/v1/media/videos/1794654991023-Empty-1794653741016.mp4',
     category: { name: 'Image to Video', slug: 'image-to-video' },
     instructor: { name: 'AIVORA Administrator' },
     price: 10000,
@@ -38,13 +38,45 @@ const INITIAL_COURSES = [
     rating: { avg: 0, count: 0 },
   },
   {
+    _id: 'initial-phone-video-call',
+    title: 'Phone Video Call',
+    slug: 'phone-video-call',
+    shortDescription: 'Learn smartphone AI video workflows and live avatar calls.',
+    thumbnail: null,
+    previewVideo: '/api/v1/media/videos/1794837379037-tk-7681649057323830558-1794815383521.mp4',
+    category: { name: 'AI Character Transformation', slug: 'ai-character-transformation' },
+    instructor: { name: 'AIVORA Administrator' },
+    price: 25000,
+    discountPrice: null,
+    level: 'beginner',
+    totalLessons: 1,
+    totalDuration: 420,
+    rating: { avg: 0, count: 0 },
+  },
+  {
+    _id: 'initial-laptoppc-video-call',
+    title: 'Laptop/PC Video Call',
+    slug: 'laptoppc-video-call',
+    shortDescription: 'Master PC and laptop real-time AI video streaming and recording.',
+    thumbnail: null,
+    previewVideo: '/api/v1/media/videos/1794882702135-ScreenRecording_11-16-2026-8-47-14-AM_1.mov',
+    category: { name: 'AI Video Creation', slug: 'ai-video-creation' },
+    instructor: { name: 'AIVORA Administrator' },
+    price: 35000,
+    discountPrice: null,
+    level: 'intermediate',
+    totalLessons: 1,
+    totalDuration: 600,
+    rating: { avg: 0, count: 0 },
+  },
+  {
     _id: 'initial-voice-cloning',
     title: '[Demo] Professional AI Voiceover & Consent-Based Voice Studio',
     slug: 'demo-professional-ai-voiceover-consent-based-voice-studio',
     shortDescription:
       'Produce studio-grade narration, multilingual dubbing, and authorized voice clones with emotional nuance.',
     thumbnail: null,
-    previewVideo: '/uploads/videos/voice-cloning-studio.mp4',
+    previewVideo: '/api/v1/media/videos/voice-cloning-studio.mp4',
     category: { name: 'AI Voice Cloning', slug: 'ai-voice-cloning' },
     instructor: { name: 'AIVORA Administrator' },
     price: 38000,
@@ -54,46 +86,16 @@ const INITIAL_COURSES = [
     totalDuration: 490,
     rating: { avg: 0, count: 0 },
   },
-  {
-    _id: 'initial-character-design',
-    title: '[Demo] Authorized AI Character Design & Talking Avatars',
-    slug: 'demo-authorized-ai-character-design-talking-avatars',
-    shortDescription:
-      'Design consistent fictional characters, realistic digital presenters, and lip-synced avatars ethically.',
-    thumbnail: null,
-    previewVideo: '/uploads/videos/ai-character-avatar.mp4',
-    category: { name: 'AI Character Transformation', slug: 'ai-character-transformation' },
-    instructor: { name: 'AIVORA Administrator' },
-    price: 55000,
-    discountPrice: 35000,
-    level: 'intermediate',
-    totalLessons: 2,
-    totalDuration: 1400,
-    rating: { avg: 0, count: 0 },
-  },
-  {
-    _id: 'initial-cinematic-video',
-    title: '[Demo] Cinematic AI Video Production Masterclass',
-    slug: 'demo-cinematic-ai-video-production-masterclass',
-    shortDescription:
-      'Master text-to-video, camera motion control, lighting direction, and commercial AI filmmaking from scratch.',
-    thumbnail: null,
-    previewVideo: '/uploads/videos/cinematic-ai-video.mp4',
-    category: { name: 'AI Video Creation', slug: 'ai-video-creation' },
-    instructor: { name: 'AIVORA Administrator' },
-    price: 45000,
-    discountPrice: 29500,
-    level: 'beginner',
-    totalLessons: 3,
-    totalDuration: 2120,
-    rating: { avg: 0, count: 0 },
-  },
 ]
 
 // Initial instant-render courses with persistent browser cache so reloads have 0ms delay
-const CACHE_KEY = 'aivora_cached_featured_courses_v3'
+const CACHE_KEY = 'aivora_cached_featured_courses_v5'
 const getInitialFeaturedCourses = () => {
   try {
+    // Purge outdated stale caches that had duplicate videos
+    ['aivora_cached_featured_courses_v1', 'aivora_cached_featured_courses_v2', 'aivora_cached_featured_courses_v3', 'aivora_cached_featured_courses_v4'].forEach((k) => {
+      try { localStorage.removeItem(k) } catch {}
+    })
     const cached = localStorage.getItem(CACHE_KEY)
     if (cached) {
       const parsed = JSON.parse(cached)

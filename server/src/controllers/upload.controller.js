@@ -125,34 +125,36 @@ export const handleMediaUpload = catchAsync(async (req, res, next) => {
     }
   }
 
-  // 2) Persist in MongoDB GridFS and MediaFile collection so uploads survive serverless restarts
+  // 2) Persist in MongoDB GridFS with zero RAM streaming (supports up to 500MB without OOM or timeouts)
   if (req.file.path && fs.existsSync(req.file.path)) {
     try {
-      const fileBuffer = fs.readFileSync(req.file.path);
-
-      // Save to GridFS (arbitrary size support)
-      await saveBufferToGridFS(
+      await saveStreamToGridFS(
         req.file.filename,
-        fileBuffer,
+        req.file.path,
         req.file.mimetype,
         subFolder,
         req.file.originalname
-      ).catch(() => {});
+      ).catch((err) => {
+        console.warn('[Upload] saveStreamToGridFS warning:', err.message);
+      });
 
-      // Fallback in MediaFile if <= 15MB
+      // Optional MediaFile collection fallback for small files (<= 15MB)
       if (req.file.size <= 15 * 1024 * 1024) {
-        await MediaFile.findOneAndUpdate(
-          { filename: req.file.filename },
-          {
-            filename: req.file.filename,
-            originalName: req.file.originalname,
-            folder: subFolder,
-            mimeType: req.file.mimetype,
-            size: req.file.size,
-            data: fileBuffer,
-          },
-          { upsert: true, new: true }
-        ).catch(() => {});
+        try {
+          const fileBuffer = fs.readFileSync(req.file.path);
+          await MediaFile.findOneAndUpdate(
+            { filename: req.file.filename },
+            {
+              filename: req.file.filename,
+              originalName: req.file.originalname,
+              folder: subFolder,
+              mimeType: req.file.mimetype,
+              size: req.file.size,
+              data: fileBuffer,
+            },
+            { upsert: true, new: true }
+          ).catch(() => {});
+        } catch {}
       }
     } catch (dbErr) {
       console.error('MongoDB storage persistence warning:', dbErr.message);

@@ -31,11 +31,18 @@ export function normalizeMediaUrl(url = '') {
     return url
   }
 
-  // Strip localhost:5000 prefix if present in database records
+  const apiOrigin = getApiOrigin()
+  // Strip localhost prefix if present in database records
   let clean = url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i, '')
 
   if (!clean.startsWith('/')) {
     clean = `/${clean}`
+  }
+
+  // In cross-origin environments (e.g. Vercel frontend + Render backend),
+  // prefix apiOrigin so videos stream directly from backend without 404ing on Vercel
+  if (apiOrigin) {
+    return `${apiOrigin}${clean}`
   }
 
   return clean
@@ -54,16 +61,16 @@ export function getFallbackMediaUrls(url = '') {
   if (filename) {
     const apiOrigin = getApiOrigin()
     const paths = [
-      `/uploads/videos/${filename}`,
       `/api/v1/media/videos/${filename}`,
+      `/uploads/videos/${filename}`,
     ]
 
     paths.forEach((p) => {
-      if (!fallbacks.includes(p)) fallbacks.push(p)
       if (apiOrigin) {
         const full = `${apiOrigin}${p}`
         if (!fallbacks.includes(full)) fallbacks.push(full)
       }
+      if (!fallbacks.includes(p)) fallbacks.push(p)
     })
   }
 

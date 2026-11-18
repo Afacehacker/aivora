@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { ensureInitialData } from '../utils/autoSeed.js';
 import { syncAllMediaAssets } from '../utils/syncMediaStorage.js';
+import { restoreDistinctCourseVideos } from '../utils/restoreCourseVideos.js';
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY_MS = 5000;
@@ -29,9 +30,10 @@ const connectDB = async (attempt = 1) => {
     const conn = await cachedPromise;
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    // Run auto-seed and media storage sync non-blockingly in the background
+    // Run auto-seed, media storage sync, and distinct video preservation non-blockingly
     ensureInitialData().catch(() => {});
     syncAllMediaAssets().catch(() => {});
+    restoreDistinctCourseVideos().catch(() => {});
 
     // Log connection events
     mongoose.connection.on('disconnected', () => {
