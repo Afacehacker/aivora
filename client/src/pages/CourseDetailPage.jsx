@@ -596,14 +596,13 @@ export default function CourseDetailPage() {
       >
         {previewUrl && (
           <div className="rounded-xl overflow-hidden bg-black flex items-center justify-center">
-            <video
-              key={previewUrl}
-              src={normalizeMediaUrl(previewUrl)}
-              controls
-              autoPlay
-              playsInline
-              preload="auto"
+            <CourseMediaPreview
+              course={{ previewVideo: previewUrl, title: course?.title }}
               className="w-full h-auto max-h-[75vh] object-contain"
+              autoPlay={true}
+              muted={false}
+              loop={true}
+              controls={true}
             />
           </div>
         )}

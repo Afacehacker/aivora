@@ -6,7 +6,7 @@ import { SkeletonCard } from '../ui/Skeleton'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import courseService from '../../services/courseService'
-import { normalizeMediaUrl } from '../../utils/mediaUrl'
+import CourseMediaPreview, { normalizeMediaUrl } from '../common/CourseMediaPreview'
 
 const filterTabs = [
   { id: 'all', label: 'All Courses', type: 'all' },
@@ -27,7 +27,7 @@ const INITIAL_COURSES = [
     slug: 'image-to-video',
     shortDescription: 'Image to a talking video',
     thumbnail: null,
-    previewVideo: '/uploads/videos/1794654991023-Empty-1794653741016.mp4',
+    previewVideo: '/api/v1/media/videos/1794654991023-Empty-1794653741016.mp4',
     category: { name: 'Image to Video', slug: 'image-to-video' },
     instructor: { name: 'AIVORA Administrator' },
     price: 10000,
@@ -44,7 +44,7 @@ const INITIAL_COURSES = [
     shortDescription:
       'Produce studio-grade narration, multilingual dubbing, and authorized voice clones with emotional nuance.',
     thumbnail: null,
-    previewVideo: '/uploads/videos/voice-cloning-studio.mp4',
+    previewVideo: '/api/v1/media/videos/voice-cloning-studio.mp4',
     category: { name: 'AI Voice Cloning', slug: 'ai-voice-cloning' },
     instructor: { name: 'AIVORA Administrator' },
     price: 38000,
@@ -61,7 +61,7 @@ const INITIAL_COURSES = [
     shortDescription:
       'Design consistent fictional characters, realistic digital presenters, and lip-synced avatars ethically.',
     thumbnail: null,
-    previewVideo: '/uploads/videos/ai-character-avatar.mp4',
+    previewVideo: '/api/v1/media/videos/ai-character-avatar.mp4',
     category: { name: 'AI Character Transformation', slug: 'ai-character-transformation' },
     instructor: { name: 'AIVORA Administrator' },
     price: 55000,
@@ -78,7 +78,7 @@ const INITIAL_COURSES = [
     shortDescription:
       'Master text-to-video, camera motion control, lighting direction, and commercial AI filmmaking from scratch.',
     thumbnail: null,
-    previewVideo: '/uploads/videos/cinematic-ai-video.mp4',
+    previewVideo: '/api/v1/media/videos/cinematic-ai-video.mp4',
     category: { name: 'AI Video Creation', slug: 'ai-video-creation' },
     instructor: { name: 'AIVORA Administrator' },
     price: 45000,
@@ -229,14 +229,13 @@ export default function FeaturedCourses() {
         {previewCourse && (
           <div className="space-y-4">
             <div className="rounded-xl overflow-hidden bg-black flex items-center justify-center">
-              <video
-                key={previewCourse.previewVideo}
-                src={normalizeMediaUrl(previewCourse.previewVideo)}
-                controls
-                autoPlay
-                playsInline
-                preload="auto"
+              <CourseMediaPreview
+                course={previewCourse}
                 className="w-full h-auto max-h-[75vh] object-contain"
+                autoPlay={true}
+                muted={false}
+                loop={true}
+                controls={true}
               />
             </div>
             <div className="flex items-center justify-between gap-3">

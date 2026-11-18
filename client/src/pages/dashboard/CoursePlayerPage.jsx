@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft, CheckCircle2, PlayCircle, ChevronLeft, ChevronRight,
@@ -10,7 +10,7 @@ import Button from '../../components/ui/Button'
 import ProgressBar from '../../components/ui/ProgressBar'
 import PageLoader from '../../components/common/PageLoader'
 import { cleanLessonTitle } from '../../utils/lessonTitle'
-import { normalizeMediaUrl } from '../../utils/mediaUrl'
+import { normalizeMediaUrl, getFallbackMediaUrls } from '../../utils/mediaUrl'
 import api from '../../services/api'
 
 const speeds = [0.75, 1, 1.25, 1.5, 2]
@@ -30,6 +30,27 @@ export default function CoursePlayerPage() {
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(true)
   const [marking, setMarking] = useState(false)
+  const [playerCandidateIndex, setPlayerCandidateIndex] = useState(0)
+
+  useEffect(() => {
+    setPlayerCandidateIndex(0)
+  }, [activeLesson?.videoUrl])
+
+  const lessonCandidates = useMemo(() => {
+    return activeLesson?.videoUrl ? getFallbackMediaUrls(activeLesson.videoUrl) : []
+  }, [activeLesson?.videoUrl])
+
+  const activeLessonSrc =
+    lessonCandidates[playerCandidateIndex] ||
+    (activeLesson?.videoUrl ? normalizeMediaUrl(activeLesson.videoUrl) : '')
+
+  const handleLessonVideoError = (e) => {
+    const err = e?.currentTarget?.error
+    if (err && err.code === 1) return // MEDIA_ERR_ABORTED is harmless
+    if (playerCandidateIndex + 1 < lessonCandidates.length) {
+      setPlayerCandidateIndex((prev) => prev + 1)
+    }
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -186,16 +207,21 @@ export default function CoursePlayerPage() {
               {activeLesson?.videoUrl ? (
                 <video
                   ref={videoRef}
-                  key={activeLesson._id || activeLesson.videoUrl}
-                  src={normalizeMediaUrl(activeLesson.videoUrl)}
+                  key={activeLessonSrc}
+                  src={activeLessonSrc}
                   controls
                   autoPlay
                   playsInline
                   preload="auto"
                   controlsList="nodownload"
+                  onError={handleLessonVideoError}
                   onEnded={handleMarkComplete}
                   className="w-full h-full object-contain"
-                />
+                >
+                  <source src={activeLessonSrc} type="video/mp4" onError={handleLessonVideoError} />
+                  <source src={activeLessonSrc} type="video/quicktime" onError={handleLessonVideoError} />
+                  <source src={activeLessonSrc} onError={handleLessonVideoError} />
+                </video>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
                   <Sparkles className="w-10 h-10 text-aivora-indigo mb-2" />

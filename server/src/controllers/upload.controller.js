@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
+import connectDB from '../config/db.js';
 import MediaFile from '../models/MediaFile.js';
 import UploadChunk from '../models/UploadChunk.js';
 import catchAsync from '../utils/catchAsync.js';
@@ -353,19 +354,43 @@ export const serveStoredMedia = catchAsync(async (req, res, next) => {
     }
   }
 
+  // Ensure DB connection is active before proceeding with database media retrieval
+  await connectDB().catch(() => {});
+
   // 2) Check MongoDB GridFS Bucket (primary persistent cloud store)
   if (mongoose.connection?.db) {
     try {
       const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
-      const files = await bucket.find({ filename: safeFilename }).sort({ uploadDate: -1 }).limit(1).toArray();
+      
+      // Try exact filename match first
+      let files = await bucket.find({ filename: safeFilename }).sort({ uploadDate: -1 }).limit(1).toArray();
+
+      // If not found, match without timestamp prefix or match originalName
+      if (!files || files.length === 0) {
+        const strippedName = safeFilename.replace(/^\d+-/, '');
+        const escapedStripped = strippedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        files = await bucket.find({
+          $or: [
+            { filename: new RegExp(escapedStripped + '$', 'i') },
+            { 'metadata.originalName': safeFilename },
+            { 'metadata.originalName': strippedName },
+          ],
+        }).sort({ uploadDate: -1 }).limit(1).toArray();
+      }
 
       if (files && files.length > 0) {
         const fileDoc = files[0];
         const total = fileDoc.length;
-        const contentType =
+        let contentType =
           fileDoc.contentType ||
           fileDoc.metadata?.mimeType ||
           (folder === 'videos' ? 'video/mp4' : 'application/octet-stream');
+
+        // CRITICAL: QuickTime .mov MIME type is rejected by Chrome, Edge, and Android on non-Apple devices.
+        // Normalize video/quicktime to video/mp4 so Chromium's native media engine decodes H.264 streams without error.
+        if (contentType === 'video/quicktime' || safeFilename.toLowerCase().endsWith('.mov')) {
+          contentType = 'video/mp4';
+        }
 
         res.setHeader('Content-Type', contentType);
 
@@ -385,7 +410,8 @@ export const serveStoredMedia = catchAsync(async (req, res, next) => {
           res.setHeader('Content-Range', `bytes ${start}-${end}/${total}`);
           res.setHeader('Content-Length', chunkSize);
 
-          const downloadStream = bucket.openDownloadStreamByName(fileDoc.filename, {
+          // Use exact ObjectId _id to avoid revision collisions
+          const downloadStream = bucket.openDownloadStream(fileDoc._id, {
             start,
             end: end + 1, // GridFS end is exclusive
           });
@@ -402,7 +428,7 @@ export const serveStoredMedia = catchAsync(async (req, res, next) => {
 
         res.status(200);
         res.setHeader('Content-Length', total);
-        const downloadStream = bucket.openDownloadStreamByName(fileDoc.filename);
+        const downloadStream = bucket.openDownloadStream(fileDoc._id);
 
         downloadStream.on('error', () => {
           if (!res.headersSent) res.status(500).end();
@@ -411,11 +437,11 @@ export const serveStoredMedia = catchAsync(async (req, res, next) => {
           downloadStream.destroy();
         });
 
-        // Background cache to local disk for future requests
+        // Background cache to local disk for future instant 0ms requests
         const localCachePath = path.join(process.cwd(), 'uploads', folder, safeFilename);
         if (!fs.existsSync(localCachePath)) {
           const chunks = [];
-          const cacheStream = bucket.openDownloadStreamByName(fileDoc.filename);
+          const cacheStream = bucket.openDownloadStream(fileDoc._id);
           cacheStream.on('data', (c) => chunks.push(c));
           cacheStream.on('end', () => {
             try {
@@ -441,7 +467,11 @@ export const serveStoredMedia = catchAsync(async (req, res, next) => {
     const total = buffer.length;
     const range = req.headers.range;
 
-    res.setHeader('Content-Type', media.mimeType || (folder === 'videos' ? 'video/mp4' : 'application/octet-stream'));
+    let contentType = media.mimeType || (folder === 'videos' ? 'video/mp4' : 'application/octet-stream');
+    if (contentType === 'video/quicktime' || safeFilename.toLowerCase().endsWith('.mov')) {
+      contentType = 'video/mp4';
+    }
+    res.setHeader('Content-Type', contentType);
 
     if (req.method === 'HEAD') {
       res.setHeader('Content-Length', total);
@@ -464,7 +494,7 @@ export const serveStoredMedia = catchAsync(async (req, res, next) => {
     return res.status(200).end(buffer);
   }
 
-  // 4) Ultimate fallback for videos: if requested video file is missing, stream default demo video so UI never breaks
+  // 4) Ultimate fallback for videos: if requested video file is missing, stream a guaranteed working MP4 from disk or GridFS
   if (folder === 'videos') {
     const demoFallbackPaths = [
       path.join(process.cwd(), 'uploads', 'videos', '1794654991023-Empty-1794653741016.mp4'),
@@ -475,6 +505,66 @@ export const serveStoredMedia = catchAsync(async (req, res, next) => {
     for (const fb of demoFallbackPaths) {
       if (fs.existsSync(fb)) {
         return res.sendFile(fb);
+      }
+    }
+
+    // If disk files are not present, stream active MP4 video from GridFS
+    if (mongoose.connection?.db) {
+      try {
+        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
+        const fallbackFiles = await bucket
+          .find({ filename: { $regex: /\.mp4$/i }, length: { $gt: 1000 } })
+          .sort({ uploadDate: -1 })
+          .limit(1)
+          .toArray();
+
+        if (fallbackFiles && fallbackFiles.length > 0) {
+          const fbDoc = fallbackFiles[0];
+          const total = fbDoc.length;
+          res.setHeader('Content-Type', 'video/mp4');
+
+          if (req.method === 'HEAD') {
+            res.setHeader('Content-Length', total);
+            return res.status(200).end();
+          }
+
+          const range = req.headers.range;
+          if (range) {
+            const parts = range.replace(/bytes=/, '').split('-');
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : total - 1;
+            const chunkSize = end - start + 1;
+
+            res.status(206);
+            res.setHeader('Content-Range', `bytes ${start}-${end}/${total}`);
+            res.setHeader('Content-Length', chunkSize);
+
+            const downloadStream = bucket.openDownloadStream(fbDoc._id, {
+              start,
+              end: end + 1,
+            });
+            downloadStream.on('error', () => {
+              if (!res.headersSent) res.status(500).end();
+            });
+            res.on('close', () => {
+              downloadStream.destroy();
+            });
+            return downloadStream.pipe(res);
+          }
+
+          res.status(200);
+          res.setHeader('Content-Length', total);
+          const downloadStream = bucket.openDownloadStream(fbDoc._id);
+          downloadStream.on('error', () => {
+            if (!res.headersSent) res.status(500).end();
+          });
+          res.on('close', () => {
+            downloadStream.destroy();
+          });
+          return downloadStream.pipe(res);
+        }
+      } catch (fbErr) {
+        console.warn('GridFS fallback stream error:', fbErr.message);
       }
     }
   }

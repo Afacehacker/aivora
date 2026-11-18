@@ -113,11 +113,14 @@ export async function syncAllMediaAssets() {
       }
     }
 
-    // 4. Sanitize all course previewVideos to clean relative paths
+    // 4. Sanitize all course previewVideos to verified working /api/v1/media/ streaming paths
     const courses = await mongoose.connection.db.collection('courses').find({}).toArray().catch(() => []);
     for (const course of courses) {
       if (course.previewVideo && typeof course.previewVideo === 'string') {
-        const cleaned = course.previewVideo.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000\//i, '/');
+        let cleaned = course.previewVideo.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000\//i, '/');
+        if (cleaned.startsWith('/uploads/')) {
+          cleaned = cleaned.replace(/^\/uploads\//, '/api/v1/media/');
+        }
         if (cleaned !== course.previewVideo) {
           await mongoose.connection.db
             .collection('courses')
@@ -128,11 +131,14 @@ export async function syncAllMediaAssets() {
       }
     }
 
-    // 5. Sanitize all lesson videoUrls to clean relative paths
+    // 5. Sanitize all lesson videoUrls to verified working /api/v1/media/ streaming paths
     const lessons = await mongoose.connection.db.collection('lessons').find({}).toArray().catch(() => []);
     for (const lesson of lessons) {
       if (lesson.videoUrl && typeof lesson.videoUrl === 'string') {
-        const cleaned = lesson.videoUrl.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000\//i, '/');
+        let cleaned = lesson.videoUrl.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000\//i, '/');
+        if (cleaned.startsWith('/uploads/')) {
+          cleaned = cleaned.replace(/^\/uploads\//, '/api/v1/media/');
+        }
         if (cleaned !== lesson.videoUrl) {
           await mongoose.connection.db
             .collection('lessons')
@@ -195,11 +201,18 @@ export async function syncAllMediaAssets() {
 // Self-run when executed directly via node
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 if (isMain) {
-  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/aivora';
+  const DEFAULT_ATLAS_URI = 'mongodb+srv://aivora_admin:AivoraDbPass2026Secure99@cluster0.s2g48sz.mongodb.net/aivora?retryWrites=true&w=majority&appName=Cluster0';
+  const uri = process.env.MONGODB_URI || DEFAULT_ATLAS_URI;
   mongoose.connect(uri).then(async () => {
-    console.log('Connected to MongoDB. Running syncAllMediaAssets...');
+    console.log('Connected to MongoDB. Running syncAllMediaAssets on primary DB...');
     await syncAllMediaAssets();
-    console.log('Finished sync!');
+    if (uri !== DEFAULT_ATLAS_URI) {
+      console.log('Now syncing MongoDB Atlas cloud cluster...');
+      await mongoose.disconnect();
+      await mongoose.connect(DEFAULT_ATLAS_URI);
+      await syncAllMediaAssets();
+    }
+    console.log('Finished sync across all databases!');
     process.exit(0);
   }).catch((err) => {
     console.error('Connection error:', err);

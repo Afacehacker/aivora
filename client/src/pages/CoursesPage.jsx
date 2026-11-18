@@ -9,7 +9,7 @@ import Modal from '../components/ui/Modal'
 import Button from '../components/ui/Button'
 import useDebounce from '../hooks/useDebounce'
 import courseService from '../services/courseService'
-import { normalizeMediaUrl } from '../utils/mediaUrl'
+import CourseMediaPreview, { normalizeMediaUrl } from '../components/common/CourseMediaPreview'
 
 const levels = [
   { value: '', label: 'All Levels' },
@@ -250,14 +250,13 @@ export default function CoursesPage() {
         {previewCourse && (
           <div className="space-y-4">
             <div className="rounded-xl overflow-hidden bg-black flex items-center justify-center">
-              <video
-                key={previewCourse.previewVideo}
-                src={normalizeMediaUrl(previewCourse.previewVideo)}
-                controls
-                autoPlay
-                playsInline
-                preload="auto"
+              <CourseMediaPreview
+                course={previewCourse}
                 className="w-full h-auto max-h-[75vh] object-contain"
+                autoPlay={true}
+                muted={false}
+                loop={true}
+                controls={true}
               />
             </div>
             <div className="flex items-center justify-between">

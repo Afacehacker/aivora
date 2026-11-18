@@ -13,7 +13,7 @@ import Badge from '../../components/ui/Badge'
 import adminService from '../../services/adminService'
 import { formatMinutesLong } from '../../components/home/CourseCard'
 import { cleanLessonTitle } from '../../utils/lessonTitle'
-import { normalizeMediaUrl } from '../../utils/mediaUrl'
+import CourseMediaPreview, { normalizeMediaUrl } from '../../components/common/CourseMediaPreview'
 
 const getVideoDurationFromFile = (file) => {
   return new Promise((resolve) => {
@@ -512,18 +512,17 @@ export default function AdminCourseForm() {
 
             {form.previewVideo ? (
               <div className="relative rounded-xl overflow-hidden bg-black border border-pink-200 flex items-center justify-center">
-                <video
-                  key={form.previewVideo}
-                  src={normalizeMediaUrl(form.previewVideo)}
-                  controls
-                  playsInline
-                  preload="auto"
+                <CourseMediaPreview
+                  course={{ previewVideo: form.previewVideo }}
                   className="w-full h-auto max-h-[360px] object-contain block"
+                  autoPlay={false}
+                  muted={false}
+                  controls={true}
                 />
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, previewVideo: '' })}
-                  className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-black/70 text-xs text-rose-400 hover:bg-black"
+                  className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-black/70 text-xs text-rose-400 hover:bg-black z-10"
                 >
                   Remove
                 </button>
@@ -855,15 +854,14 @@ export default function AdminCourseForm() {
                       <div className="lg:col-span-5 space-y-2">
                         {tut.videoUrl ? (
                           <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-pink-200">
-                            <video
-                              key={tut.videoUrl}
-                              src={normalizeMediaUrl(tut.videoUrl)}
-                              controls
-                              playsInline
-                              preload="auto"
+                            <CourseMediaPreview
+                              course={{ previewVideo: tut.videoUrl }}
                               className="w-full h-full object-contain"
+                              autoPlay={false}
+                              muted={false}
+                              controls={true}
                             />
-                            <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-white font-medium flex items-center gap-1">
+                            <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] text-white font-medium flex items-center gap-1 z-10">
                               <Video className="w-3 h-3 text-pink-400" />
                               Video Attached
                             </div>

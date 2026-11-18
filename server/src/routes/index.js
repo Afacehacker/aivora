@@ -20,7 +20,7 @@ import { serveStoredMedia } from '../controllers/upload.controller.js';
 const router = express.Router();
 
 // Public media streaming route (serves dynamic uploads stored in MongoDB or disk)
-router.get('/media/:folder/:filename', serveStoredMedia);
+router.all('/media/:folder/:filename', serveStoredMedia);
 
 router.use('/auth', authRoutes);
 router.use('/courses', courseRoutes);

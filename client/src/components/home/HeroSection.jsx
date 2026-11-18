@@ -8,7 +8,7 @@ import Button from '../ui/Button'
 import Modal from '../ui/Modal'
 import CourseCard from './CourseCard'
 import courseService from '../../services/courseService'
-import { normalizeMediaUrl } from '../../utils/mediaUrl'
+import CourseMediaPreview, { normalizeMediaUrl } from '../common/CourseMediaPreview'
 
 const trustPills = [
   'Structured Step-by-Step Training',
@@ -24,7 +24,7 @@ const defaultHeroCourse = {
   shortDescription: 'Image to a talking video',
   description: 'Learn how to change image to a talking video in less than 5minutes',
   thumbnail: null,
-  previewVideo: '/uploads/videos/1794654991023-Empty-1794653741016.mp4',
+  previewVideo: '/api/v1/media/videos/1794654991023-Empty-1794653741016.mp4',
   category: {
     name: 'Image to Video',
     slug: 'image-to-video',
@@ -185,14 +185,13 @@ export default function HeroSection({ settings }) {
         {previewCourse && (
           <div className="space-y-4">
             <div className="rounded-xl overflow-hidden bg-black flex items-center justify-center">
-              <video
-                key={previewCourse.previewVideo}
-                src={normalizeMediaUrl(previewCourse.previewVideo)}
-                controls
-                autoPlay
-                playsInline
-                preload="auto"
+              <CourseMediaPreview
+                course={previewCourse}
                 className="w-full h-auto max-h-[75vh] object-contain"
+                autoPlay={true}
+                muted={false}
+                loop={true}
+                controls={true}
               />
             </div>
             <div className="flex items-center justify-between">
