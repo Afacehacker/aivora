@@ -44,7 +44,7 @@ const INITIAL_COURSES = [
     shortDescription:
       'Produce studio-grade narration, multilingual dubbing, and authorized voice clones with emotional nuance.',
     thumbnail: null,
-    previewVideo: '/api/v1/media/videos/voice-cloning-studio.mp4',
+    previewVideo: '/uploads/videos/voice-cloning-studio.mp4',
     category: { name: 'AI Voice Cloning', slug: 'ai-voice-cloning' },
     instructor: { name: 'AIVORA Administrator' },
     price: 38000,
@@ -61,7 +61,7 @@ const INITIAL_COURSES = [
     shortDescription:
       'Design consistent fictional characters, realistic digital presenters, and lip-synced avatars ethically.',
     thumbnail: null,
-    previewVideo: '/api/v1/media/videos/ai-character-avatar.mp4',
+    previewVideo: '/uploads/videos/ai-character-avatar.mp4',
     category: { name: 'AI Character Transformation', slug: 'ai-character-transformation' },
     instructor: { name: 'AIVORA Administrator' },
     price: 55000,
@@ -78,7 +78,7 @@ const INITIAL_COURSES = [
     shortDescription:
       'Master text-to-video, camera motion control, lighting direction, and commercial AI filmmaking from scratch.',
     thumbnail: null,
-    previewVideo: '/api/v1/media/videos/cinematic-ai-video.mp4',
+    previewVideo: '/uploads/videos/cinematic-ai-video.mp4',
     category: { name: 'AI Video Creation', slug: 'ai-video-creation' },
     instructor: { name: 'AIVORA Administrator' },
     price: 45000,
@@ -91,9 +91,10 @@ const INITIAL_COURSES = [
 ]
 
 // Initial instant-render courses with persistent browser cache so reloads have 0ms delay
+const CACHE_KEY = 'aivora_cached_featured_courses_v3'
 const getInitialFeaturedCourses = () => {
   try {
-    const cached = localStorage.getItem('aivora_cached_featured_courses')
+    const cached = localStorage.getItem(CACHE_KEY)
     if (cached) {
       const parsed = JSON.parse(cached)
       if (Array.isArray(parsed) && parsed.length > 0) return parsed
@@ -121,7 +122,7 @@ export default function FeaturedCourses() {
           setCourses(res.data)
           if (activeFilter.id === 'all') {
             try {
-              localStorage.setItem('aivora_cached_featured_courses', JSON.stringify(res.data))
+              localStorage.setItem(CACHE_KEY, JSON.stringify(res.data))
             } catch {}
           }
         } else if (isMounted && activeFilter.id !== 'all') {

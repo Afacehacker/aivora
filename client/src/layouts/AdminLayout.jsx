@@ -4,16 +4,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookOpen, Users, ShoppingCart, Star, Settings,
   Globe, Headphones, Tag, FolderOpen, Menu, X, Sparkles, LogOut,
-  Bell, ChevronRight, Shield
+  Bell, ChevronRight, Shield, CreditCard, CheckCircle2
 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 
 const adminLinks = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/admin/dashboard' },
+  { icon: CheckCircle2, label: 'Approve Payments', to: '/admin/orders?status=pending' },
+  { icon: CreditCard, label: 'Payments & Orders', to: '/admin/orders' },
   { icon: BookOpen, label: 'Courses', to: '/admin/courses' },
   { icon: FolderOpen, label: 'Categories', to: '/admin/categories' },
   { icon: Users, label: 'Students', to: '/admin/students' },
-  { icon: ShoppingCart, label: 'Orders', to: '/admin/orders' },
   { icon: Star, label: 'Reviews', to: '/admin/reviews' },
   { icon: Tag, label: 'Coupons', to: '/admin/coupons' },
   { icon: Headphones, label: 'Support', to: '/admin/support' },

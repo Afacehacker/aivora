@@ -37,9 +37,25 @@ export default function CoursesPage() {
   const [page, setPage] = useState(1)
 
   const [categories, setCategories] = useState([])
-  const [courses, setCourses] = useState([])
+  const [courses, setCourses] = useState(() => {
+    try {
+      const cached = localStorage.getItem('aivora_cached_courses_catalog_v2')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch {}
+    return []
+  })
   const [pagination, setPagination] = useState({ total: 0, pages: 1, page: 1 })
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('aivora_cached_courses_catalog_v2')
+      return !cached
+    } catch {
+      return true
+    }
+  })
   const [previewCourse, setPreviewCourse] = useState(null)
 
   useEffect(() => {
@@ -67,6 +83,11 @@ export default function CoursesPage() {
         if (isMounted) {
           setCourses(res?.data || [])
           setPagination(res?.pagination || { total: 0, pages: 1, page: 1 })
+          if (page === 1 && !debouncedSearch && !selectedCategory && !selectedLevel) {
+            try {
+              localStorage.setItem('aivora_cached_courses_catalog_v2', JSON.stringify(res?.data || []))
+            } catch {}
+          }
         }
       } catch {
         if (isMounted) setCourses([])

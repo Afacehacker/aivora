@@ -41,10 +41,7 @@ export default function CourseMediaPreview({
     return getFallbackMediaUrls(rawSource)
   }, [rawSource])
 
-  const activeVideoSrc =
-    candidateIndex === 999
-      ? '/api/v1/media/videos/1794837148474-tk-7681649057323830558-1794815383521.mp4'
-      : candidateUrls[candidateIndex] || normalizeMediaUrl(rawSource)
+  const activeVideoSrc = candidateUrls[candidateIndex] || normalizeMediaUrl(rawSource)
   const shouldRenderVideo = Boolean(activeVideoSrc) && !videoFailed
 
   // Reset state when rawSource changes
@@ -152,20 +149,13 @@ export default function CourseMediaPreview({
       return
     }
 
-    // Try next candidate URL if available
+    // Try next candidate URL for this specific video if available
     if (candidateIndex + 1 < candidateUrls.length) {
       setCandidateIndex((prev) => prev + 1)
       return
     }
 
-    // Ultimate fallback if all candidate URLs failed: use guaranteed active MP4
-    const ultimateFallback = '/api/v1/media/videos/1794837148474-tk-7681649057323830558-1794815383521.mp4'
-    if (activeVideoSrc !== ultimateFallback) {
-      setCandidateIndex(999)
-      return
-    }
-
-    // All candidate URLs exhausted
+    // All candidates for this video exhausted
     setVideoFailed(true)
   }
 

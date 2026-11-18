@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import connectDB from '../config/db.js';
@@ -60,6 +61,34 @@ const saveBufferToGridFS = async (filename, buffer, mimeType, folder, originalNa
       if (err) return reject(err);
       resolve(true);
     });
+  });
+};
+
+/**
+ * Ultra-fast, zero-RAM streaming of disk file into MongoDB GridFS bucket
+ */
+const saveStreamToGridFS = async (filename, sourceFilePath, mimeType, folder, originalName) => {
+  if (!mongoose.connection.db) return false;
+  const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
+
+  // Delete existing file with same filename if present
+  try {
+    const existing = await bucket.find({ filename }).toArray().catch(() => []);
+    for (const doc of existing) {
+      await bucket.delete(doc._id).catch(() => {});
+    }
+  } catch {}
+
+  return new Promise((resolve, reject) => {
+    const readStream = fs.createReadStream(sourceFilePath);
+    const uploadStream = bucket.openUploadStream(filename, {
+      contentType: mimeType,
+      metadata: { folder, originalName, mimeType },
+    });
+    readStream
+      .pipe(uploadStream)
+      .on('finish', () => resolve(true))
+      .on('error', (err) => reject(err));
   });
 };
 
@@ -142,9 +171,9 @@ export const handleMediaUpload = catchAsync(async (req, res, next) => {
 });
 
 /**
- * POST /api/v1/admin/upload-chunk — Chunked video uploader
- * Bypasses Vercel 4.5MB serverless body limits by slicing videos into ~2.5MB pieces,
- * assembling them safely in MongoDB GridFS so videos of ANY duration/size upload reliably.
+ * POST /api/v1/admin/upload-chunk — Ultra-fast chunked video uploader (< 5 minutes)
+ * Writes chunks immediately to local temp disk in milliseconds (bypassing MongoDB Atlas network latency),
+ * then streams the assembled file directly to GridFS with zero excess RAM usage, preventing Out Of Memory crashes.
  */
 export const handleChunkUpload = catchAsync(async (req, res, next) => {
   const file = Array.isArray(req.files)
@@ -174,134 +203,142 @@ export const handleChunkUpload = catchAsync(async (req, res, next) => {
   const isVideo = subFolder === 'videos' || (mimeType || '').startsWith('video/') || isVideoExt;
   const isImage = subFolder === 'images' || (mimeType || '').startsWith('image/') || isImageExt;
 
-  // Periodically purge orphaned chunks older than 20 minutes to keep database storage free
-  UploadChunk.deleteMany({ createdAt: { $lt: new Date(Date.now() - 20 * 60 * 1000) } }).catch(() => {});
-
-  // 1) Upsert chunk in MongoDB
+  // 1) Write chunk directly to local SSD/disk staging (instant, 0 network latency)
+  const safeUploadId = uploadId.replace(/[^a-zA-Z0-9_-]/g, '');
+  const tempChunkDir = path.join(os.tmpdir(), 'aivora-chunks', safeUploadId);
   try {
-    await UploadChunk.findOneAndUpdate(
-      { uploadId, chunkIndex },
-      {
-        uploadId,
-        chunkIndex,
-        totalChunks,
-        filename,
-        folder: subFolder,
-        mimeType: mimeType || file.mimetype || 'video/mp4',
-        originalName: originalName || '',
-        data: file.buffer,
-      },
-      { upsert: true, new: true }
-    );
-  } catch (chunkErr) {
-    if (chunkErr.code === 8000 || chunkErr.message?.includes('space quota')) {
-      return next(
-        new AppError(
-          'Database storage quota reached on MongoDB Atlas. Please free up space or upgrade storage.',
-          413
-        )
-      );
+    if (!fs.existsSync(tempChunkDir)) {
+      fs.mkdirSync(tempChunkDir, { recursive: true });
     }
-    throw chunkErr;
+    fs.writeFileSync(path.join(tempChunkDir, `part_${chunkIndex}`), file.buffer);
+  } catch (fsErr) {
+    console.warn('[ChunkUpload] Disk temp write error:', fsErr.message);
   }
 
-  const chunkCount = await UploadChunk.countDocuments({ uploadId });
+  // Also backup to MongoDB UploadChunk in background (non-blocking)
+  UploadChunk.findOneAndUpdate(
+    { uploadId, chunkIndex },
+    {
+      uploadId,
+      chunkIndex,
+      totalChunks,
+      filename,
+      folder: subFolder,
+      mimeType: mimeType || file.mimetype || 'video/mp4',
+      originalName: originalName || '',
+      data: file.buffer,
+    },
+    { upsert: true }
+  ).catch(() => {});
 
-  // 2) If more chunks remaining, return progress acknowledgment
-  if (chunkCount < totalChunks) {
+  // 2) Count parts received on disk
+  let receivedParts = 0;
+  try {
+    const existingParts = fs.readdirSync(tempChunkDir).filter((f) => f.startsWith('part_'));
+    receivedParts = existingParts.length;
+  } catch {
+    receivedParts = chunkIndex + 1;
+  }
+
+  // 3) If not all chunks received yet, return instant 200 acknowledgment
+  if (receivedParts < totalChunks && chunkIndex + 1 < totalChunks) {
     return successResponse(res, 200, `Chunk ${chunkIndex + 1} of ${totalChunks} uploaded.`, {
       uploadId,
       chunkIndex,
       totalChunks,
       completed: false,
-      receivedChunks: chunkCount,
-      percent: Math.round((chunkCount / totalChunks) * 100),
+      receivedChunks: receivedParts,
+      percent: Math.round(((chunkIndex + 1) / totalChunks) * 100),
     });
   }
 
-  // 3) All chunks received! Retrieve and assemble in sequence
-  const allChunks = await UploadChunk.find({ uploadId }).sort({ chunkIndex: 1 });
-  if (allChunks.length < totalChunks) {
-    return successResponse(res, 200, 'Awaiting final chunks...', {
-      uploadId,
-      completed: false,
-      receivedChunks: allChunks.length,
-      totalChunks,
-    });
-  }
-
-  const fullBuffer = Buffer.concat(allChunks.map((c) => c.data));
-  let finalUrl = `/api/v1/media/${subFolder}/${filename}`;
-  let cloudinaryDuration = 0;
-
-  // 4) If Cloudinary is configured, upload the full video
-  if (isCloudinaryConfigured()) {
-    try {
-      const cRes = await uploadBufferToCloudinary(fullBuffer, filename, isVideo, subFolder);
-      if (cRes && (cRes.secure_url || cRes.url)) {
-        finalUrl = cRes.secure_url || cRes.url;
-        cloudinaryDuration = cRes.duration || 0;
-      }
-    } catch (cErr) {
-      console.warn('Cloudinary upload warning (using GridFS/DB storage):', cErr.message);
-    }
-  }
-
-  // 5) Store in MongoDB GridFS (streams natively without size limits)
+  // 4) All chunks received! Assemble stream directly on disk (0 MB excess RAM)
+  const assembledTempFile = path.join(tempChunkDir, `assembled_${filename}`);
+  let assembledSize = 0;
   try {
-    await saveBufferToGridFS(
-      filename,
-      fullBuffer,
-      mimeType || 'video/mp4',
-      subFolder,
-      originalName || filename
-    );
-  } catch (gridErr) {
-    console.warn('GridFS save warning:', gridErr.message);
+    const writeStream = fs.createWriteStream(assembledTempFile);
+    for (let i = 0; i < totalChunks; i++) {
+      const partPath = path.join(tempChunkDir, `part_${i}`);
+      if (fs.existsSync(partPath)) {
+        const partBuffer = fs.readFileSync(partPath);
+        writeStream.write(partBuffer);
+        assembledSize += partBuffer.length;
+        try { fs.unlinkSync(partPath); } catch {}
+      }
+    }
+    await new Promise((resolve, reject) => {
+      writeStream.end(resolve);
+      writeStream.on('error', reject);
+    });
+  } catch (assembleErr) {
+    console.error('[ChunkUpload] Assemble error:', assembleErr.message);
   }
 
-  // 6) Mirror to local disk storage for instant 0ms native streaming
+  // 5) Destination disk paths for native 0ms local streaming
   const diskCandidateDirs = [
     path.join(process.cwd(), 'uploads', subFolder),
     path.join(process.cwd(), 'server', 'uploads', subFolder),
     path.join(bundledUploadsDir, subFolder),
     path.join(process.cwd(), 'client', 'public', 'uploads', subFolder),
   ];
+  let finalDiskPath = null;
   diskCandidateDirs.forEach((d) => {
     try {
       if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
-      fs.writeFileSync(path.join(d, filename), fullBuffer);
+      const dest = path.join(d, filename);
+      if (fs.existsSync(assembledTempFile)) {
+        fs.copyFileSync(assembledTempFile, dest);
+        if (!finalDiskPath) finalDiskPath = dest;
+      }
     } catch {}
   });
 
-  // 7) Also store in MediaFile if <= 15MB for backward compatibility
-  if (fullBuffer.length <= 15 * 1024 * 1024) {
+  let finalUrl = `/api/v1/media/${subFolder}/${filename}`;
+  let cloudinaryDuration = 0;
+
+  // 6) If Cloudinary is configured, upload directly from assembled disk file
+  if (isCloudinaryConfigured() && finalDiskPath && fs.existsSync(finalDiskPath)) {
     try {
-      await MediaFile.findOneAndUpdate(
-        { filename },
-        {
-          filename,
-          originalName: originalName || filename,
-          folder: subFolder,
-          mimeType: mimeType || 'video/mp4',
-          size: fullBuffer.length,
-          data: fullBuffer,
-        },
-        { upsert: true }
-      );
-    } catch (mErr) {
-      console.warn('MediaFile fallback warning:', mErr.message);
+      const cRes = isVideo
+        ? await uploadVideo(finalDiskPath, `aivora/${subFolder}`)
+        : await uploadImage(finalDiskPath, `aivora/${subFolder}`);
+      if (cRes && (cRes.secure_url || cRes.url)) {
+        finalUrl = cRes.secure_url || cRes.url;
+        cloudinaryDuration = cRes.duration || 0;
+      }
+    } catch (cErr) {
+      console.warn('Cloudinary upload warning:', cErr.message);
     }
   }
 
-  // 8) Clean up temporary chunks from MongoDB
-  await UploadChunk.deleteMany({ uploadId }).catch(() => {});
+  // 7) Stream directly from disk into MongoDB GridFS with zero excess RAM
+  const sourceToStream = finalDiskPath || (fs.existsSync(assembledTempFile) ? assembledTempFile : null);
+  if (sourceToStream) {
+    try {
+      await saveStreamToGridFS(
+        filename,
+        sourceToStream,
+        mimeType || 'video/mp4',
+        subFolder,
+        originalName || filename
+      );
+    } catch (gridErr) {
+      console.warn('GridFS stream warning:', gridErr.message);
+    }
+  }
+
+  // 8) Clean up temp chunk files & MongoDB chunks
+  try {
+    if (fs.existsSync(assembledTempFile)) fs.unlinkSync(assembledTempFile);
+    if (fs.existsSync(tempChunkDir)) fs.rmSync(tempChunkDir, { recursive: true, force: true });
+  } catch {}
+  UploadChunk.deleteMany({ uploadId }).catch(() => {});
 
   return successResponse(res, 200, 'Video file uploaded and processed successfully.', {
     url: finalUrl,
     filename,
     type: isVideo ? 'video' : isImage ? 'image' : 'file',
-    size: fullBuffer.length,
+    size: assembledSize,
     duration: cloudinaryDuration,
     originalName: originalName || filename,
     completed: true,
